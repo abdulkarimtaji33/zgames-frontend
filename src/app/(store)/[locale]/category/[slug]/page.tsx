@@ -1,0 +1,257 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { SlidersHorizontal, X, LayoutGrid, List, ChevronDown } from 'lucide-react';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { Pagination } from '@/components/shared/Pagination';
+import { ProductGrid } from '@/components/store/ProductGrid';
+import { FilterSidebar } from '@/components/store/FilterSidebar';
+import type { Product, PaginatedResponse } from '@/types';
+import { productsApi } from '@/lib/api';
+import { cn } from '@/lib/utils/cn';
+
+const SORT_OPTIONS = [
+  { label: 'Newest', value: 'createdAt:DESC' },
+  { label: 'Price: Low to High', value: 'price:ASC' },
+  { label: 'Price: High to Low', value: 'price:DESC' },
+  { label: 'Best Sellers', value: 'reviewCount:DESC' },
+  { label: 'Highest Rated', value: 'avgRating:DESC' },
+];
+
+const FILTERS = [
+  {
+    key: 'platform',
+    label: 'Platform',
+    options: [
+      { label: 'PlayStation 5', value: 'PS5' },
+      { label: 'PlayStation 4', value: 'PS4' },
+      { label: 'Xbox Series X', value: 'XBOX_SERIES_X' },
+      { label: 'Xbox One', value: 'XBOX_ONE' },
+      { label: 'Nintendo Switch', value: 'SWITCH' },
+      { label: 'PC', value: 'PC' },
+    ],
+  },
+  {
+    key: 'genre',
+    label: 'Genre',
+    options: [
+      { label: 'Action', value: 'ACTION' },
+      { label: 'RPG', value: 'RPG' },
+      { label: 'Sports', value: 'SPORTS' },
+      { label: 'Racing', value: 'RACING' },
+      { label: 'Fighting', value: 'FIGHTING' },
+      { label: 'Shooter', value: 'SHOOTER' },
+      { label: 'Adventure', value: 'ADVENTURE' },
+      { label: 'Simulation', value: 'SIMULATION' },
+    ],
+  },
+  {
+    key: 'region',
+    label: 'Region',
+    options: [
+      { label: 'UAE', value: 'UAE' },
+      { label: 'KSA', value: 'KSA' },
+      { label: 'International', value: 'INTERNATIONAL' },
+    ],
+  },
+  {
+    key: 'availability',
+    label: 'Availability',
+    options: [
+      { label: 'In Stock', value: 'in_stock' },
+      { label: 'Pre-Order', value: 'preorder' },
+      { label: 'Coming Soon', value: 'coming_soon' },
+    ],
+  },
+];
+
+export default function CategoryPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState('createdAt:DESC');
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortOpen, setSortOpen] = useState(false);
+
+  const slug = params.slug as string;
+  const categoryName = slug?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Products';
+
+  const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [sortField, sortOrder] = sortBy.split(':');
+      const queryParams: Record<string, unknown> = {
+        page,
+        limit: 20,
+        sortBy: sortField,
+        sortOrder,
+        ...(selectedFilters.platform?.length && { platform: selectedFilters.platform[0] }),
+        ...(selectedFilters.genre?.length && { genre: selectedFilters.genre[0] }),
+        ...(selectedFilters.region?.length && { region: selectedFilters.region[0] }),
+        ...(selectedFilters.availability?.includes('preorder') && { isPreorder: true }),
+        ...(selectedFilters.availability?.includes('coming_soon') && { isComingSoon: true }),
+      };
+      const res = await productsApi.findAll(queryParams);
+      const data = res.data.data as PaginatedResponse<Product>;
+      setProducts(data.items ?? []);
+      setTotalPages(data.meta?.totalPages ?? 1);
+      setTotalItems(data.meta?.total ?? 0);
+    } catch {
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, sortBy, selectedFilters]);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  const handleFilterChange = (key: string, values: string[]) => {
+    setSelectedFilters((prev) => ({ ...prev, [key]: values }));
+    setPage(1);
+  };
+
+  const clearAllFilters = () => { setSelectedFilters({}); setPage(1); };
+
+  const currentSort = SORT_OPTIONS.find((s) => s.value === sortBy) ?? SORT_OPTIONS[0];
+
+  return (
+    <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[{ label: 'Shop', href: '/en' }, { label: categoryName }]}
+        className="mb-4"
+      />
+
+      {/* Page header */}
+      <div className="flex items-start justify-between mb-6 gap-4">
+        <div>
+          <h1 className="font-heading text-3xl font-bold">{categoryName}</h1>
+          {!isLoading && (
+            <p className="text-sm text-foreground-muted mt-1">{totalItems} products</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-6">
+        {/* Filter sidebar - desktop */}
+        <aside className="hidden lg:block w-60 flex-shrink-0">
+          <FilterSidebar
+            filters={FILTERS}
+            selected={selectedFilters}
+            onChange={handleFilterChange}
+            onClearAll={clearAllFilters}
+          />
+        </aside>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-4 mb-5 pb-4 border-b border-border">
+            {/* Mobile filter btn */}
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="flex items-center gap-2 lg:hidden px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </button>
+
+            <div className="flex items-center gap-3 ml-auto">
+              {/* View mode */}
+              <div className="hidden sm:flex items-center gap-1 border border-border rounded p-0.5">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn('p-1.5 rounded transition-colors', viewMode === 'grid' ? 'bg-background-tertiary text-foreground' : 'text-foreground-muted')}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn('p-1.5 rounded transition-colors', viewMode === 'list' ? 'bg-background-tertiary text-foreground' : 'text-foreground-muted')}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Sort */}
+              <div className="relative">
+                <button
+                  onClick={() => setSortOpen((o) => !o)}
+                  className="flex items-center gap-2 px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors"
+                >
+                  <span>Sort: {currentSort.label}</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {sortOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-card border border-border shadow-xl animate-slide-down z-40">
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setSortBy(opt.value); setSortOpen(false); setPage(1); }}
+                          className={cn(
+                            'w-full text-left px-3 py-2 text-sm hover:bg-background-tertiary transition-colors',
+                            sortBy === opt.value ? 'text-accent font-medium' : 'text-foreground-muted',
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Products */}
+          <ProductGrid products={products} isLoading={isLoading} cols={viewMode === 'list' ? 2 : 4} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-10">
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile filter drawer */}
+      {filterOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setFilterOpen(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading text-xl font-bold">Filters</h3>
+              <button onClick={() => setFilterOpen(false)} className="p-2 text-foreground-muted hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <FilterSidebar
+              filters={FILTERS}
+              selected={selectedFilters}
+              onChange={handleFilterChange}
+              onClearAll={clearAllFilters}
+            />
+            <button
+              onClick={() => setFilterOpen(false)}
+              className="w-full mt-6 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
+            >
+              Show {totalItems} Products
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

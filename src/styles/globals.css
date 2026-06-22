@@ -1,0 +1,149 @@
+﻿@import "tailwindcss";
+
+/* ── CSS Variables ───────────────────────────────────────────── */
+:root {
+  --background: #0a0a0f;
+  --background-secondary: #111118;
+  --background-tertiary: #1a1a25;
+  --foreground: #ffffff;
+  --foreground-muted: #a0aec0;
+  --foreground-subtle: #4a5568;
+  --card: #111118;
+  --card-hover: #1a1a25;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.16);
+  --accent: #e53e3e;
+  --accent-hover: #c53030;
+  --accent-orange: #ff6b35;
+  --accent-orange-hover: #e55a25;
+  --accent-glow: rgba(229,62,62,0.2);
+  --success: #38a169;
+  --warning: #d69e2e;
+  --error: #e53e3e;
+  --info: #3182ce;
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-orange: var(--accent-orange);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-rajdhani);
+}
+
+/* ── Base Styles ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--background-tertiary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--foreground-subtle); }
+
+/* ── Typography ──────────────────────────────────────────────── */
+.font-heading { font-family: var(--font-rajdhani), system-ui, sans-serif; }
+
+h1, h2, h3 { font-family: var(--font-rajdhani), system-ui, sans-serif; letter-spacing: 0.02em; }
+
+/* ── Focus styles ────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Animations ──────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 20px 4px var(--accent-glow); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes count-badge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in { animation: fade-in 0.3s ease forwards; }
+.animate-slide-up { animation: slide-up 0.4s ease forwards; }
+.animate-slide-down { animation: slide-down 0.25s ease forwards; }
+.animate-slide-in-right { animation: slide-in-right 0.3s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 1.5s infinite linear; }
+.animate-count-badge { animation: count-badge 0.3s ease; }
+
+/* ── Gradient Utilities ──────────────────────────────────────── */
+.gradient-accent { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-orange) 100%); }
+.gradient-dark { background: linear-gradient(180deg, var(--background-secondary) 0%, var(--background) 100%); }
+.text-gradient { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-orange) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* ── Glass Effect ────────────────────────────────────────────── */
+.glass { background: rgba(17,17,24,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); }
+
+/* ── Skeleton ────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--background-tertiary) 25%, var(--background-secondary) 50%, var(--background-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* ── Card hover effect ───────────────────────────────────────── */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+
+/* ── Red glow button ─────────────────────────────────────────── */
+.btn-glow { box-shadow: 0 0 20px rgba(229,62,62,0.3); }
+.btn-glow:hover { box-shadow: 0 0 30px rgba(229,62,62,0.5); }
+
+/* ── Line clamp utilities ────────────────────────────────────── */
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+/* ── Mega menu backdrop ──────────────────────────────────────── */
+.mega-menu-backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }

@@ -28,6 +28,9 @@
   category?: Category;
   images?: ProductImage[];
   variants?: ProductVariant[];
+  relatedProducts?: Product[];
+  upsellProducts?: Product[];
+  crossSellProducts?: Product[];
   tags?: string;
   metaTitle?: string;
   metaDescription?: string;
@@ -39,6 +42,7 @@ export interface ProductImage {
   id: string;
   url: string;
   alt?: string;
+  altText?: string;
   isFeatured: boolean;
   sortOrder: number;
 }
@@ -50,15 +54,29 @@ export interface ProductVariant {
   salePrice?: number;
   isActive: boolean;
   stockQuantity?: number;
+  options?: Array<{ attributeId: string; optionId: string }>;
+  sortOrder?: number;
+  giftCardSupplierConfig?: {
+    enabled: boolean;
+    apiUrl?: string;
+    apiKey?: string;
+    method?: 'GET' | 'POST';
+    bodyTemplate?: string;
+    codePath?: string;
+  } | null;
 }
 
 export interface Category {
   id: string;
   name: string;
   slug: string;
+  image?: string;
   imageUrl?: string;
   description?: string;
   parentId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  sortOrder?: number;
   children?: Category[];
 }
 
@@ -79,6 +97,7 @@ export interface CartItem {
   imageUrl?: string;
   slug: string;
   platform?: string;
+  type?: string;
 }
 
 export interface User {
@@ -89,6 +108,19 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   role?: string;
+}
+
+export interface StaffUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  avatar?: string;
+  isActive: boolean;
+  roles?: Array<{ id: string; name: string; description?: string }>;
+  lastLoginAt?: string;
+  createdAt?: string;
 }
 
 export interface Customer {
@@ -122,6 +154,8 @@ export interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   productSnapshot?: Record<string, unknown>;
+  deliveredCodes?: string[] | null;
+  fulfillmentStatus?: 'not_applicable' | 'pending' | 'fulfilled' | 'partial';
 }
 
 export interface Address {

@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingBag, Package, Tags, Bookmark, Sliders,
   Warehouse, Truck, ClipboardList, Users, Star, MessageSquare,
   RotateCcw, Bell, BarChart2, FileText, Settings, ChevronDown,
-  ChevronRight, Menu, X, Zap, Gift, Heart, FileSpreadsheet,
-  Shield, DollarSign, PenTool, Building2, LogOut,
+  ChevronRight, Menu, X, Zap, Gift, Shield, DollarSign, PenTool,
+  Building2, LogOut, Globe, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { useAdminAuthStore } from '@/store/adminAuthStore';
+import { adminAuthApi } from '@/lib/api/adminApi';
+import { AdminToastContainer } from '@/components/admin/AdminToast';
 
 type NavItem = {
   label: string;
@@ -37,6 +40,7 @@ const NAV: NavItem[] = [
       { label: 'Flash Sales', href: '/admin/marketing/flash-sales' },
       { label: 'Loyalty', href: '/admin/marketing/loyalty' },
       { label: 'Gift Cards', href: '/admin/marketing/gift-cards' },
+      { label: 'Affiliates', href: '/admin/marketing/affiliates' },
     ],
   },
   { label: 'Customers', href: '/admin/customers', icon: Users },
@@ -44,14 +48,43 @@ const NAV: NavItem[] = [
   { label: 'Support', href: '/admin/support', icon: MessageSquare },
   { label: 'Returns', href: '/admin/returns', icon: RotateCcw },
   { label: 'Blog', href: '/admin/blog', icon: PenTool },
+  { label: 'CMS Pages', href: '/admin/cms-pages', icon: FileText },
   { label: 'Finance', href: '/admin/finance', icon: DollarSign },
   { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
   { label: 'Analytics', href: '/admin/analytics', icon: FileText },
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
   { label: 'Users', href: '/admin/users', icon: Shield },
   { label: 'Roles', href: '/admin/roles', icon: Gift },
+  { label: 'Permissions', href: '/admin/permissions', icon: Shield },
+  {
+    label: 'Localization', icon: Globe,
+    children: [
+      { label: 'Countries', href: '/admin/localization/countries' },
+      { label: 'Currencies', href: '/admin/localization/currencies' },
+      { label: 'Languages', href: '/admin/localization/languages' },
+      { label: 'Stores', href: '/admin/localization/stores' },
+    ],
+  },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
+
+const ROLE_NAV: Record<string, string[]> = {
+  super_admin: ['*'],
+  admin: ['*'],
+  marketing_manager: ['Dashboard', 'Products', 'Categories', 'Brands', 'Marketing', 'Blog', 'CMS Pages', 'Analytics', 'Reports'],
+  warehouse_manager: ['Dashboard', 'Products', 'Inventory', 'Purchase Orders', 'Suppliers', 'Warehouses', 'Reports'],
+  finance_manager: ['Dashboard', 'Orders', 'Finance', 'Reports', 'Analytics', 'Customers'],
+  customer_support: ['Dashboard', 'Orders', 'Customers', 'Support', 'Returns', 'Reviews'],
+  content_editor: ['Dashboard', 'Products', 'Blog', 'CMS Pages', 'Categories'],
+};
+
+function filterNav(roles: string[] | undefined): NavItem[] {
+  if (!roles?.length) return NAV;
+  if (roles.some((r) => ROLE_NAV[r]?.includes('*'))) return NAV;
+  const allowed = new Set(roles.flatMap((r) => ROLE_NAV[r] ?? []));
+  if (allowed.size === 0) return NAV;
+  return NAV.filter((item) => allowed.has(item.label));
+}
 
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const pathname = usePathname();
@@ -113,15 +146,66 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isLoginPage = pathname === '/admin/login';
+  const { user, isAuthenticated, clearAuth, accessToken, refreshToken, setAuth } = useAdminAuthStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(isLoginPage);
+
+  useEffect(() => {
+    if (isLoginPage) {
+      if (isAuthenticated) router.replace('/admin');
+      setAuthChecked(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.replace('/admin/login');
+      return;
+    }
+
+    if (isAuthenticated && !user && accessToken) {
+      adminAuthApi.me()
+        .then((res) => setAuth(accessToken, refreshToken ?? '', res.data.data))
+        .catch(() => {
+          clearAuth();
+          router.replace('/admin/login');
+        })
+        .finally(() => setAuthChecked(true));
+    } else {
+      setAuthChecked(true);
+    }
+  }, [isLoginPage, isAuthenticated, user, accessToken, refreshToken, router, setAuth, clearAuth]);
+
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) await adminAuthApi.logout(refreshToken);
+    } catch { /* ignore */ }
+    clearAuth();
+    router.push('/admin/login');
+  };
+
+  if (isLoginPage) return <>{children}</>;
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Admin';
+  const roleName = user?.roles?.[0]?.name?.replace(/_/g, ' ') ?? 'Staff';
+  const filteredNav = filterNav(user?.roles?.map((r) => r.name));
 
   const Sidebar = () => (
     <aside className={cn(
       'flex flex-col bg-background-secondary border-r border-border h-screen sticky top-0 transition-all duration-200',
       sidebarCollapsed ? 'w-14' : 'w-60',
     )}>
-      {/* Logo */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
         {!sidebarCollapsed && (
           <Link href="/admin" className="flex items-center gap-2">
@@ -138,17 +222,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV.map((item) => (
+        {filteredNav.map((item) => (
           <NavLink key={item.label} item={item} collapsed={sidebarCollapsed} />
         ))}
       </nav>
 
-      {/* Bottom */}
-      <div className="border-t border-border p-3 flex-shrink-0">
-        <Link href="/" className={cn('flex items-center px-3 py-2.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors', sidebarCollapsed && 'justify-center')}>
+      <div className="border-t border-border p-3 flex-shrink-0 space-y-1">
+        <button
+          onClick={handleLogout}
+          className={cn('flex items-center w-full px-3 py-2.5 rounded-lg text-sm text-foreground-muted hover:text-error hover:bg-background-tertiary transition-colors', sidebarCollapsed && 'justify-center')}
+        >
           <LogOut className="h-4 w-4 flex-shrink-0" />
+          {!sidebarCollapsed && <span className="ml-3">Sign Out</span>}
+        </button>
+        <Link href="/" className={cn('flex items-center px-3 py-2.5 rounded-lg text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors', sidebarCollapsed && 'justify-center')}>
+          <ChevronRight className="h-4 w-4 flex-shrink-0 rotate-180" />
           {!sidebarCollapsed && <span className="ml-3">Back to Store</span>}
         </Link>
       </div>
@@ -157,12 +246,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop sidebar */}
       <div className="hidden lg:flex">
         <Sidebar />
       </div>
 
-      {/* Mobile sidebar overlay */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileSidebarOpen(false)} />
@@ -178,9 +265,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar */}
         <header className="flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-border bg-background-secondary flex-shrink-0">
           <button
             onClick={() => setMobileSidebarOpen(true)}
@@ -189,25 +274,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-3 ml-auto">
-            <button className="relative p-2 rounded-lg hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-accent" />
-            </button>
-            <div className="flex items-center gap-2 pl-3 border-l border-border">
-              <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center font-bold text-white text-sm">A</div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-foreground">Admin</p>
-                <p className="text-xs text-foreground-muted">Super Admin</p>
+            <Link
+              href="/admin/guide"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin Guide</span>
+            </Link>
+            <Link href="/admin/profile" className="flex items-center gap-2 pl-3 border-l border-border hover:opacity-80 transition-opacity">
+              <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center font-bold text-white text-sm">
+                {displayName[0]}
               </div>
-            </div>
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium text-foreground">{displayName}</p>
+                <p className="text-xs text-foreground-muted capitalize">{roleName}</p>
+              </div>
+            </Link>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
+      <AdminToastContainer />
     </div>
   );
 }

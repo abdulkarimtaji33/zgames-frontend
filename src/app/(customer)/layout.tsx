@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, Package, Heart, GitCompare, MapPin, Bell, Star, Wallet, LogOut } from 'lucide-react';
+import { User, Package, Heart, GitCompare, MapPin, Bell, Star, Wallet, LogOut, Gift } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils/cn';
 
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/addresses', label: 'Addresses', icon: MapPin },
   { href: '/loyalty', label: 'Loyalty Rewards', icon: Star },
   { href: '/store-credit', label: 'Store Credit', icon: Wallet },
+  { href: '/gift-cards', label: 'Gift Cards', icon: Gift },
   { href: '/notifications', label: 'Notifications', icon: Bell },
 ];
 

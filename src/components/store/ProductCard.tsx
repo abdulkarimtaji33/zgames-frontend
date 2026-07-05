@@ -39,6 +39,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       imageUrl: imageUrl ?? undefined,
       slug: product.slug,
       platform: product.platform,
+      type: product.type,
     });
   };
 

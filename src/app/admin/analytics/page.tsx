@@ -1,60 +1,108 @@
 'use client';
-import { StatCard } from '@/components/admin/StatCard';
-import { Eye, MousePointer, ShoppingCart, Users } from 'lucide-react';
+
+import { useCallback, useEffect, useState } from 'react';
+import { DataTable } from '@/components/admin/DataTable';
+import { AdminPagination } from '@/components/admin/AdminPagination';
+import { FormField, FormInput } from '@/components/admin/FormField';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { adminAnalyticsApi } from '@/lib/api/adminApi';
+import type { PaginatedResponse } from '@/types';
+
+interface EventRow {
+  id: string;
+  eventType?: string;
+  event?: string;
+  page?: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface PageViewRow {
+  page?: string;
+  path?: string;
+  views?: number;
+  count?: number;
+}
+
 export default function AdminAnalyticsPage() {
-  const EVENTS = [
-    { event: 'page_view', count: 284921, change: '+12.3%', up: true },
-    { event: 'view_item', count: 89234, change: '+8.1%', up: true },
-    { event: 'add_to_cart', count: 12841, change: '+5.2%', up: true },
-    { event: 'begin_checkout', count: 4921, change: '+3.8%', up: true },
-    { event: 'purchase', count: 1842, change: '+15.2%', up: true },
-    { event: 'search', count: 23891, change: '-2.1%', up: false },
-  ];
-  const TOP_PAGES = [
-    { page: '/en', views: 48921, bounce: '38%' },
-    { page: '/en/products/ps5-console-disc', views: 12834, bounce: '22%' },
-    { page: '/en/category/playstation', views: 9821, bounce: '34%' },
-    { page: '/en/deals', views: 8934, bounce: '41%' },
-    { page: '/en/products/pokemon-sv-booster-box', views: 7821, bounce: '19%' },
-  ];
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [pageViews, setPageViews] = useState<PageViewRow[]>([]);
+  const [viewsLoading, setViewsLoading] = useState(true);
+
+  const dateParams = {
+    ...(startDate && { startDate }),
+    ...(endDate && { endDate }),
+  };
+
+  const fetcher = useCallback(
+    (params: Record<string, unknown>) =>
+      adminAnalyticsApi.events({ ...params, ...dateParams }) as unknown as Promise<{ data: { data: PaginatedResponse<EventRow> | EventRow[] } }>,
+    [startDate, endDate],
+  );
+  const { items, page, setPage, total, totalPages, isLoading } = usePaginatedList<EventRow>({ fetcher, limit: 20 });
+
+  useEffect(() => {
+    setViewsLoading(true);
+    adminAnalyticsApi.pageViews({ ...dateParams, limit: 10 })
+      .then((res) => setPageViews(res.data.data ?? []))
+      .catch(() => setPageViews([]))
+      .finally(() => setViewsLoading(false));
+  }, [startDate, endDate]);
+
+  const maxViews = Math.max(...pageViews.map((p) => Number(p.views ?? p.count ?? 0)), 1);
+
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <h1 className="font-heading text-2xl font-bold">Analytics</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Sessions" value="284,921" change="+12.3%" changeUp icon={<Eye className="h-4 w-4" />} color="text-blue-400" />
-        <StatCard title="Page Views" value="842,341" change="+8.4%" changeUp icon={<MousePointer className="h-4 w-4" />} color="text-purple-400" />
-        <StatCard title="Add to Cart" value="12,841" change="+5.2%" changeUp icon={<ShoppingCart className="h-4 w-4" />} color="text-accent" />
-        <StatCard title="New Users" value="4,891" change="+18.1%" changeUp icon={<Users className="h-4 w-4" />} color="text-green-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="font-heading text-2xl font-bold">Analytics</h1>
+        <div className="flex items-end gap-3">
+          <FormField label="Start Date"><FormInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></FormField>
+          <FormField label="End Date"><FormInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></FormField>
+        </div>
       </div>
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-xl bg-card border border-border overflow-hidden">
-          <div className="px-5 py-4 border-b border-border"><h3 className="font-heading text-base font-bold">Event Funnel</h3></div>
-          <div className="divide-y divide-border">
-            {EVENTS.map((e) => (
-              <div key={e.event} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="text-sm font-medium font-mono text-accent">{e.event}</p>
-                  <p className="text-xl font-bold text-foreground">{e.count.toLocaleString()}</p>
+
+      <div className="rounded-xl bg-card border border-border p-5">
+        <h3 className="font-heading font-bold mb-4">Page Views</h3>
+        {viewsLoading ? (
+          <div className="h-32 flex items-center justify-center"><div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
+        ) : pageViews.length === 0 ? (
+          <p className="text-sm text-foreground-muted">No page view data.</p>
+        ) : (
+          <div className="space-y-3">
+            {pageViews.map((p, i) => {
+              const views = Number(p.views ?? p.count ?? 0);
+              const pct = Math.round((views / maxViews) * 100);
+              return (
+                <div key={i}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="truncate">{String(p.page ?? p.path ?? 'Unknown')}</span>
+                    <span className="font-bold ml-2">{views}</span>
+                  </div>
+                  <div className="h-2 bg-background-tertiary rounded-full overflow-hidden">
+                    <div className="h-full bg-accent/80 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <span className={`text-sm font-medium ${e.up ? 'text-success' : 'text-error'}`}>{e.change}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
-        <div className="rounded-xl bg-card border border-border overflow-hidden">
-          <div className="px-5 py-4 border-b border-border"><h3 className="font-heading text-base font-bold">Top Pages</h3></div>
-          <div className="divide-y divide-border">
-            {TOP_PAGES.map((p) => (
-              <div key={p.page} className="flex items-center justify-between px-5 py-3">
-                <p className="text-sm font-mono text-foreground-muted truncate flex-1">{p.page}</p>
-                <div className="text-right flex-shrink-0 ml-4">
-                  <p className="text-sm font-bold">{p.views.toLocaleString()}</p>
-                  <p className="text-xs text-foreground-muted">Bounce: {p.bounce}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-heading font-bold mb-3">Events</h3>
+        <DataTable
+          data={items}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'eventType', label: 'Event', sortable: true, render: (v, row) => String(v ?? row.event ?? '—') },
+            { key: 'page', label: 'Page', render: (v) => String(v ?? '—') },
+            { key: 'createdAt', label: 'Time', render: (v) => new Date(String(v)).toLocaleString() },
+          ]}
+          emptyMessage="No analytics events recorded yet."
+        />
+        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>
     </div>
   );

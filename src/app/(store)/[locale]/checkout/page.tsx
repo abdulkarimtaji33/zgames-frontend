@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Check, ChevronRight, Lock, CreditCard, MapPin, Package } from 'lucide-react';
@@ -12,14 +12,7 @@ import { useCurrencyStore } from '@/store/currencyStore';
 import { ordersApi } from '@/lib/api';
 import { cn } from '@/lib/utils/cn';
 
-type Step = 'address' | 'shipping' | 'payment' | 'review';
-
-const STEPS: { key: Step; label: string; icon: typeof MapPin }[] = [
-  { key: 'address', label: 'Address', icon: MapPin },
-  { key: 'shipping', label: 'Shipping', icon: Package },
-  { key: 'payment', label: 'Payment', icon: CreditCard },
-  { key: 'review', label: 'Review', icon: Check },
-];
+type Step = 'address' | 'shipping' | 'contact' | 'payment' | 'review';
 
 const SHIPPING_OPTIONS = [
   { id: 'standard', label: 'Standard Delivery', description: '2–5 business days', price: 15, free: false },
@@ -50,7 +43,24 @@ export default function CheckoutPage() {
   const { isAuthenticated } = useAuthStore();
   const { format } = useCurrencyStore();
 
-  const [currentStep, setCurrentStep] = useState<Step>('address');
+  const isDigitalOnly = items.length > 0 && items.every((i) => i.type === 'gift_card' || i.type === 'digital');
+
+  const STEPS = useMemo(() => (
+    isDigitalOnly
+      ? [
+          { key: 'contact' as Step, label: 'Contact', icon: MapPin },
+          { key: 'payment' as Step, label: 'Payment', icon: CreditCard },
+          { key: 'review' as Step, label: 'Review', icon: Check },
+        ]
+      : [
+          { key: 'address' as Step, label: 'Address', icon: MapPin },
+          { key: 'shipping' as Step, label: 'Shipping', icon: Package },
+          { key: 'payment' as Step, label: 'Payment', icon: CreditCard },
+          { key: 'review' as Step, label: 'Review', icon: Check },
+        ]
+  ), [isDigitalOnly]);
+
+  const [currentStep, setCurrentStep] = useState<Step>(isDigitalOnly ? 'contact' : 'address');
   const [shippingOption, setShippingOption] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isPlacing, setIsPlacing] = useState(false);
@@ -58,16 +68,18 @@ export default function CheckoutPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<AddressForm>();
 
+  const availablePaymentMethods = isDigitalOnly ? PAYMENT_METHODS.filter((pm) => pm.id !== 'cod') : PAYMENT_METHODS;
+
   const subtotal = getSubtotal();
-  const shippingCost = subtotal >= 150 ? 0 : (SHIPPING_OPTIONS.find((o) => o.id === shippingOption)?.price ?? 15);
-  const total = subtotal + shippingCost - couponDiscount;
+  const shippingCost = isDigitalOnly ? 0 : (subtotal >= 150 ? 0 : (SHIPPING_OPTIONS.find((o) => o.id === shippingOption)?.price ?? 15));
+  const total = Math.max(0, subtotal + shippingCost - couponDiscount);
 
   const stepIndex = (s: Step) => STEPS.findIndex((st) => st.key === s);
   const currentIndex = stepIndex(currentStep);
 
   const onAddressSubmit = (data: AddressForm) => {
     setAddressData(data);
-    setCurrentStep('shipping');
+    setCurrentStep(isDigitalOnly ? 'payment' : 'shipping');
   };
 
   const placeOrder = async () => {
@@ -81,7 +93,9 @@ export default function CheckoutPage() {
           quantity: i.quantity,
           unitPrice: i.salePrice ?? i.price,
         })),
-        shippingAddress: addressData,
+        shippingAddress: isDigitalOnly
+          ? { ...addressData, addressLine1: 'Digital delivery — no shipping required', city: 'N/A' }
+          : addressData,
         shippingCost: shippingCost,
         currencyCode: 'AED',
         countryCode: addressData.countryCode,
@@ -130,6 +144,33 @@ export default function CheckoutPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2">
+          {/* Step: Contact (digital-only carts — no shipping address needed) */}
+          {currentStep === 'contact' && (
+            <div className="rounded-2xl bg-card border border-border p-6">
+              <h2 className="font-heading text-xl font-bold mb-2 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-accent" /> Contact Details
+              </h2>
+              <p className="text-sm text-foreground-muted mb-6">
+                Your order is fully digital — no shipping address needed. We&apos;ll email your code(s) right after payment.
+              </p>
+              <form onSubmit={handleSubmit(onAddressSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="First Name" error={errors.firstName?.message}
+                    {...register('firstName', { required: 'Required' })} />
+                  <Input label="Last Name" error={errors.lastName?.message}
+                    {...register('lastName', { required: 'Required' })} />
+                </div>
+                <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567"
+                  error={errors.phone?.message}
+                  {...register('phone', { required: 'Required' })} />
+                <input type="hidden" value="AE" {...register('countryCode')} />
+                <Button type="submit" variant="primary" size="lg" className="w-full mt-2">
+                  Continue to Payment
+                </Button>
+              </form>
+            </div>
+          )}
+
           {/* Step: Address */}
           {currentStep === 'address' && (
             <div className="rounded-2xl bg-card border border-border p-6">
@@ -214,7 +255,7 @@ export default function CheckoutPage() {
                 <CreditCard className="h-5 w-5 text-accent" /> Payment Method
               </h2>
               <div className="space-y-3 mb-6">
-                {PAYMENT_METHODS.map((pm) => (
+                {availablePaymentMethods.map((pm) => (
                   <label key={pm.id} className={cn(
                     'flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors',
                     paymentMethod === pm.id ? 'border-accent bg-accent/5' : 'border-border hover:border-border-hover',
@@ -241,8 +282,9 @@ export default function CheckoutPage() {
                   <Input label="Name on Card" placeholder="John Doe" />
                 </div>
               )}
+
               <div className="flex gap-3">
-                <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep('shipping')}>Back</Button>
+                <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep(isDigitalOnly ? 'contact' : 'shipping')}>Back</Button>
                 <Button variant="primary" size="lg" className="flex-1" onClick={() => setCurrentStep('review')}>Review Order</Button>
               </div>
             </div>
@@ -256,10 +298,17 @@ export default function CheckoutPage() {
               </h2>
               {addressData && (
                 <div className="mb-5 p-4 rounded-xl bg-background-tertiary">
-                  <p className="text-xs font-semibold text-foreground-subtle uppercase mb-2">Delivery To</p>
+                  <p className="text-xs font-semibold text-foreground-subtle uppercase mb-2">
+                    {isDigitalOnly ? 'Contact' : 'Delivery To'}
+                  </p>
                   <p className="text-sm font-medium">{addressData.firstName} {addressData.lastName}</p>
-                  <p className="text-sm text-foreground-muted">{addressData.addressLine1}, {addressData.city}</p>
+                  {!isDigitalOnly && (
+                    <p className="text-sm text-foreground-muted">{addressData.addressLine1}, {addressData.city}</p>
+                  )}
                   <p className="text-sm text-foreground-muted">{addressData.phone}</p>
+                  {isDigitalOnly && (
+                    <p className="text-sm text-accent mt-1">🎁 Delivered instantly by email — no shipping needed</p>
+                  )}
                 </div>
               )}
               <div className="space-y-2 mb-5">
@@ -305,7 +354,9 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-foreground-muted">Shipping</span>
-                <span className={shippingCost === 0 ? 'text-success' : ''}>{shippingCost === 0 ? 'Free' : format(shippingCost)}</span>
+                <span className={shippingCost === 0 ? 'text-success' : ''}>
+                  {isDigitalOnly ? 'Digital — N/A' : shippingCost === 0 ? 'Free' : format(shippingCost)}
+                </span>
               </div>
               <div className="flex justify-between font-bold">
                 <span>Total</span>

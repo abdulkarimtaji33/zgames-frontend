@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { AuthResponse, Product, PaginatedResponse, Order, Customer, Review, Category, Brand } from '@/types';
+import type { AuthResponse, Product, PaginatedResponse, Order, Customer, Review, Category, Brand, OrderItem } from '@/types';
 
 /* Auth */
 export const authApi = {
@@ -73,6 +73,30 @@ export const reviewsApi = {
 export const couponsApi = {
   validate: (code: string, orderAmount: number) =>
     apiClient.post<{ data: { discount: number; type: string } }>('/coupons/validate', { code, orderAmount }),
+};
+
+/* Digital gift card codes delivered on past orders (e.g. PlayStation, Xbox, Steam codes) */
+export interface DeliveredGiftCardItem extends OrderItem {
+  orderNumber: string;
+  orderCreatedAt: string;
+}
+
+export const giftCardsApi = {
+  /** Fetches all order items across the customer's orders that are gift_card-type products with delivered codes. */
+  findMyCodes: async (): Promise<DeliveredGiftCardItem[]> => {
+    const res = await apiClient.get<{ data: PaginatedResponse<Order> }>('/orders/my', { params: { limit: 100 } });
+    const orders = res.data.data.items ?? [];
+    const results: DeliveredGiftCardItem[] = [];
+    for (const order of orders) {
+      for (const item of order.items ?? []) {
+        const type = (item.productSnapshot as { type?: string } | undefined)?.type;
+        if (type === 'gift_card') {
+          results.push({ ...item, orderNumber: order.orderNumber, orderCreatedAt: order.createdAt });
+        }
+      }
+    }
+    return results;
+  },
 };
 
 /* Customer */

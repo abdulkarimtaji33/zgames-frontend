@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -20,6 +20,14 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   actions?: (row: T) => React.ReactNode;
   emptyMessage?: string;
+  /**
+   * When provided, search input is debounced and forwarded here instead of
+   * filtering `data` client-side — use this when `data` is only the current
+   * page from a server-paginated endpoint, so search covers the full dataset.
+   */
+  onSearch?: (query: string) => void;
+  /** Extra filter controls rendered next to the search box (e.g. dropdowns). */
+  filters?: React.ReactNode;
 }
 
 function getValue<T>(row: T, key: string): unknown {
@@ -34,19 +42,30 @@ export function DataTable<T extends { id: string | number }>({
   searchPlaceholder = 'Search...',
   actions,
   emptyMessage = 'No records found.',
+  onSearch,
+  filters,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const filtered = search
-    ? data.filter((row) =>
-        columns.some((col) => {
-          const v = getValue(row, String(col.key));
-          return String(v ?? '').toLowerCase().includes(search.toLowerCase());
-        }),
-      )
-    : data;
+  useEffect(() => {
+    if (!onSearch) return;
+    const t = setTimeout(() => onSearch(search), 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const filtered = onSearch
+    ? data
+    : search
+      ? data.filter((row) =>
+          columns.some((col) => {
+            const v = getValue(row, String(col.key));
+            return String(v ?? '').toLowerCase().includes(search.toLowerCase());
+          }),
+        )
+      : data;
 
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
@@ -68,21 +87,26 @@ export function DataTable<T extends { id: string | number }>({
 
   return (
     <div className="rounded-xl bg-card border border-border overflow-hidden">
-      {searchable && (
-        <div className="p-4 border-b border-border">
-          <div className="relative max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-tertiary border border-border text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
-            />
-          </div>
+      {(searchable || filters) && (
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center gap-3">
+          {searchable && (
+            <div className="relative max-w-xs w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-tertiary border border-border text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
+              />
+            </div>
+          )}
+          {filters && <div className="flex flex-wrap items-center gap-2">{filters}</div>}
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent sm:hidden z-[1]" />
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-background-tertiary border-b border-border">
             <tr>
@@ -144,6 +168,7 @@ export function DataTable<T extends { id: string | number }>({
             )}
           </tbody>
         </table>
+        </div>
       </div>
       {sorted.length > 0 && (
         <div className="px-4 py-3 border-t border-border text-xs text-foreground-muted">

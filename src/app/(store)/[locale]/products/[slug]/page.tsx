@@ -59,6 +59,7 @@ export default function ProductDetailPage() {
       imageUrl: featuredImage?.url,
       slug: product.slug,
       platform: product.platform,
+      type: product.type,
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);

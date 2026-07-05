@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Search, ShoppingCart, Heart, User, Menu, X,
   ChevronDown, Globe, DollarSign, Bell, LogOut,
@@ -38,12 +38,21 @@ export function Header() {
   const [megaOpen, setMegaOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
   const [countryOpen, setCountryOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const submitSearch = (query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    router.push(`/en/search?q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+  };
 
   const cartCount = useCartStore((s) => s.getItemCount());
   const wishlistCount = useWishlistStore((s) => s.productIds.length);
@@ -136,14 +145,19 @@ export function Header() {
 
             {/* Search bar (md+) */}
             <div className="hidden md:flex flex-1 max-w-xl mx-4">
-              <div className="relative w-full">
+              <form
+                onSubmit={(e) => { e.preventDefault(); submitSearch(desktopSearchQuery); }}
+                className="relative w-full"
+              >
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-subtle" />
                 <input
                   type="text"
+                  value={desktopSearchQuery}
+                  onChange={(e) => setDesktopSearchQuery(e.target.value)}
                   placeholder="Search games, consoles, accessories..."
                   className="w-full rounded-full bg-background-secondary border border-border pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                 />
-              </div>
+              </form>
             </div>
 
             {/* Right actions */}
@@ -297,7 +311,7 @@ export function Header() {
           {/* Mobile search bar */}
           {searchOpen && (
             <div className="md:hidden pb-3 animate-slide-down">
-              <div className="relative">
+              <form onSubmit={(e) => { e.preventDefault(); submitSearch(searchQuery); }} className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-subtle" />
                 <input
                   ref={searchRef}
@@ -307,10 +321,10 @@ export function Header() {
                   placeholder="Search games, consoles..."
                   className="w-full rounded-full bg-background-secondary border border-border pl-9 pr-10 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
                 />
-                <button onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                <button type="button" onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted">
                   <X className="h-4 w-4" />
                 </button>
-              </div>
+              </form>
             </div>
           )}
         </div>

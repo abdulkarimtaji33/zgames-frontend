@@ -137,7 +137,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
                 </div>
               ) : (
                 <span className="font-bold text-foreground">
-                  {product.isPreorder ? `AED ${product.price.toFixed(2)}` : `AED ${product.price.toFixed(2)}`}
+                  AED {product.price.toFixed(2)}
                 </span>
               )}
             </div>

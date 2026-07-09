@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/Input';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useCurrencyStore } from '@/store/currencyStore';
-import { ordersApi } from '@/lib/api';
+import { ordersApi, paymentsApi } from '@/lib/api';
+import { StripePaymentForm } from '@/components/store/StripePaymentForm';
+import { AddressAutocomplete, type ParsedAddress } from '@/components/shared/AddressAutocomplete';
 import { cn } from '@/lib/utils/cn';
 
 type Step = 'address' | 'shipping' | 'contact' | 'payment' | 'review';
@@ -65,8 +67,10 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isPlacing, setIsPlacing] = useState(false);
   const [addressData, setAddressData] = useState<AddressForm | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<AddressForm>();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AddressForm>();
 
   const availablePaymentMethods = isDigitalOnly ? PAYMENT_METHODS.filter((pm) => pm.id !== 'cod') : PAYMENT_METHODS;
 
@@ -85,6 +89,7 @@ export default function CheckoutPage() {
   const placeOrder = async () => {
     if (!addressData) return;
     setIsPlacing(true);
+    setPaymentError(null);
     try {
       const orderData = {
         items: items.map((i) => ({
@@ -101,7 +106,22 @@ export default function CheckoutPage() {
         countryCode: addressData.countryCode,
         paymentMethod,
       };
-      await ordersApi.create(orderData);
+      const orderRes = await ordersApi.create(orderData);
+      const order = (orderRes.data as { data?: { id: string } }).data;
+
+      if (paymentMethod === 'card' && order?.id) {
+        const intentRes = await paymentsApi.createIntent({ orderId: order.id, method: 'stripe', currency: 'AED' });
+        const secret = (intentRes.data as { data?: { metadata?: { clientSecret?: string } } }).data?.metadata?.clientSecret;
+        if (secret) {
+          setClientSecret(secret);
+          setIsPlacing(false);
+          return;
+        }
+        setPaymentError('Card payments are not configured yet. Please choose Cash on Delivery.');
+        setIsPlacing(false);
+        return;
+      }
+
       clearCart();
       router.push('/en/order-success');
     } catch {
@@ -109,6 +129,11 @@ export default function CheckoutPage() {
     } finally {
       setIsPlacing(false);
     }
+  };
+
+  const handleCardPaymentSuccess = () => {
+    clearCart();
+    router.push('/en/order-success');
   };
 
   if (items.length === 0) {
@@ -187,9 +212,18 @@ export default function CheckoutPage() {
                 <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567"
                   error={errors.phone?.message}
                   {...register('phone', { required: 'Required' })} />
-                <Input label="Address Line 1" placeholder="Building, Street"
+                <AddressAutocomplete
+                  label="Address Line 1"
+                  placeholder="Start typing your address…"
                   error={errors.addressLine1?.message}
-                  {...register('addressLine1', { required: 'Required' })} />
+                  onTextChange={(v) => setValue('addressLine1', v, { shouldValidate: true })}
+                  onPlaceSelected={(place: ParsedAddress) => {
+                    setValue('addressLine1', place.addressLine1, { shouldValidate: true });
+                    setValue('city', place.city, { shouldValidate: true });
+                    if (place.countryCode) setValue('countryCode', place.countryCode);
+                  }}
+                />
+                <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
                 <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor"
                   {...register('addressLine2')} />
                 <div className="grid grid-cols-2 gap-4">
@@ -273,13 +307,10 @@ export default function CheckoutPage() {
                 ))}
               </div>
               {paymentMethod === 'card' && (
-                <div className="border border-border rounded-xl p-4 mb-6 space-y-3">
-                  <Input label="Card Number" placeholder="1234 5678 9012 3456" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input label="Expiry" placeholder="MM / YY" />
-                    <Input label="CVV" placeholder="123" type="password" />
-                  </div>
-                  <Input label="Name on Card" placeholder="John Doe" />
+                <div className="border border-border rounded-xl p-4 mb-6">
+                  <p className="text-sm text-foreground-muted">
+                    You&apos;ll enter your card details securely on the next step, powered by Stripe.
+                  </p>
                 </div>
               )}
 
@@ -325,12 +356,29 @@ export default function CheckoutPage() {
                   <span className="text-accent">{format(total)}</span>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep('payment')}>Back</Button>
-                <Button variant="primary" size="xl" className="flex-1" onClick={placeOrder} isLoading={isPlacing}>
-                  <Lock className="h-4 w-4" /> Place Order
-                </Button>
-              </div>
+              {paymentError && (
+                <p className="text-sm text-error mb-4">{paymentError}</p>
+              )}
+
+              {clientSecret ? (
+                <div className="space-y-4">
+                  <h3 className="font-heading text-sm font-bold flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-accent" /> Secure card payment
+                  </h3>
+                  <StripePaymentForm
+                    clientSecret={clientSecret}
+                    returnUrl={`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/en/order-success`}
+                    onSuccess={handleCardPaymentSuccess}
+                  />
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep('payment')}>Back</Button>
+                  <Button variant="primary" size="xl" className="flex-1" onClick={placeOrder} isLoading={isPlacing}>
+                    <Lock className="h-4 w-4" /> Place Order
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

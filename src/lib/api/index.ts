@@ -106,17 +106,28 @@ export const customerApi = {
   updateProfile: (data: unknown) =>
     apiClient.patch('/customers/me', data),
   getAddresses: () =>
-    apiClient.get('/customers/addresses'),
+    apiClient.get('/customers/me/addresses'),
   addAddress: (data: unknown) =>
-    apiClient.post('/customers/addresses', data),
+    apiClient.post('/customers/me/addresses', data),
   updateAddress: (id: string, data: unknown) =>
-    apiClient.put(`/customers/addresses/${id}`, data),
+    apiClient.patch(`/customers/me/addresses/${id}`, data),
   deleteAddress: (id: string) =>
-    apiClient.delete(`/customers/addresses/${id}`),
+    apiClient.delete(`/customers/me/addresses/${id}`),
+  setDefaultAddress: (id: string) =>
+    apiClient.patch(`/customers/me/addresses/${id}/set-default`),
   getWishlist: () =>
     apiClient.get('/wishlist'),
   addToWishlist: (productId: string) =>
     apiClient.post('/wishlist', { productId }),
   removeFromWishlist: (productId: string) =>
     apiClient.delete(`/wishlist/${productId}`),
+};
+/* Payments */
+export const paymentsApi = {
+  createIntent: (data: { orderId: string; method: string; currency?: string }) =>
+    apiClient.post<{ data: { id: string; metadata?: { clientSecret?: string } } }>('/payments/intent', data),
+  confirm: (data: { paymentId: string; gatewayPaymentId?: string }) =>
+    apiClient.post('/payments/confirm', data),
+  findByOrder: (orderId: string) =>
+    apiClient.get(`/payments/order/${orderId}`),
 };

@@ -1,11 +1,17 @@
-﻿'use client';
+'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  defaultTheme = 'light',
+}: {
+  children: React.ReactNode;
+  defaultTheme?: 'light' | 'dark';
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -24,7 +30,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+      <ThemeProvider
+        attribute="class"
+        defaultTheme={defaultTheme}
+        enableSystem={false}
+        storageKey="zgames-theme"
+      >
         {children}
       </ThemeProvider>
       {process.env.NODE_ENV === 'development' && (

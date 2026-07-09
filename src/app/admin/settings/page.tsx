@@ -10,6 +10,7 @@ import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminSettingsApi } from '@/lib/api/adminApi';
 
 const ADMIN_NOTIFICATION_EMAIL_KEY = 'admin_notification_email';
+const STORE_THEME_KEY = 'store_theme_default';
 
 interface SettingRow {
   key: string;
@@ -30,6 +31,8 @@ export default function AdminSettingsPage() {
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [newSetting, setNewSetting] = useState(EMPTY_NEW);
   const [notifyEmail, setNotifyEmail] = useState('');
+  const [themeDefault, setThemeDefault] = useState<'light' | 'dark'>('light');
+  const [savingTheme, setSavingTheme] = useState(false);
   const [savingNotifyEmail, setSavingNotifyEmail] = useState(false);
 
   const load = () => {
@@ -46,6 +49,8 @@ export default function AdminSettingsPage() {
         })));
         const notifyRow = rows.find((s) => s.key === ADMIN_NOTIFICATION_EMAIL_KEY);
         setNotifyEmail(notifyRow ? String(notifyRow.value ?? '') : '');
+        const themeRow = rows.find((s) => s.key === STORE_THEME_KEY);
+        setThemeDefault(themeRow && String(themeRow.value) === 'dark' ? 'dark' : 'light');
       })
       .catch(() => setSettings([]))
       .finally(() => setIsLoading(false));
@@ -71,9 +76,28 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleSaveTheme = async (value: 'light' | 'dark') => {
+    setThemeDefault(value);
+    setSavingTheme(true);
+    try {
+      await adminSettingsApi.upsert({
+        key: STORE_THEME_KEY,
+        value,
+        group: 'appearance',
+        description: 'Default storefront theme (light or dark) shown to new visitors',
+      });
+      toast('Default theme saved', 'success');
+      load();
+    } catch {
+      toast('Failed to save default theme', 'error');
+    } finally {
+      setSavingTheme(false);
+    }
+  };
+
   const groups = useMemo(() => {
     const map = new Map<string, SettingRow[]>();
-    settings.filter((s) => s.key !== ADMIN_NOTIFICATION_EMAIL_KEY).forEach((s) => {
+    settings.filter((s) => s.key !== ADMIN_NOTIFICATION_EMAIL_KEY && s.key !== STORE_THEME_KEY).forEach((s) => {
       const g = s.group ?? 'general';
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(s);
@@ -167,6 +191,31 @@ export default function AdminSettingsPage() {
             className="flex-1 px-3 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
           />
           <Button variant="primary" size="sm" onClick={handleSaveNotifyEmail} isLoading={savingNotifyEmail}>Save</Button>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-card border border-border p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="font-heading font-bold text-sm">Storefront Theme</h3>
+        </div>
+        <p className="text-xs text-foreground-muted">
+          Choose the default appearance shown to first-time visitors. Returning visitors who manually switch themes keep their own preference.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleSaveTheme('light')}
+            disabled={savingTheme}
+            className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-colors ${themeDefault === 'light' ? 'border-accent text-accent bg-accent/5' : 'border-border text-foreground-muted hover:bg-background-tertiary'}`}
+          >
+            Light (default)
+          </button>
+          <button
+            onClick={() => handleSaveTheme('dark')}
+            disabled={savingTheme}
+            className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-colors ${themeDefault === 'dark' ? 'border-accent text-accent bg-accent/5' : 'border-border text-foreground-muted hover:bg-background-tertiary'}`}
+          >
+            Dark
+          </button>
         </div>
       </div>
 

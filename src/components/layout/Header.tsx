@@ -15,6 +15,7 @@ import { useCurrencyStore } from '@/store/currencyStore';
 import { cn } from '@/lib/utils/cn';
 import { MegaMenu } from './MegaMenu';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from './ThemeToggle';
 
 const NAV_ITEMS = [
   { label: 'Shop', href: '#', hasMega: true },
@@ -228,6 +229,8 @@ export function Header() {
                   </div>
                 )}
               </div>
+
+              <ThemeToggle />
 
               {/* Wishlist */}
               <Link

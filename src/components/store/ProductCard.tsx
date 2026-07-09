@@ -132,12 +132,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <div>
               {product.salePrice ? (
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-accent">AED {product.salePrice.toFixed(2)}</span>
-                  <span className="text-xs text-foreground-subtle line-through">AED {product.price.toFixed(2)}</span>
+                  <span className="font-bold text-accent">AED {Number(product.salePrice).toFixed(2)}</span>
+                  <span className="text-xs text-foreground-subtle line-through">AED {Number(product.price).toFixed(2)}</span>
                 </div>
               ) : (
                 <span className="font-bold text-foreground">
-                  AED {product.price.toFixed(2)}
+                  AED {Number(product.price).toFixed(2)}
                 </span>
               )}
             </div>

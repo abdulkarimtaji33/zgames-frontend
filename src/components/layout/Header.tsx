@@ -121,8 +121,6 @@ export function Header() {
                 item.hasMega ? (
                   <button
                     key={item.label}
-                    onMouseEnter={() => setMegaOpen(true)}
-                    onMouseLeave={() => setMegaOpen(false)}
                     onClick={() => setMegaOpen((o) => !o)}
                     className={cn(
                       'flex items-center gap-1 px-3 py-2 rounded text-sm font-medium transition-colors',
@@ -234,7 +232,7 @@ export function Header() {
 
               {/* Wishlist */}
               <Link
-                href="/en/wishlist"
+                href="/wishlist"
                 className="relative p-2 rounded text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors hidden sm:flex"
                 aria-label="Wishlist"
               >
@@ -334,10 +332,7 @@ export function Header() {
 
         {/* Mega Menu */}
         {megaOpen && (
-          <div
-            onMouseEnter={() => setMegaOpen(true)}
-            onMouseLeave={() => setMegaOpen(false)}
-          >
+          <div>
             <MegaMenu onClose={() => setMegaOpen(false)} />
           </div>
         )}

@@ -33,10 +33,12 @@ export const productsApi = {
 
 /* Categories */
 export const categoriesApi = {
-  findAll: () =>
-    apiClient.get<{ data: Category[] }>('/categories'),
+  findAll: (params?: Record<string, unknown>) =>
+    apiClient.get<{ data: PaginatedResponse<Category> }>('/categories', { params }),
   findOne: (id: string) =>
     apiClient.get<{ data: Category }>(`/categories/${id}`),
+  findBySlug: (slug: string) =>
+    apiClient.get<{ data: Category }>(`/categories/by-slug/${slug}`),
   tree: () =>
     apiClient.get<{ data: Category[] }>('/categories/tree'),
 };

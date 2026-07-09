@@ -24,6 +24,7 @@ interface CategoryForm {
   parentId: string;
   image: string;
   isActive: boolean;
+  isFeatured: boolean;
 }
 
 const emptyForm: CategoryForm = {
@@ -32,6 +33,7 @@ const emptyForm: CategoryForm = {
   parentId: '',
   image: '',
   isActive: true,
+  isFeatured: false,
 };
 
 function flattenForSelect(categories: CategoryNode[], depth = 0, excludeId?: string): { id: string; label: string }[] {
@@ -124,6 +126,9 @@ function CategoryTreeRow({
           <Badge variant={cat.isActive !== false ? 'success' : 'error'} size="xs">
             {cat.isActive !== false ? 'Active' : 'Inactive'}
           </Badge>
+          {(cat as CategoryNode & { isFeatured?: boolean }).isFeatured && (
+            <Badge variant="new" size="xs">Homepage</Badge>
+          )}
           <CrudActions onEdit={() => onEdit(cat)} onDelete={() => onDelete(cat)} />
         </div>
       </div>
@@ -198,6 +203,7 @@ export default function AdminCategoriesPage() {
       parentId: cat.parentId ?? (cat as CategoryNode & { parent?: { id: string } }).parent?.id ?? '',
       image: cat.image ?? '',
       isActive: cat.isActive !== false,
+      isFeatured: Boolean((cat as CategoryNode & { isFeatured?: boolean }).isFeatured),
     });
     setModalOpen(true);
   };
@@ -220,6 +226,7 @@ export default function AdminCategoriesPage() {
         parentId: form.parentId || undefined,
         image: form.image || undefined,
         isActive: form.isActive,
+        isFeatured: form.isFeatured,
       };
       if (editing) {
         await adminCategoriesApi.update(editing.id, payload);
@@ -379,6 +386,15 @@ export default function AdminCategoriesPage() {
               className="accent-accent h-4 w-4"
             />
             <span className="text-sm text-foreground">Active</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isFeatured}
+              onChange={(e) => setForm((f) => ({ ...f, isFeatured: e.target.checked }))}
+              className="accent-accent h-4 w-4"
+            />
+            <span className="text-sm text-foreground">Show on homepage (Shop by Category)</span>
           </label>
         </div>
       </AdminModal>

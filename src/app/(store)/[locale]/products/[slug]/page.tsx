@@ -201,12 +201,12 @@ export default function ProductDetailPage() {
           <div className="border-t border-b border-border py-4">
             <div className="flex items-end gap-3">
               <span className="font-heading text-4xl font-bold text-accent">
-                AED {(product.salePrice ?? product.price).toFixed(2)}
+                AED {Number(product.salePrice ?? product.price).toFixed(2)}
               </span>
               {product.salePrice && (
                 <div className="flex flex-col">
-                  <span className="text-lg text-foreground-subtle line-through">AED {product.price.toFixed(2)}</span>
-                  <span className="text-sm text-success font-medium">You save AED {(product.price - product.salePrice).toFixed(2)}</span>
+                  <span className="text-lg text-foreground-subtle line-through">AED {Number(product.price).toFixed(2)}</span>
+                  <span className="text-sm text-success font-medium">You save AED {(Number(product.price) - Number(product.salePrice)).toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -370,7 +370,7 @@ export default function ProductDetailPage() {
                 <div>
                   <div className="flex items-center gap-6 mb-8">
                     <div className="text-center">
-                      <p className="font-heading text-6xl font-bold text-accent">{product.avgRating.toFixed(1)}</p>
+                      <p className="font-heading text-6xl font-bold text-accent">{Number(product.avgRating).toFixed(1)}</p>
                       <StarRating rating={product.avgRating} size="lg" />
                       <p className="text-sm text-foreground-muted mt-1">{product.reviewCount} reviews</p>
                     </div>

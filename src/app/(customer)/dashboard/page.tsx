@@ -15,7 +15,7 @@ export default function DashboardPage() {
     { label: 'Total Orders', value: '0', icon: Package, color: 'text-blue-400', href: '/orders' },
     { label: 'Wishlist Items', value: wishlistCount.toString(), icon: Heart, color: 'text-pink-400', href: '/wishlist' },
     { label: 'Loyalty Points', value: (customer?.pointsBalance ?? 0).toString(), icon: Star, color: 'text-yellow-400', href: '/loyalty' },
-    { label: 'Store Credit', value: `AED ${(customer?.walletBalance ?? 0).toFixed(2)}`, icon: Wallet, color: 'text-green-400', href: '/store-credit' },
+    { label: 'Store Credit', value: `AED ${Number(customer?.walletBalance ?? 0).toFixed(2)}`, icon: Wallet, color: 'text-green-400', href: '/store-credit' },
   ];
 
   return (

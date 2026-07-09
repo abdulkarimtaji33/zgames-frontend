@@ -8,7 +8,7 @@ import { Pagination } from '@/components/shared/Pagination';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { FilterSidebar } from '@/components/store/FilterSidebar';
 import type { Product, PaginatedResponse } from '@/types';
-import { productsApi } from '@/lib/api';
+import { productsApi, categoriesApi } from '@/lib/api';
 import { cn } from '@/lib/utils/cn';
 
 const SORT_OPTIONS = [
@@ -24,35 +24,35 @@ const FILTERS = [
     key: 'platform',
     label: 'Platform',
     options: [
-      { label: 'PlayStation 5', value: 'PS5' },
-      { label: 'PlayStation 4', value: 'PS4' },
-      { label: 'Xbox Series X', value: 'XBOX_SERIES_X' },
-      { label: 'Xbox One', value: 'XBOX_ONE' },
-      { label: 'Nintendo Switch', value: 'SWITCH' },
-      { label: 'PC', value: 'PC' },
+      { label: 'PlayStation 5', value: 'ps5' },
+      { label: 'PlayStation 4', value: 'ps4' },
+      { label: 'Xbox Series X', value: 'xbox_series_x' },
+      { label: 'Xbox One', value: 'xbox_one' },
+      { label: 'Nintendo Switch', value: 'nintendo_switch' },
+      { label: 'PC', value: 'pc' },
     ],
   },
   {
     key: 'genre',
     label: 'Genre',
     options: [
-      { label: 'Action', value: 'ACTION' },
-      { label: 'RPG', value: 'RPG' },
-      { label: 'Sports', value: 'SPORTS' },
-      { label: 'Racing', value: 'RACING' },
-      { label: 'Fighting', value: 'FIGHTING' },
-      { label: 'Shooter', value: 'SHOOTER' },
-      { label: 'Adventure', value: 'ADVENTURE' },
-      { label: 'Simulation', value: 'SIMULATION' },
+      { label: 'Action', value: 'action' },
+      { label: 'RPG', value: 'rpg' },
+      { label: 'Sports', value: 'sports' },
+      { label: 'Racing', value: 'racing' },
+      { label: 'Fighting', value: 'fighting' },
+      { label: 'Shooter', value: 'shooter' },
+      { label: 'Adventure', value: 'adventure' },
+      { label: 'Simulation', value: 'simulation' },
     ],
   },
   {
     key: 'region',
     label: 'Region',
     options: [
-      { label: 'UAE', value: 'UAE' },
-      { label: 'KSA', value: 'KSA' },
-      { label: 'International', value: 'INTERNATIONAL' },
+      { label: 'UAE', value: 'uae' },
+      { label: 'KSA', value: 'ksa' },
+      { label: 'International', value: 'international' },
     ],
   },
   {
@@ -81,9 +81,26 @@ export default function CategoryPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortOpen, setSortOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [categoryLabel, setCategoryLabel] = useState<string | null>(null);
+  const [categoryResolved, setCategoryResolved] = useState(false);
 
   const slug = params.slug as string;
-  const categoryName = slug?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Products';
+  const fallbackName = slug?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Products';
+  const categoryName = categoryLabel ?? fallbackName;
+
+  useEffect(() => {
+    if (!slug) return;
+    setCategoryResolved(false);
+    categoriesApi.findBySlug(slug)
+      .then((res) => {
+        const cat = (res.data as { data?: { id: string; name: string } }).data;
+        setCategoryId(cat?.id ?? null);
+        setCategoryLabel(cat?.name ?? null);
+      })
+      .catch(() => { setCategoryId(null); setCategoryLabel(null); })
+      .finally(() => setCategoryResolved(true));
+  }, [slug]);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -94,6 +111,7 @@ export default function CategoryPage() {
         limit: 20,
         sortBy: sortField,
         sortOrder,
+        ...(categoryId && { categoryId }),
         ...(selectedFilters.platform?.length && { platform: selectedFilters.platform[0] }),
         ...(selectedFilters.genre?.length && { genre: selectedFilters.genre[0] }),
         ...(selectedFilters.region?.length && { region: selectedFilters.region[0] }),
@@ -112,7 +130,7 @@ export default function CategoryPage() {
     }
   }, [page, sortBy, selectedFilters]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => { if (categoryResolved) fetchProducts(); }, [fetchProducts, categoryResolved]);
 
   const handleFilterChange = (key: string, values: string[]) => {
     setSelectedFilters((prev) => ({ ...prev, [key]: values }));

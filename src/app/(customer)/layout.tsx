@@ -53,7 +53,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                 </div>
                 <div className="text-center p-2 rounded-lg bg-background-tertiary">
                   <p className="text-xs text-foreground-muted">Credit</p>
-                  <p className="font-bold text-foreground text-sm">AED {(customer.walletBalance ?? 0).toFixed(2)}</p>
+                  <p className="font-bold text-foreground text-sm">AED {Number(customer.walletBalance ?? 0).toFixed(2)}</p>
                 </div>
               </div>
             )}

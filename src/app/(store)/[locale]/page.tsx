@@ -51,21 +51,21 @@ function HeroSlider() {
       subtitle: "Need for Speed Unbound Collector's Edition and more",
       cta: 'Shop PS5',
       href: '/en/category/playstation-5',
-      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/Web_Banner___767_x_484px.png',
+      image: '/hero/ps5-deals.jpg',
     },
     {
       title: 'Flash Deals',
       subtitle: 'Up to 30% off Xbox, PlayStation & Switch essentials',
       cta: 'Shop Deals',
       href: '/en/deals',
-      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/uae_metal_gear_solid_delta_snake_eater_deluxe_edition_pegi_xbox.jpg',
+      image: '/hero/flash-deals.jpg',
     },
     {
       title: 'Pokémon Collection',
       subtitle: 'Figures, Funko Pops and collectibles in stock',
       cta: 'Shop Now',
       href: '/en/category/trading-cards',
-      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/8/8/889698505611_1.jpg',
+      image: '/hero/pokemon-collection.jpg',
     },
   ];
 
@@ -90,12 +90,12 @@ function HeroSlider() {
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
       <div className="absolute inset-0 flex items-center">
-        <div className="px-8 md:px-16 max-w-lg">
-          <p className="text-sm text-white/70 mb-2 uppercase tracking-widest">CGA Games Exclusive</p>
-          <h2 className="font-heading text-4xl md:text-6xl font-black text-white mb-3 leading-none drop-shadow-lg">{slide.title}</h2>
-          <p className="text-white/85 text-base md:text-lg mb-6 drop-shadow">{slide.subtitle}</p>
+        <div className="w-full px-5 sm:px-8 md:px-16 max-w-lg">
+          <p className="text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2 uppercase tracking-widest">CGA Games Exclusive</p>
+          <h2 className="font-heading text-2xl sm:text-4xl md:text-6xl font-black text-white mb-2 sm:mb-3 leading-tight drop-shadow-lg">{slide.title}</h2>
+          <p className="text-white/85 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 drop-shadow line-clamp-2">{slide.subtitle}</p>
           <Link href={slide.href}>
-            <Button variant="primary" size="lg">{slide.cta} <ArrowRight className="h-4 w-4" /></Button>
+            <Button variant="primary" size="md" className="sm:h-12 sm:px-6 sm:text-base">{slide.cta} <ArrowRight className="h-4 w-4" /></Button>
           </Link>
         </div>
       </div>

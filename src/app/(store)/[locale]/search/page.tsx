@@ -45,7 +45,7 @@ function SearchContent() {
             <Search className="h-7 w-7 text-foreground-subtle" />
           </div>
           <h3 className="font-heading text-lg font-bold text-foreground mb-1">Search our catalog</h3>
-          <p className="text-sm text-foreground-muted max-w-sm">
+          <p className="text-sm text-foreground-muted w-full max-w-sm mx-auto">
             Enter a game title, platform, or brand above to find what you&apos;re looking for.
           </p>
         </div>

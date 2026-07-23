@@ -28,7 +28,7 @@ export const productsApi = {
   findOne: (id: string) =>
     apiClient.get<{ data: Product }>(`/products/${id}`),
   findBySlug: (slug: string) =>
-    apiClient.get<{ data: Product }>(`/products/slug/${slug}`),
+    apiClient.get<{ data: Product }>(`/products/by-slug/${slug}`),
 };
 
 /* Categories */

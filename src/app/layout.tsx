@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Rajdhani } from 'next/font/google';
 import { Providers } from '@/components/Providers';
 import '@/styles/globals.css';
@@ -17,6 +17,11 @@ const rajdhani = Rajdhani({
 export const metadata: Metadata = {
   title: 'CGA Games - Gaming Ecommerce',
   description: 'Premium gaming ecommerce platform for the GCC region',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 async function getDefaultTheme(): Promise<'light' | 'dark'> {

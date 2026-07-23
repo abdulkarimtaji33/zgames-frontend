@@ -80,7 +80,7 @@ export default function CartPage() {
                 {item.platform && (
                   <p className="text-xs text-foreground-muted mt-0.5">{item.platform}</p>
                 )}
-                <div className="flex items-center justify-between mt-3 gap-4">
+                <div className="flex flex-wrap items-center justify-between mt-3 gap-2 sm:gap-4">
                   {/* Quantity */}
                   <div className="flex items-center border border-border rounded-full overflow-hidden">
                     <button

@@ -51,21 +51,21 @@ export default function OrdersPage() {
       ) : (
         <div className="space-y-3">
           {orders.map((order) => (
-            <div key={order.id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-sm hover:border-border-hover hover:shadow-md transition-all group">
-              <div className="flex items-center gap-4">
+            <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border shadow-sm hover:border-border-hover hover:shadow-md transition-all group">
+              <div className="flex items-center gap-4 min-w-0">
                 <div className="h-10 w-10 rounded-full bg-background-tertiary flex items-center justify-center flex-shrink-0">
                   <Package className="h-5 w-5 text-foreground-muted" />
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">{order.orderNumber}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground truncate">{order.orderNumber}</p>
                   <p className="text-xs text-foreground-muted">
                     {new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <Badge variant={STATUS_VARIANT[order.status] ?? 'default'}>{order.status}</Badge>
-                <p className="font-bold text-accent">{order.currency} {Number(order.total).toFixed(2)}</p>
+                <p className="font-bold text-accent whitespace-nowrap">{order.currency} {Number(order.total).toFixed(2)}</p>
                 <ChevronRight className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
               </div>
             </div>

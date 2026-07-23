@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-2xl bg-card border border-border p-8 shadow-2xl">
+      <div className="rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-2xl">
         {step === 'email' ? (
           <>
             <div className="text-center mb-8">

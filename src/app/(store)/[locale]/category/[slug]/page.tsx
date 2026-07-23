@@ -173,17 +173,17 @@ export default function CategoryPage() {
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {/* Toolbar */}
-          <div className="flex items-center justify-between gap-4 mb-5 pb-4 border-b border-border">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-5 pb-4 border-b border-border">
             {/* Mobile filter btn */}
             <button
               onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 lg:hidden px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors"
+              className="flex items-center gap-2 lg:hidden px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors flex-shrink-0"
             >
               <SlidersHorizontal className="h-4 w-4" />
               Filters
             </button>
 
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
               {/* View mode */}
               <div className="hidden sm:flex items-center gap-1 border border-border rounded p-0.5">
                 <button
@@ -204,15 +204,17 @@ export default function CategoryPage() {
               <div className="relative">
                 <button
                   onClick={() => setSortOpen((o) => !o)}
-                  className="flex items-center gap-2 px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded border border-border text-sm text-foreground-muted hover:border-border-hover transition-colors max-w-[10rem] sm:max-w-none"
                 >
-                  <span>Sort: {currentSort.label}</span>
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <span className="truncate">
+                    <span className="hidden sm:inline">Sort: </span>{currentSort.label}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
                 </button>
                 {sortOpen && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-card border border-border shadow-xl animate-slide-down z-40">
+                    <div className="absolute right-0 top-full mt-1 w-52 max-w-[calc(100vw-2rem)] rounded-lg bg-card border border-border shadow-xl animate-slide-down z-40">
                       {SORT_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}

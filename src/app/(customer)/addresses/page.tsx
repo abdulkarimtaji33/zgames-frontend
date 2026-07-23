@@ -125,7 +125,7 @@ export default function AddressesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center flex-wrap gap-3 justify-between">
         <h1 className="font-heading text-2xl font-bold">My Addresses</h1>
         <Button variant="secondary" size="sm" onClick={openAdd}>
           <Plus className="h-4 w-4" /> Add Address
@@ -157,7 +157,7 @@ export default function AddressesPage() {
               <p className="text-sm text-foreground-muted">{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}</p>
               <p className="text-sm text-foreground-muted">{addr.city}{addr.state ? `, ${addr.state}` : ''}, {addr.countryCode}</p>
               <p className="text-sm text-foreground-muted">{addr.phone}</p>
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center flex-wrap gap-2 pt-2">
                 <button onClick={() => openEdit(addr)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors">
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
@@ -165,7 +165,7 @@ export default function AddressesPage() {
                   <Trash2 className="h-3.5 w-3.5" /> Delete
                 </button>
                 {!addr.isDefault && (
-                  <button onClick={() => handleSetDefault(addr.id)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors ml-auto">
+                  <button onClick={() => handleSetDefault(addr.id)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors sm:ml-auto">
                     Set as default
                   </button>
                 )}
@@ -189,7 +189,7 @@ export default function AddressesPage() {
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input label="Label" placeholder="Home, Office…" {...register('label')} />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="First Name" error={errors.firstName?.message} {...register('firstName', { required: 'Required' })} />
                 <Input label="Last Name" error={errors.lastName?.message} {...register('lastName', { required: 'Required' })} />
               </div>
@@ -211,11 +211,11 @@ export default function AddressesPage() {
               <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
               <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor" {...register('addressLine2')} />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="City" error={errors.city?.message} {...register('city', { required: 'Required' })} />
                 <Input label="State / Emirate (optional)" {...register('state')} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Country</label>
                   <select {...register('countryCode')}

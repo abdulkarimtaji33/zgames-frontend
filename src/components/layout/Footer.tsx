@@ -88,8 +88,8 @@ export function Footer() {
       <div className="border-b border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="font-heading text-2xl font-bold text-foreground mb-1">
+            <div className="w-full text-center md:text-left">
+              <h3 className="font-heading text-xl sm:text-2xl font-bold text-foreground mb-1">
                 Join the <span className="text-accent">CGA Games</span> Community
               </h3>
               <p className="text-sm text-foreground-muted">
@@ -100,7 +100,7 @@ export function Footer() {
               <input
                 type="email"
                 placeholder="Enter your email address"
-                className="flex-1 rounded-full bg-surface-2 border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring transition-colors"
+                className="flex-1 min-w-0 rounded-full bg-surface-2 border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring transition-colors"
               />
               <button
                 type="submit"
@@ -147,13 +147,13 @@ export function Footer() {
             </div>
 
             {/* Social */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
                 <Link
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="p-2 rounded-lg bg-surface-1 border border-border text-foreground-muted hover:text-foreground hover:border-border-hover hover:bg-surface-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="p-2.5 sm:p-2 rounded-lg bg-surface-1 border border-border text-foreground-muted hover:text-foreground hover:border-border-hover hover:bg-surface-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Icon className="h-4 w-4" />
                 </Link>
@@ -185,7 +185,7 @@ export function Footer() {
 
         {/* App download */}
         <div className="mt-10 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4">
             <p className="text-sm text-foreground-muted">Download the app:</p>
             <a
               href="#"

@@ -16,8 +16,8 @@ export default function NotificationsPage() {
       <h1 className="font-heading text-2xl font-bold">Notification Preferences</h1>
       <div className="rounded-xl bg-card border border-border divide-y divide-border shadow-sm">
         {PREF_ITEMS.map((pref) => (
-          <div key={pref.label} className="flex items-center justify-between p-4">
-            <div>
+          <div key={pref.label} className="flex items-center flex-wrap justify-between gap-3 p-4">
+            <div className="min-w-0">
               <p className="font-medium text-foreground text-sm">{pref.label}</p>
               <p className="text-xs text-foreground-muted">{pref.desc}</p>
             </div>

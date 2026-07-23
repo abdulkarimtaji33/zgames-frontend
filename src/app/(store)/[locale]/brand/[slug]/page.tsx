@@ -37,9 +37,9 @@ export default function BrandPage() {
         className="mb-6"
       />
       {/* Brand hero */}
-      <div className="rounded-2xl bg-gradient-to-br from-surface-1 to-surface-2 border border-border p-8 mb-8 text-center animate-fade-in">
+      <div className="rounded-2xl bg-gradient-to-br from-surface-1 to-surface-2 border border-border p-6 sm:p-8 mb-8 text-center animate-fade-in">
         <div className="h-16 w-16 rounded-2xl bg-surface-0 border border-border flex items-center justify-center text-3xl mx-auto mb-3">🎮</div>
-        <h1 className="font-heading text-3xl font-bold">{brandName}</h1>
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold">{brandName}</h1>
         <p className="text-foreground-muted mt-1 text-sm">Browse all {brandName} products</p>
       </div>
       <div key={page} className="animate-fade-in">

@@ -144,23 +144,23 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-8">
       {/* Steps indicator */}
-      <div className="flex items-center justify-center mb-10">
+      <div className="flex items-center justify-center mb-10 overflow-x-auto px-1">
         {STEPS.map(({ key, label, icon: Icon }, i) => (
-          <div key={key} className="flex items-center">
+          <div key={key} className="flex items-center shrink-0">
             <div className={cn(
-              'flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors',
+              'flex items-center gap-2 px-2 sm:px-3 py-2 rounded-full text-sm font-medium transition-colors',
               i <= currentIndex ? 'bg-accent/10 text-accent' : 'text-foreground-muted',
             )}>
               <div className={cn(
-                'h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold',
+                'h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold',
                 i < currentIndex ? 'bg-accent text-white' : i === currentIndex ? 'bg-accent text-white' : 'bg-background-tertiary text-foreground-muted',
               )}>
                 {i < currentIndex ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
               </div>
-              <span className="hidden sm:inline">{label}</span>
+              <span className="hidden sm:inline whitespace-nowrap">{label}</span>
             </div>
             {i < STEPS.length - 1 && (
-              <ChevronRight className="h-4 w-4 text-foreground-subtle mx-1" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-foreground-subtle mx-0.5 sm:mx-1" />
             )}
           </div>
         ))}
@@ -258,24 +258,24 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-6">
                 {SHIPPING_OPTIONS.map((opt) => (
                   <label key={opt.id} className={cn(
-                    'flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors',
+                    'flex flex-wrap items-center justify-between gap-2 p-4 rounded-xl border cursor-pointer transition-colors',
                     shippingOption === opt.id ? 'border-accent bg-accent/5' : 'border-border hover:border-border-hover',
                   )}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <input type="radio" name="shipping" value={opt.id} checked={shippingOption === opt.id}
-                        onChange={() => setShippingOption(opt.id)} className="accent-accent" />
-                      <div>
+                        onChange={() => setShippingOption(opt.id)} className="accent-accent shrink-0" />
+                      <div className="min-w-0">
                         <p className="font-medium text-foreground">{opt.label}</p>
                         <p className="text-sm text-foreground-muted">{opt.description}</p>
                       </div>
                     </div>
-                    <span className={cn('font-bold', opt.price === 0 ? 'text-success' : 'text-foreground')}>
+                    <span className={cn('font-bold shrink-0', opt.price === 0 ? 'text-success' : 'text-foreground')}>
                       {opt.price === 0 ? 'Free' : format(opt.price)}
                     </span>
                   </label>
                 ))}
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep('address')}>Back</Button>
                 <Button variant="primary" size="lg" className="flex-1" onClick={() => setCurrentStep('payment')}>Continue to Payment</Button>
               </div>
@@ -314,7 +314,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep(isDigitalOnly ? 'contact' : 'shipping')}>Back</Button>
                 <Button variant="primary" size="lg" className="flex-1" onClick={() => setCurrentStep('review')}>Review Order</Button>
               </div>
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
                   />
                 </div>
               ) : (
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="secondary" size="lg" className="flex-1" onClick={() => setCurrentStep('payment')}>Back</Button>
                   <Button variant="primary" size="xl" className="flex-1" onClick={placeOrder} isLoading={isPlacing}>
                     <Lock className="h-4 w-4" /> Place Order

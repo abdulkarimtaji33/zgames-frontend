@@ -119,12 +119,12 @@ export function Header() {
           scrolled ? 'glass shadow-md border-border' : 'bg-surface-0 border-border/60',
         )}
       >
-        <div className="mx-auto max-w-[1440px] px-4 md:px-6">
-          <div className="flex h-16 items-center gap-4">
+        <div className="mx-auto max-w-[1440px] px-3 sm:px-4 md:px-6">
+          <div className="flex h-16 items-center gap-2 sm:gap-4">
             {/* Logo */}
-            <Link href="/en" className={cn('flex-shrink-0 flex items-center gap-2 group rounded-md', focusRing)}>
-              <div className="h-8 w-8 rounded-md bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">C</div>
-              <span className="font-heading text-2xl font-bold tracking-wide">
+            <Link href="/en" className={cn('flex-shrink-0 flex items-center gap-1.5 sm:gap-2 group rounded-md', focusRing)}>
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-md bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">C</div>
+              <span className="font-heading text-lg sm:text-2xl font-bold sm:tracking-wide whitespace-nowrap">
                 <span className="text-accent">CGA</span>
                 <span className="text-foreground">GAMES</span>
               </span>
@@ -183,7 +183,7 @@ export function Header() {
             </div>
 
             {/* Right actions */}
-            <div className="flex items-center gap-1 ml-auto">
+            <div className="flex items-center gap-0.5 sm:gap-1 ml-auto">
               {/* Search (mobile) */}
               <button
                 onClick={() => setSearchOpen((o) => !o)}
@@ -344,7 +344,7 @@ export function Header() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileOpen((o) => !o)}
-                className={cn('lg:hidden p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors ml-1 active:scale-95', focusRing)}
+                className={cn('lg:hidden p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors ml-0 sm:ml-1 active:scale-95', focusRing)}
                 aria-label="Menu"
                 aria-expanded={mobileOpen}
               >

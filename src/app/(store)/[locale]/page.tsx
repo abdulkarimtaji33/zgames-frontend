@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Zap, Package, Star, ChevronRight, Clock } from 'lucide-react';
+import { ArrowRight, Zap, Package, Star, ChevronRight, ChevronLeft, Clock } from 'lucide-react';
 import Image from 'next/image';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ProductGrid } from '@/components/store/ProductGrid';
@@ -69,16 +69,51 @@ function HeroSlider() {
     },
   ];
 
+  const SLIDE_MS = 5000;
   const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [progressKey, setProgressKey] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+
+  const goTo = (i: number) => {
+    setCurrent((i + slides.length) % slides.length);
+    setProgressKey((k) => k + 1);
+  };
+  const next = () => goTo(current + 1);
+  const prev = () => goTo(current - 1);
+
   useEffect(() => {
-    const timer = setInterval(() => setCurrent((i) => (i + 1) % slides.length), 4000);
+    if (paused) return;
+    const timer = setInterval(() => setCurrent((i) => (i + 1) % slides.length), SLIDE_MS);
     return () => clearInterval(timer);
-  }, [slides.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slides.length, paused, progressKey]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 40) (delta < 0 ? next : prev)();
+    touchStartX.current = null;
+  };
 
   const slide = slides[current];
 
   return (
-    <div className="relative rounded-2xl overflow-hidden h-64 md:h-96 lg:h-[480px] mb-6 bg-background-tertiary">
+    <div
+      className="group relative rounded-2xl overflow-hidden h-64 md:h-96 lg:h-[480px] mb-6 bg-background-tertiary select-none"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      role="region"
+      aria-label="Featured promotions"
+      aria-roledescription="carousel"
+    >
       {/* Stacked slides cross-fade via opacity — no remount, so the transition actually plays */}
       {slides.map((s, i) => (
         <div
@@ -87,36 +122,81 @@ function HeroSlider() {
           style={{ opacity: i === current ? 1 : 0 }}
           aria-hidden={i !== current}
         >
-          <Image
-            src={s.image}
-            alt={s.title}
-            fill
-            priority={i === 0}
-            className="object-cover"
-            sizes="100vw"
-          />
+          <div
+            className="absolute inset-0 transition-transform ease-linear"
+            style={{
+              transform: i === current ? 'scale(1.08)' : 'scale(1)',
+              transitionDuration: i === current ? `${SLIDE_MS + 700}ms` : '0ms',
+            }}
+          >
+            <Image
+              src={s.image}
+              alt={s.title}
+              fill
+              priority={i === 0}
+              className="object-cover"
+              sizes="100vw"
+            />
+          </div>
         </div>
       ))}
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
       <div className="absolute inset-0 flex items-center">
-        <div key={current} className="w-full px-5 sm:px-8 md:px-16 max-w-lg animate-slide-up">
-          <p className="text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2 uppercase tracking-widest">CGA Games Exclusive</p>
+        <div key={current} className="w-full px-5 sm:px-8 md:px-16 max-w-lg animate-slide-up" aria-live="polite">
+          <span className="inline-flex items-center gap-1.5 mb-2.5 sm:mb-3 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm text-[11px] sm:text-xs text-white/90 font-medium tracking-wide">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-glow" />
+            CGA Games Exclusive
+          </span>
           <h2 className="font-heading text-2xl sm:text-4xl md:text-6xl font-black text-white mb-2 sm:mb-3 leading-tight drop-shadow-lg">{slide.title}</h2>
           <p className="text-white/85 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 drop-shadow line-clamp-2">{slide.subtitle}</p>
           <Link href={slide.href}>
-            <Button variant="primary" size="md" className="sm:h-12 sm:px-6 sm:text-base">{slide.cta} <ArrowRight className="h-4 w-4" /></Button>
+            <Button variant="primary" size="md" className="sm:h-12 sm:px-6 sm:text-base group/btn">
+              {slide.cta} <ArrowRight className="h-4 w-4 transition-transform duration-[var(--duration-fast)] group-hover/btn:translate-x-0.5" />
+            </Button>
           </Link>
         </div>
       </div>
-      {/* Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+
+      {/* Prev / Next arrows — desktop hover-reveal, always tappable on touch */}
+      <button
+        onClick={prev}
+        aria-label="Previous slide"
+        className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm flex items-center justify-center transition-opacity duration-[var(--duration-fast)] opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
+      >
+        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+      </button>
+      <button
+        onClick={next}
+        aria-label="Next slide"
+        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm flex items-center justify-center transition-opacity duration-[var(--duration-fast)] opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
+      >
+        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+      </button>
+
+      {/* Progress-bar indicators — fill in real time with the autoplay interval */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
         {slides.map((_, i) => (
           <button
             key={i}
-            onClick={() => setCurrent(i)}
+            onClick={() => goTo(i)}
             aria-label={`Go to slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all duration-[var(--duration-base)] ${i === current ? 'w-6 bg-accent' : 'w-1.5 bg-white/50 hover:bg-white/80'}`}
-          />
+            aria-current={i === current}
+            className="relative h-1 w-8 rounded-full bg-white/30 overflow-hidden"
+          >
+            {i === current && (
+              <span
+                key={progressKey}
+                className="absolute inset-y-0 left-0 bg-accent rounded-full"
+                style={{
+                  animation: paused ? 'none' : `hero-progress ${SLIDE_MS}ms linear forwards`,
+                  width: paused ? '100%' : undefined,
+                }}
+              />
+            )}
+            {i < current && <span className="absolute inset-0 bg-accent rounded-full" />}
+          </button>
         ))}
       </div>
     </div>
@@ -203,15 +283,15 @@ function Newsletter() {
         <h2 className="font-heading text-3xl md:text-4xl font-bold mb-3">
           Join the <span className="text-accent">CGA Games</span> Community
         </h2>
-        <p className="text-foreground-muted mb-6 max-w-md mx-auto">
+        <p className="text-foreground-muted mb-6 w-full max-w-md mx-auto">
           Get exclusive deals, early access to new arrivals, and gaming news delivered to your inbox.
         </p>
         {subscribed ? (
-          <p className="max-w-sm mx-auto rounded-full bg-success/20 border border-success/30 text-success px-4 py-2.5 text-sm font-medium">
+          <p className="w-full max-w-sm mx-auto rounded-full bg-success/20 border border-success/30 text-success px-4 py-2.5 text-sm font-medium">
             Thanks — you're subscribed!
           </p>
         ) : (
-          <form className="flex gap-2 max-w-sm mx-auto" onSubmit={handleSubmit}>
+          <form className="flex flex-col sm:flex-row gap-2 w-full max-w-sm mx-auto" onSubmit={handleSubmit}>
             <input
               type="email"
               required
@@ -219,9 +299,9 @@ function Newsletter() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               aria-label="Email address"
-              className="flex-1 rounded-full bg-background-tertiary border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-colors"
+              className="flex-1 min-w-0 rounded-full bg-background-tertiary border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-colors"
             />
-            <Button type="submit" variant="primary" size="md" className="rounded-full">Subscribe</Button>
+            <Button type="submit" variant="primary" size="md" className="rounded-full flex-shrink-0">Subscribe</Button>
           </form>
         )}
       </div>
@@ -262,14 +342,14 @@ export default function HomePage() {
 
       {/* Flash Deals */}
       <section className="mb-14 reveal">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
           <div className="flex items-center gap-3">
-            <Zap className="h-6 w-6 text-accent" />
+            <Zap className="h-6 w-6 text-accent flex-shrink-0" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold">Flash Deals</h2>
           </div>
-          <div className="flex items-center justify-between sm:gap-6">
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
             <CountdownTimer label="Ends in:" />
-            <Link href="/en/deals" className="text-sm text-accent hover:underline font-medium flex items-center gap-1 ml-4">
+            <Link href="/en/deals" className="text-sm text-accent hover:underline font-medium flex items-center gap-1 flex-shrink-0">
               View All <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>

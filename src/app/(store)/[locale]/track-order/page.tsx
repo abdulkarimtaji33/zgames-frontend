@@ -67,7 +67,7 @@ export default function TrackOrderPage() {
 
         {order && (
           <div className="rounded-2xl bg-card border border-border p-6">
-            <div className="flex justify-between mb-6">
+            <div className="flex flex-wrap justify-between gap-x-4 gap-y-2 mb-6">
               <div>
                 <p className="text-xs text-foreground-muted">Order Number</p>
                 <p className="font-bold text-lg">{order.orderNumber}</p>

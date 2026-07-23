@@ -22,7 +22,7 @@ export default function WishlistPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center flex-wrap gap-3 justify-between">
         <h1 className="font-heading text-2xl font-bold">My Wishlist ({productIds.length})</h1>
         {productIds.length > 0 && (
           <button

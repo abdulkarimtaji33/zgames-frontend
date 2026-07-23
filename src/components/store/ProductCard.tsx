@@ -86,7 +86,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <button
               onClick={handleWishlist}
               className={cn(
-                'h-8 w-8 rounded-full flex items-center justify-center shadow-lg transition-colors',
+                'h-9 w-9 rounded-full flex items-center justify-center shadow-lg transition-colors',
                 isWishlisted
                   ? 'bg-accent text-white'
                   : 'bg-card/90 text-foreground-muted hover:bg-accent hover:text-white',
@@ -98,7 +98,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <Link
               href={`/en/products/${product.slug}`}
               onClick={(e) => e.stopPropagation()}
-              className="h-8 w-8 rounded-full bg-card/90 flex items-center justify-center shadow-lg text-foreground-muted hover:bg-background-tertiary transition-colors"
+              className="h-9 w-9 rounded-full bg-card/90 flex items-center justify-center shadow-lg text-foreground-muted hover:bg-background-tertiary transition-colors"
               aria-label="Quick view"
             >
               <Eye className="h-3.5 w-3.5" />
@@ -146,7 +146,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {!product.isComingSoon && (
               <button
                 onClick={handleAddToCart}
-                className="h-8 w-8 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
+                className="h-9 w-9 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
                 aria-label="Add to cart"
               >
                 <ShoppingCart className="h-3.5 w-3.5" />

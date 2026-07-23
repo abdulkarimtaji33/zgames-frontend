@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
         <p className="mx-auto max-w-md text-sm text-foreground-muted mb-6">
           It may have been removed, renamed, or the link is out of date. Try browsing our catalog instead.
         </p>
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/en"
             className="inline-flex h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
@@ -217,13 +217,13 @@ export default function ProductDetailPage() {
 
           {/* Price */}
           <div className="border-t border-b border-border py-4">
-            <div className="flex items-end gap-3">
-              <span className="font-heading text-4xl font-bold text-accent">
+            <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+              <span className="font-heading text-3xl sm:text-4xl font-bold text-accent">
                 AED {Number(product.salePrice ?? product.price).toFixed(2)}
               </span>
               {product.salePrice && (
                 <div className="flex flex-col">
-                  <span className="text-lg text-foreground-subtle line-through">AED {Number(product.price).toFixed(2)}</span>
+                  <span className="text-base sm:text-lg text-foreground-subtle line-through">AED {Number(product.price).toFixed(2)}</span>
                   <span className="text-sm text-success font-medium">You save AED {(Number(product.price) - Number(product.salePrice)).toFixed(2)}</span>
                 </div>
               )}
@@ -249,7 +249,7 @@ export default function ProductDetailPage() {
           {/* Quantity + Cart */}
           {!product.isComingSoon && (
             <div className="space-y-3">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <div className="flex items-center border border-border rounded-full overflow-hidden">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -270,11 +270,11 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   variant="primary"
                   size="lg"
-                  className="flex-1"
+                  className="flex-1 min-w-[9.5rem]"
                   onClick={handleAddToCart}
                 >
                   {addedToCart ? (
@@ -286,7 +286,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => isWishlisted ? removeProduct(product.id) : addProduct(product.id)}
                   className={cn(
-                    'h-12 w-12 rounded-xl border flex items-center justify-center transition-colors',
+                    'h-11 w-11 sm:h-12 sm:w-12 flex-shrink-0 rounded-xl border flex items-center justify-center transition-colors',
                     isWishlisted ? 'bg-accent border-accent text-white' : 'border-border text-foreground-muted hover:border-accent hover:text-accent',
                   )}
                   aria-label="Wishlist"
@@ -294,7 +294,7 @@ export default function ProductDetailPage() {
                   <Heart className={cn('h-5 w-5', isWishlisted && 'fill-current')} />
                 </button>
                 <button
-                  className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-foreground-muted hover:border-border-hover transition-colors"
+                  className="h-11 w-11 sm:h-12 sm:w-12 flex-shrink-0 rounded-xl border border-border flex items-center justify-center text-foreground-muted hover:border-border-hover transition-colors"
                   aria-label="Share"
                 >
                   <Share2 className="h-5 w-5" />

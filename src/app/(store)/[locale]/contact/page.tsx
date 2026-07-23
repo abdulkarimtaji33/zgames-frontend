@@ -62,7 +62,7 @@ export default function ContactPage() {
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <h2 className="font-heading text-xl font-bold mb-4">Send a Message</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Your Name" placeholder="John Doe" error={errors.name?.message}
                   {...register('name', { required: 'Required' })} />
                 <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message}

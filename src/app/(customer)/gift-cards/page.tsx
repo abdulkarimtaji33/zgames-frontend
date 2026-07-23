@@ -31,7 +31,7 @@ export default function GiftCardsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center flex-wrap gap-3 justify-between">
         <h1 className="font-heading text-2xl font-bold">My Gift Card Codes</h1>
         <Link href="/en/category/gift-cards" className="text-sm text-accent hover:underline">
           Buy more gift cards →
@@ -59,11 +59,11 @@ export default function GiftCardsPage() {
             const isPending = item.fulfillmentStatus === 'pending' || (item.fulfillmentStatus === 'partial' && codes.length < item.quantity);
             return (
               <div key={item.id} className="rounded-2xl bg-gradient-to-br from-accent/20 to-background-secondary border border-accent/20 p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wide">
-                    <Gift className="h-4 w-4" /> {productName}
+                <div className="flex items-center flex-wrap gap-2 justify-between mb-3">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wide min-w-0">
+                    <Gift className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{productName}</span>
                   </span>
-                  <span className="text-xs text-foreground-subtle">Order #{item.orderNumber}</span>
+                  <span className="text-xs text-foreground-subtle flex-shrink-0">Order #{item.orderNumber}</span>
                 </div>
 
                 {codes.length > 0 ? (

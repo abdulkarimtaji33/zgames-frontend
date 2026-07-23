@@ -79,18 +79,27 @@ function HeroSlider() {
 
   return (
     <div className="relative rounded-2xl overflow-hidden h-64 md:h-96 lg:h-[480px] mb-6 bg-background-tertiary">
-      <Image
-        key={slide.image}
-        src={slide.image}
-        alt={slide.title}
-        fill
-        priority
-        className="object-cover transition-opacity duration-700"
-        sizes="100vw"
-      />
+      {/* Stacked slides cross-fade via opacity — no remount, so the transition actually plays */}
+      {slides.map((s, i) => (
+        <div
+          key={s.image}
+          className="absolute inset-0 transition-opacity duration-700 ease-[var(--ease-standard)]"
+          style={{ opacity: i === current ? 1 : 0 }}
+          aria-hidden={i !== current}
+        >
+          <Image
+            src={s.image}
+            alt={s.title}
+            fill
+            priority={i === 0}
+            className="object-cover"
+            sizes="100vw"
+          />
+        </div>
+      ))}
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full px-5 sm:px-8 md:px-16 max-w-lg">
+        <div key={current} className="w-full px-5 sm:px-8 md:px-16 max-w-lg animate-slide-up">
           <p className="text-xs sm:text-sm text-white/70 mb-1.5 sm:mb-2 uppercase tracking-widest">CGA Games Exclusive</p>
           <h2 className="font-heading text-2xl sm:text-4xl md:text-6xl font-black text-white mb-2 sm:mb-3 leading-tight drop-shadow-lg">{slide.title}</h2>
           <p className="text-white/85 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 drop-shadow line-clamp-2">{slide.subtitle}</p>
@@ -102,8 +111,12 @@ function HeroSlider() {
       {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {slides.map((_, i) => (
-          <button key={i} onClick={() => setCurrent(i)}
-            className={`h-1.5 rounded-full transition-all ${i === current ? 'w-6 bg-accent' : 'w-1.5 bg-white/50'}`} />
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            className={`h-1.5 rounded-full transition-all duration-[var(--duration-base)] ${i === current ? 'w-6 bg-accent' : 'w-1.5 bg-white/50 hover:bg-white/80'}`}
+          />
         ))}
       </div>
     </div>

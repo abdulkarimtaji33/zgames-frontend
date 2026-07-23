@@ -49,7 +49,7 @@ export default function FaqPage() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="font-heading text-4xl font-bold mb-3">Frequently Asked Questions</h1>
-          <p className="text-foreground-muted">Everything you need to know about ZGames.</p>
+          <p className="text-foreground-muted">Everything you need to know about CGA Games.</p>
         </div>
 
         <div className="space-y-8">

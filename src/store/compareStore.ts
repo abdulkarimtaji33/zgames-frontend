@@ -28,6 +28,6 @@ export const useCompareStore = create<CompareState>()(
         })),
       clearCompare: () => set({ productIds: [] }),
     }),
-    { name: 'zgames-compare' },
+    { name: 'cgagames-compare' },
   ),
 );

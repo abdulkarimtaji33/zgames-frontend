@@ -21,7 +21,7 @@ export default function BlogDetailPage({ params }: { params: { slug: string } })
           <span>·</span>
           <span>5 min read</span>
           <span>·</span>
-          <span>By ZGames Team</span>
+          <span>By CGA Games Team</span>
         </div>
 
         {/* Image */}

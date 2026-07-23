@@ -1,8 +1,8 @@
 export default function StoreLocatorPage() {
   const stores = [
-    { name: 'ZGames Dubai Mall', address: 'Dubai Mall, Level 2, Near Food Court', city: 'Dubai', phone: '+971 4 XXX XXXX', hours: 'Daily: 10am – 11pm' },
-    { name: 'ZGames Mall of Emirates', address: 'Mall of the Emirates, Level 1', city: 'Dubai', phone: '+971 4 XXX YYYY', hours: 'Daily: 10am – 11pm' },
-    { name: 'ZGames Abu Dhabi', address: 'Yas Mall, Ground Floor', city: 'Abu Dhabi', phone: '+971 2 XXX XXXX', hours: 'Daily: 10am – 10pm' },
+    { name: 'CGA Games Dubai Mall', address: 'Dubai Mall, Level 2, Near Food Court', city: 'Dubai', phone: '+971 4 XXX XXXX', hours: 'Daily: 10am – 11pm' },
+    { name: 'CGA Games Mall of Emirates', address: 'Mall of the Emirates, Level 1', city: 'Dubai', phone: '+971 4 XXX YYYY', hours: 'Daily: 10am – 11pm' },
+    { name: 'CGA Games Abu Dhabi', address: 'Yas Mall, Ground Floor', city: 'Abu Dhabi', phone: '+971 2 XXX XXXX', hours: 'Daily: 10am – 10pm' },
   ];
 
   return (

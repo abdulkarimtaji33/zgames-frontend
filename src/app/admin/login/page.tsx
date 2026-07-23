@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
-    defaultValues: { email: 'admin@zgames.ae', password: '' },
+    defaultValues: { email: 'admin@cgagames.com', password: '' },
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             <Shield className="h-7 w-7 text-white" />
           </div>
           <h1 className="font-heading text-3xl font-bold mb-2">Admin Sign In</h1>
-          <p className="text-sm text-foreground-muted">ZGames administration panel</p>
+          <p className="text-sm text-foreground-muted">CGA Games administration panel</p>
         </div>
 
         <div className="rounded-2xl bg-card border border-border p-8 shadow-2xl">
@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
             <Input
               label="Email Address"
               type="email"
-              placeholder="admin@zgames.ae"
+              placeholder="admin@cgagames.com"
               leftIcon={<Mail className="h-4 w-4" />}
               error={errors.email?.message}
               {...register('email', {

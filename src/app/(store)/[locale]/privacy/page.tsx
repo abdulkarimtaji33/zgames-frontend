@@ -11,7 +11,7 @@ export default function PrivacyPage() {
             { title: '3. Data Sharing', body: 'We do not sell your personal data. We share data with trusted third parties who assist us in operating our website and conducting our business, including payment processors and delivery partners.' },
             { title: '4. Cookies', body: 'Our website uses cookies to enhance your experience, analyze traffic, and personalize content. You can control cookies through your browser settings.' },
             { title: '5. Data Security', body: 'We implement security measures including SSL encryption, secure servers, and regular audits to protect your personal information from unauthorized access.' },
-            { title: '6. Your Rights', body: 'You have the right to access, correct, or delete your personal data. Contact us at privacy@zgames.ae to exercise these rights.' },
+            { title: '6. Your Rights', body: 'You have the right to access, correct, or delete your personal data. Contact us at privacy@cgagames.com to exercise these rights.' },
           ].map(({ title, body }) => (
             <div key={title}>
               <h2 className="font-heading text-xl font-bold text-foreground mb-2">{title}</h2>

@@ -43,6 +43,6 @@ export const useCurrencyStore = create<CurrencyState>()(
         return `${selected.symbol} ${converted.toFixed(2)}`;
       },
     }),
-    { name: 'zgames-currency' },
+    { name: 'cgagames-currency' },
   ),
 );

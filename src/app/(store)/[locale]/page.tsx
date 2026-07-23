@@ -52,21 +52,21 @@ function HeroSlider() {
       subtitle: "Need for Speed Unbound Collector's Edition and more",
       cta: 'Shop PS5',
       href: '/en/category/playstation-5',
-      image: 'https://zgames.ae/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/Web_Banner___767_x_484px.png',
+      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/Web_Banner___767_x_484px.png',
     },
     {
       title: 'Flash Deals',
       subtitle: 'Up to 30% off Xbox, PlayStation & Switch essentials',
       cta: 'Shop Deals',
       href: '/en/deals',
-      image: 'https://zgames.ae/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/uae_metal_gear_solid_delta_snake_eater_deluxe_edition_pegi_xbox.jpg',
+      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/uploads/uploads/uae_metal_gear_solid_delta_snake_eater_deluxe_edition_pegi_xbox.jpg',
     },
     {
       title: 'Pokémon Collection',
       subtitle: 'Figures, Funko Pops and collectibles in stock',
       cta: 'Shop Now',
       href: '/en/category/trading-cards',
-      image: 'https://zgames.ae/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/8/8/889698505611_1.jpg',
+      image: 'https://cgagames.com/media/catalog/product/cache/ed0e0b9233706b5b42d1db286ecb0c36/8/8/889698505611_1.jpg',
     },
   ];
 
@@ -92,7 +92,7 @@ function HeroSlider() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
       <div className="absolute inset-0 flex items-center">
         <div className="px-8 md:px-16 max-w-lg">
-          <p className="text-sm text-white/70 mb-2 uppercase tracking-widest">ZGames Exclusive</p>
+          <p className="text-sm text-white/70 mb-2 uppercase tracking-widest">CGA Games Exclusive</p>
           <h2 className="font-heading text-4xl md:text-6xl font-black text-white mb-3 leading-none drop-shadow-lg">{slide.title}</h2>
           <p className="text-white/85 text-base md:text-lg mb-6 drop-shadow">{slide.subtitle}</p>
           <Link href={slide.href}>
@@ -316,7 +316,7 @@ export default function HomePage() {
       <section className="mb-6">
         <div className="rounded-2xl bg-gradient-to-br from-accent/20 via-background-secondary to-background-tertiary border border-accent/20 p-8 md:p-12 text-center">
           <h2 className="font-heading text-3xl md:text-4xl font-bold mb-3">
-            Join the <span className="text-accent">ZGames</span> Community
+            Join the <span className="text-accent">CGA Games</span> Community
           </h2>
           <p className="text-foreground-muted mb-6 max-w-md mx-auto">
             Get exclusive deals, early access to new arrivals, and gaming news delivered to your inbox.

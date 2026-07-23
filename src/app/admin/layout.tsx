@@ -209,8 +209,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
         {!sidebarCollapsed && (
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-xs">Z</div>
-            <span className="font-heading font-bold text-sm"><span className="text-accent">Z</span>GAMES</span>
+            <div className="h-7 w-7 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-xs">C</div>
+            <span className="font-heading font-bold text-sm"><span className="text-accent">CGA</span> GAMES</span>
             <span className="text-xs text-foreground-subtle border border-border px-1.5 py-0.5 rounded">Admin</span>
           </Link>
         )}

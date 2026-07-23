@@ -1,6 +1,6 @@
 {
   "site": {
-    "name": "ZGames",
+    "name": "CGA Games",
     "tagline": "Your Gaming Destination in the GCC",
     "description": "Shop the latest consoles, games, trading cards, accessories, and collectibles."
   },
@@ -24,16 +24,16 @@
     "trackOrder": "Track Order"
   },
   "footer": {
-    "newsletter": "Join the ZGames Community",
+    "newsletter": "Join the CGA Games Community",
     "newsletterSubtitle": "Get the latest gaming news, exclusive deals & early access.",
     "subscribe": "Subscribe",
     "emailPlaceholder": "Enter your email address"
   },
   "auth": {
     "loginTitle": "Welcome Back",
-    "loginSubtitle": "Sign in to your ZGames account",
+    "loginSubtitle": "Sign in to your CGA Games account",
     "registerTitle": "Create Account",
-    "registerSubtitle": "Join ZGames and start gaming",
+    "registerSubtitle": "Join CGA Games and start gaming",
     "forgotTitle": "Forgot Password?",
     "forgotSubtitle": "Enter your email to receive a reset link.",
     "email": "Email Address",

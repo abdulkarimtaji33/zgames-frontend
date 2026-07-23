@@ -6,10 +6,10 @@ export default function AboutPage() {
       <div className="max-w-4xl mx-auto">
         {/* Hero */}
         <div className="text-center mb-16">
-          <p className="text-accent font-medium text-sm uppercase tracking-widest mb-3">About ZGames</p>
+          <p className="text-accent font-medium text-sm uppercase tracking-widest mb-3">About CGA Games</p>
           <h1 className="font-heading text-5xl font-bold mb-5">The GCC's Premier Gaming Destination</h1>
           <p className="text-foreground-muted text-lg leading-relaxed max-w-2xl mx-auto">
-            Founded in Dubai, ZGames was built by gamers, for gamers. We bring you authentic gaming products at the best prices, with fast delivery across the Gulf.
+            Founded in Dubai, CGA Games was built by gamers, for gamers. We bring you authentic gaming products at the best prices, with fast delivery across the Gulf.
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export default function AboutPage() {
 
         {/* Values */}
         <div className="mb-16">
-          <h2 className="font-heading text-3xl font-bold text-center mb-10">Why ZGames?</h2>
+          <h2 className="font-heading text-3xl font-bold text-center mb-10">Why CGA Games?</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {[
               { icon: Shield, title: '100% Authentic', desc: 'Every product sourced directly from official distributors. No counterfeits, ever.', color: 'text-blue-400' },

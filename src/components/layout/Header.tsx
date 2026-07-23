@@ -108,9 +108,9 @@ export function Header() {
           <div className="flex h-16 items-center gap-4">
             {/* Logo */}
             <Link href="/en" className="flex-shrink-0 flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">Z</div>
+              <div className="h-8 w-8 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">C</div>
               <span className="font-heading text-2xl font-bold tracking-wide">
-                <span className="text-accent">Z</span>
+                <span className="text-accent">CGA</span>
                 <span className="text-foreground">GAMES</span>
               </span>
             </Link>
@@ -349,7 +349,7 @@ export function Header() {
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-border">
               <span className="font-heading text-xl font-bold">
-                <span className="text-accent">Z</span>GAMES
+                <span className="text-accent">CGA</span>GAMES
               </span>
               <button onClick={() => setMobileOpen(false)} className="p-2 rounded text-foreground-muted hover:text-foreground">
                 <X className="h-5 w-5" />

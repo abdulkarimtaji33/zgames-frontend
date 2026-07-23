@@ -69,7 +69,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <h3 className="font-heading text-2xl font-bold text-foreground mb-1">
-                Join the <span className="text-accent">ZGames</span> Community
+                Join the <span className="text-accent">CGA Games</span> Community
               </h3>
               <p className="text-sm text-foreground-muted">
                 Get the latest gaming news, exclusive deals & early access to new arrivals.
@@ -98,9 +98,9 @@ export function Footer() {
           {/* Brand column */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link href="/en" className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-sm">Z</div>
+              <div className="h-8 w-8 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-sm">C</div>
               <span className="font-heading text-2xl font-bold">
-                <span className="text-accent">Z</span>
+                <span className="text-accent">CGA</span>
                 <span className="text-foreground">GAMES</span>
               </span>
             </Link>
@@ -116,7 +116,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2 text-sm text-foreground-muted">
                 <Mail className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-                <span>support@zgames.ae</span>
+                <span>support@cgagames.com</span>
               </div>
               <div className="flex items-start gap-2 text-sm text-foreground-muted">
                 <MapPin className="h-3.5 w-3.5 text-accent flex-shrink-0 mt-0.5" />
@@ -199,7 +199,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-6 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-foreground-subtle">
-          <p>© {new Date().getFullYear()} ZGames. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CGA Games. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/en/terms" className="hover:text-foreground-muted transition-colors">Terms</Link>
             <Link href="/en/privacy" className="hover:text-foreground-muted transition-colors">Privacy</Link>

@@ -16,7 +16,7 @@ export default function BlogPage() {
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-12">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="font-heading text-4xl font-bold mb-3">ZGames Blog</h1>
+        <h1 className="font-heading text-4xl font-bold mb-3">CGA Games Blog</h1>
         <p className="text-foreground-muted">Gaming news, reviews, guides, and more.</p>
       </div>
 

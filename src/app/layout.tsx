@@ -15,7 +15,7 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: 'ZGames - Gaming Ecommerce',
+  title: 'CGA Games - Gaming Ecommerce',
   description: 'Premium gaming ecommerce platform for the GCC region',
 };
 

@@ -67,7 +67,7 @@ export default function RegisterPage() {
       <div className="rounded-2xl bg-card border border-border p-8 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Create Account</h1>
-          <p className="text-sm text-foreground-muted">Join ZGames and start gaming</p>
+          <p className="text-sm text-foreground-muted">Join CGA Games and start gaming</p>
         </div>
 
         {serverError && (

@@ -37,7 +37,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
     }),
     {
-      name: 'zgames-admin-auth',
+      name: 'cgagames-admin-auth',
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

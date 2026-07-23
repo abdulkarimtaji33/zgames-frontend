@@ -26,6 +26,6 @@ export const useWishlistStore = create<WishlistState>()(
         })),
       clearWishlist: () => set({ productIds: [] }),
     }),
-    { name: 'zgames-wishlist' },
+    { name: 'cgagames-wishlist' },
   ),
 );

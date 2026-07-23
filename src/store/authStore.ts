@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>()(
         set({ customer: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
     }),
     {
-      name: 'zgames-auth',
+      name: 'cgagames-auth',
       partialize: (state) => ({
         customer: state.customer,
         accessToken: state.accessToken,

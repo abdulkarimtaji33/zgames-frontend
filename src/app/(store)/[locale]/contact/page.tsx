@@ -34,7 +34,7 @@ export default function ContactPage() {
         <div className="space-y-5">
           {[
             { icon: Phone, title: 'Phone', value: '+971 4 XXX XXXX', sub: 'Sun–Thu: 9am–6pm', color: 'text-blue-400' },
-            { icon: Mail, title: 'Email', value: 'support@zgames.ae', sub: 'Response within 24hrs', color: 'text-green-400' },
+            { icon: Mail, title: 'Email', value: 'support@cgagames.com', sub: 'Response within 24hrs', color: 'text-green-400' },
             { icon: MessageCircle, title: 'WhatsApp', value: '+971 50 XXX XXXX', sub: 'Available 9am–9pm', color: 'text-green-500' },
             { icon: MapPin, title: 'Store', value: 'Dubai Mall, Level 2', sub: 'Daily: 10am–11pm', color: 'text-accent' },
           ].map(({ icon: Icon, title, value, sub, color }) => (

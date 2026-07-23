@@ -187,7 +187,7 @@ export default function AdminSettingsPage() {
             type="email"
             value={notifyEmail}
             onChange={(e) => setNotifyEmail(e.target.value)}
-            placeholder="orders@zgames.ae"
+            placeholder="orders@cgagames.com"
             className="flex-1 px-3 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
           />
           <Button variant="primary" size="sm" onClick={handleSaveNotifyEmail} isLoading={savingNotifyEmail}>Save</Button>

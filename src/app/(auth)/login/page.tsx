@@ -51,7 +51,7 @@ export default function LoginPage() {
       <div className="rounded-2xl bg-card border border-border p-8 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-sm text-foreground-muted">Sign in to your ZGames account</p>
+          <p className="text-sm text-foreground-muted">Sign in to your CGA Games account</p>
         </div>
 
         {/* Social login */}

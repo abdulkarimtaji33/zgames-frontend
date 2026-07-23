@@ -34,7 +34,7 @@ export function Providers({
         attribute="class"
         defaultTheme={defaultTheme}
         enableSystem={false}
-        storageKey="zgames-theme"
+        storageKey="cgagames-theme"
       >
         {children}
       </ThemeProvider>

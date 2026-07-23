@@ -13,7 +13,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     try {
-      const stored = localStorage.getItem('zgames-auth');
+      const stored = localStorage.getItem('cgagames-auth');
       if (stored) {
         const parsed = JSON.parse(stored) as { state?: { accessToken?: string } };
         const token = parsed?.state?.accessToken;
@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
 
     try {
       if (typeof window === 'undefined') throw new Error('SSR context');
-      const stored = localStorage.getItem('zgames-auth');
+      const stored = localStorage.getItem('cgagames-auth');
       if (!stored) throw new Error('No stored auth');
       const parsed = JSON.parse(stored) as { state?: { refreshToken?: string } };
       const refreshToken = parsed?.state?.refreshToken;
@@ -69,7 +69,7 @@ apiClient.interceptors.response.use(
       // Update stored token
       const updated = JSON.parse(stored) as { state?: Record<string, unknown> };
       if (updated.state) updated.state.accessToken = newToken;
-      localStorage.setItem('zgames-auth', JSON.stringify(updated));
+      localStorage.setItem('cgagames-auth', JSON.stringify(updated));
 
       processQueue(null, newToken);
       if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -77,7 +77,7 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       // Clear auth on refresh failure
-      if (typeof window !== 'undefined') localStorage.removeItem('zgames-auth');
+      if (typeof window !== 'undefined') localStorage.removeItem('cgagames-auth');
       if (typeof window !== 'undefined') window.location.href = '/login';
       return Promise.reject(refreshError);
     } finally {

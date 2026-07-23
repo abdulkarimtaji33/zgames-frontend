@@ -143,27 +143,29 @@ export default function AdminFlashSalesPage() {
         <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Create Flash Sale</Button>
       </div>
 
-      <DataTable
-        data={items}
-        isLoading={isLoading}
-        searchable
-        columns={[
-          { key: 'name', label: 'Name', sortable: true },
-          { key: 'startsAt', label: 'Start', render: (v) => new Date(String(v)).toLocaleString() },
-          { key: 'endsAt', label: 'End', render: (v) => new Date(String(v)).toLocaleString() },
-          { key: 'products', label: 'Products', render: (v) => String((v as FlashSaleProduct[] | undefined)?.length ?? 0) },
-          { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v ? 'success' : 'default'} size="xs">{v ? 'Active' : 'Inactive'}</Badge> },
-        ]}
-        actions={(row) => (
-          <>
-            <button onClick={() => openAddProduct(row)} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-accent transition-colors" title="Add Product">
-              <PackagePlus className="h-3.5 w-3.5" />
-            </button>
-            <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />
-          </>
-        )}
-        emptyMessage="No flash sales found."
-      />
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <DataTable
+          data={items}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'name', label: 'Name', sortable: true },
+            { key: 'startsAt', label: 'Start', render: (v) => new Date(String(v)).toLocaleString() },
+            { key: 'endsAt', label: 'End', render: (v) => new Date(String(v)).toLocaleString() },
+            { key: 'products', label: 'Products', align: 'right', render: (v) => String((v as FlashSaleProduct[] | undefined)?.length ?? 0) },
+            { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v ? 'success' : 'default'} size="xs">{v ? 'Active' : 'Inactive'}</Badge> },
+          ]}
+          actions={(row) => (
+            <>
+              <button onClick={() => openAddProduct(row)} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-accent transition-colors" title="Add Product">
+                <PackagePlus className="h-3.5 w-3.5" />
+              </button>
+              <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />
+            </>
+          )}
+          emptyMessage="No flash sales found."
+        />
+      </div>
 
       <AdminModal open={modalOpen} title={editing ? 'Edit Flash Sale' : 'Create Flash Sale'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting}>
         <div className="space-y-4">

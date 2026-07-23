@@ -6,7 +6,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
-import { FormField, FormInput } from '@/components/admin/FormField';
+import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -136,8 +136,8 @@ export default function AdminLanguagesPage() {
           <FormField label="Code"><FormInput value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} disabled={!!editing} placeholder="en" /></FormField>
           <FormField label="Name"><FormInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></FormField>
           <FormField label="Native Name"><FormInput value={form.nativeName} onChange={(e) => setForm({ ...form, nativeName: e.target.value })} /></FormField>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isRTL} onChange={(e) => setForm({ ...form, isRTL: e.target.checked })} /> Right-to-left (RTL)</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
+          <FormCheckbox label="Right-to-left (RTL)" checked={form.isRTL} onChange={(e) => setForm({ ...form, isRTL: e.target.checked })} />
+          <FormCheckbox label="Active" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
         </div>
       </AdminModal>
 

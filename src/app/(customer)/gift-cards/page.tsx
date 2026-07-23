@@ -43,7 +43,7 @@ export default function GiftCardsPage() {
           <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl bg-card border border-border p-10 text-center">
+        <div className="rounded-2xl bg-card border border-border p-10 text-center shadow-sm">
           <Gift className="h-12 w-12 text-foreground-subtle mx-auto mb-3" />
           <p className="text-foreground-muted mb-1">You haven&apos;t purchased any digital gift cards yet.</p>
           <p className="text-sm text-foreground-subtle mb-4">Buy a PlayStation, Xbox, Steam or other digital gift card and your redemption code will appear here right after payment.</p>
@@ -58,7 +58,7 @@ export default function GiftCardsPage() {
             const codes = item.deliveredCodes ?? [];
             const isPending = item.fulfillmentStatus === 'pending' || (item.fulfillmentStatus === 'partial' && codes.length < item.quantity);
             return (
-              <div key={item.id} className="rounded-2xl bg-gradient-to-br from-accent/20 to-background-secondary border border-accent/20 p-5">
+              <div key={item.id} className="rounded-2xl bg-gradient-to-br from-accent/20 to-background-secondary border border-accent/20 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wide">
                     <Gift className="h-4 w-4" /> {productName}
@@ -97,7 +97,7 @@ export default function GiftCardsPage() {
         </div>
       )}
 
-      <div className="rounded-xl bg-card border border-border p-5">
+      <div className="rounded-xl bg-card border border-border p-5 shadow-sm">
         <p className="text-sm text-foreground-muted">
           Redemption codes are emailed to you automatically right after payment. If you can&apos;t find the email, your codes will also always be available here.
         </p>

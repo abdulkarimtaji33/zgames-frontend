@@ -25,10 +25,10 @@ export default function BlogDetailPage({ params }: { params: { slug: string } })
         </div>
 
         {/* Image */}
-        <div className="rounded-2xl bg-background-tertiary h-64 md:h-80 flex items-center justify-center text-6xl mb-8">🎮</div>
+        <div className="rounded-xl bg-surface-2 h-64 md:h-80 flex items-center justify-center text-6xl mb-8 shadow-sm">🎮</div>
 
         {/* Content */}
-        <div className="prose prose-invert max-w-none">
+        <div className="prose-measure">
           <p className="text-foreground-muted leading-relaxed text-base mb-4">
             Welcome to our comprehensive guide. In this article, we will cover everything you need to know about the latest gaming trends and products available in the GCC market.
           </p>

@@ -6,3 +6,6 @@ export { Badge } from './Badge';
 export type { BadgeProps } from './Badge';
 export { Card, CardHeader, CardBody, CardFooter } from './Card';
 export { Skeleton, ProductCardSkeleton } from './Skeleton';
+export { Dialog } from './Dialog';
+export { Tooltip } from './Tooltip';
+export { Dropdown, DropdownItem } from './Dropdown';

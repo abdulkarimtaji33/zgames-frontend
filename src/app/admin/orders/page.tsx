@@ -105,7 +105,7 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div>
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -126,6 +126,7 @@ export default function AdminOrdersPage() {
               key: 'total',
               label: 'Total',
               sortable: true,
+              align: 'right',
               render: (v, row) => (
                 <span className="font-bold text-accent">
                   {row.currency ?? 'AED'} {Number(v).toFixed(2)}
@@ -162,7 +163,11 @@ export default function AdminOrdersPage() {
             },
           ]}
           actions={(row) => <CrudActions viewHref={`/admin/orders/${row.id}`} />}
-          emptyMessage="No orders found."
+          emptyMessage={
+            activeTab === 'ALL'
+              ? 'No orders yet. Orders will appear here as customers check out.'
+              : `No ${activeTab.toLowerCase()} orders found. Try a different status filter.`
+          }
         />
         <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>

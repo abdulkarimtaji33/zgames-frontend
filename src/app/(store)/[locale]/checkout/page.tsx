@@ -125,7 +125,7 @@ export default function CheckoutPage() {
       clearCart();
       router.push('/en/order-success');
     } catch {
-      alert('Failed to place order. Please try again.');
+      setPaymentError("We couldn't place your order — please check your details and try again. Your cart has been kept safe.");
     } finally {
       setIsPlacing(false);
     }
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-foreground">Country</label>
                     <select {...register('countryCode')}
-                      className="w-full rounded border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full rounded-lg border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring/40 transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-standard)]"
                     >
                       <option value="AE">🇦🇪 United Arab Emirates</option>
                       <option value="SA">🇸🇦 Saudi Arabia</option>
@@ -357,7 +357,9 @@ export default function CheckoutPage() {
                 </div>
               </div>
               {paymentError && (
-                <p className="text-sm text-error mb-4">{paymentError}</p>
+                <div className="flex items-start gap-2.5 p-3 mb-4 rounded-lg bg-error/10 border border-error/30 text-sm text-error">
+                  <span>{paymentError}</span>
+                </div>
               )}
 
               {clientSecret ? (

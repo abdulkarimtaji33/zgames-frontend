@@ -52,12 +52,17 @@ function CheckoutForm({ returnUrl, onSuccess }: { returnUrl: string; onSuccess: 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <PaymentElement />
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && (
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-error/10 border border-error/30 text-sm text-error">
+          <span>{error}</span>
+        </div>
+      )}
       <button
         type="submit"
         disabled={!stripe || submitting}
-        className="w-full py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+        className="w-full py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-px transition-colors disabled:opacity-50 disabled:pointer-events-none inline-flex items-center justify-center gap-2"
       >
+        {submitting && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
         {submitting ? 'Processing…' : 'Pay now'}
       </button>
     </form>

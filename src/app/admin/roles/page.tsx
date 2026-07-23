@@ -142,7 +142,7 @@ export default function AdminRolesPage() {
     }
   };
 
-  const colors = ['text-accent', 'text-blue-400', 'text-purple-400', 'text-green-400', 'text-yellow-400', 'text-orange-400', 'text-pink-400'];
+  const colors = ['text-accent', 'text-info', 'text-viz-4', 'text-success', 'text-viz-3', 'text-accent-orange', 'text-viz-6'];
 
   const groupedPerms = allPermissions.reduce<Record<string, Permission[]>>((acc, p) => {
     (acc[p.resource] ??= []).push(p);

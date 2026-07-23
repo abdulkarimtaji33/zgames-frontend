@@ -85,7 +85,7 @@ export default function AdminNotificationsPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard title="Unread" value={String(unreadCount)} icon={<Bell className="h-4 w-4" />} color="text-accent" />
-        <StatCard title="Total" value={String(total)} icon={<Bell className="h-4 w-4" />} color="text-blue-400" />
+        <StatCard title="Total" value={String(total)} icon={<Bell className="h-4 w-4" />} color="text-info" />
       </div>
 
       <DataTable

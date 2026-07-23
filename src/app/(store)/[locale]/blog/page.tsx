@@ -32,51 +32,61 @@ export default function BlogPage() {
       </div>
 
       {/* Featured post */}
-      <div className="mb-10">
-        <Link href={`/en/blog/${BLOG_POSTS[0].slug}`} className="group">
-          <div className="rounded-2xl bg-gradient-to-br from-accent/20 via-background-secondary to-background-tertiary border border-border overflow-hidden">
-            <div className="p-8 md:p-12">
-              <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium border border-accent/30 mb-4">
-                {BLOG_POSTS[0].category}
-              </span>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:text-accent transition-colors">
-                {BLOG_POSTS[0].title}
-              </h2>
-              <p className="text-foreground-muted text-lg mb-4 max-w-2xl">{BLOG_POSTS[0].excerpt}</p>
-              <div className="flex items-center gap-4 text-sm text-foreground-subtle">
-                <span>{BLOG_POSTS[0].date}</span>
-                <span>·</span>
-                <span>{BLOG_POSTS[0].readTime}</span>
-              </div>
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Post grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {BLOG_POSTS.slice(1).map((post) => (
-          <Link key={post.slug} href={`/en/blog/${post.slug}`} className="group">
-            <div className="rounded-xl bg-card border border-border overflow-hidden hover:border-border-hover transition-colors h-full flex flex-col">
-              <div className="bg-background-tertiary h-40 flex items-center justify-center text-4xl">🎮</div>
-              <div className="p-5 flex flex-col flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium border border-accent/20 mb-3 self-start">
-                  {post.category}
+      {BLOG_POSTS.length > 0 ? (
+        <div className="mb-10 reveal">
+          <Link href={`/en/blog/${BLOG_POSTS[0].slug}`} className="group">
+            <div className="rounded-xl bg-gradient-to-br from-accent/15 via-surface-1 to-surface-2 border border-border overflow-hidden shadow-sm transition-shadow hover:shadow-md">
+              <div className="p-8 md:p-12">
+                <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium border border-accent/30 mb-4">
+                  {BLOG_POSTS[0].category}
                 </span>
-                <h2 className="font-heading text-lg font-bold text-foreground mb-2 group-hover:text-accent transition-colors line-clamp-2 flex-1">
-                  {post.title}
+                <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:text-accent transition-colors">
+                  {BLOG_POSTS[0].title}
                 </h2>
-                <p className="text-sm text-foreground-muted mb-3 line-clamp-2">{post.excerpt}</p>
-                <div className="flex items-center gap-3 text-xs text-foreground-subtle mt-auto">
-                  <span>{post.date}</span>
+                <p className="text-foreground-muted text-lg mb-4 max-w-2xl">{BLOG_POSTS[0].excerpt}</p>
+                <div className="flex items-center gap-4 text-sm text-foreground-subtle">
+                  <span>{BLOG_POSTS[0].date}</span>
                   <span>·</span>
-                  <span>{post.readTime}</span>
+                  <span>{BLOG_POSTS[0].readTime}</span>
                 </div>
               </div>
             </div>
           </Link>
-        ))}
-      </div>
+        </div>
+      ) : null}
+
+      {/* Post grid */}
+      {BLOG_POSTS.length > 1 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {BLOG_POSTS.slice(1).map((post) => (
+            <Link key={post.slug} href={`/en/blog/${post.slug}`} className="group reveal">
+              <div className="rounded-xl bg-card border border-border overflow-hidden hover:border-border-hover hover:shadow-md transition-all h-full flex flex-col shadow-sm">
+                <div className="bg-surface-2 h-40 flex items-center justify-center text-4xl">🎮</div>
+                <div className="p-5 flex flex-col flex-1">
+                  <span className="inline-block px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium border border-accent/20 mb-3 self-start">
+                    {post.category}
+                  </span>
+                  <h2 className="font-heading text-lg font-bold text-foreground mb-2 group-hover:text-accent transition-colors line-clamp-2 flex-1">
+                    {post.title}
+                  </h2>
+                  <p className="text-sm text-foreground-muted mb-3 line-clamp-2">{post.excerpt}</p>
+                  <div className="flex items-center gap-3 text-xs text-foreground-subtle mt-auto">
+                    <span>{post.date}</span>
+                    <span>·</span>
+                    <span>{post.readTime}</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 rounded-xl bg-card border border-border">
+          <p className="text-4xl mb-3">📰</p>
+          <h2 className="font-heading text-xl font-bold mb-2">No articles yet</h2>
+          <p className="text-foreground-muted">Check back soon for gaming news, reviews, and guides.</p>
+        </div>
+      )}
     </div>
   );
 }

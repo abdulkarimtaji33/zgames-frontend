@@ -90,27 +90,29 @@ export default function AdminGiftCardsPage() {
         </div>
       </div>
 
-      <DataTable
-        data={items}
-        isLoading={isLoading}
-        searchable
-        columns={[
-          { key: 'code', label: 'Code', render: (v) => <code className="font-mono text-sm text-accent">{String(v)}</code> },
-          {
-            key: 'purchasedByCustomerId',
-            label: 'Source',
-            render: (v, row) => v
-              ? <Badge variant="accent" size="xs" title={row.sentToEmail ?? undefined}>Customer Purchased</Badge>
-              : <Badge variant="default" size="xs">Manually Issued</Badge>,
-          },
-          { key: 'initialBalance', label: 'Initial', render: (v) => `AED ${Number(v).toFixed(2)}` },
-          { key: 'currentBalance', label: 'Balance', render: (v) => <span className="font-bold text-accent">AED {Number(v).toFixed(2)}</span> },
-          { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Active' : 'Inactive'}</Badge> },
-          { key: 'expiresAt', label: 'Expires', render: (v) => v ? new Date(String(v)).toLocaleDateString() : 'Never' },
-        ]}
-        emptyMessage="No gift cards found."
-      />
-      <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <DataTable
+          data={items}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'code', label: 'Code', render: (v) => <code className="font-mono text-sm text-accent">{String(v)}</code> },
+            {
+              key: 'purchasedByCustomerId',
+              label: 'Source',
+              render: (v, row) => v
+                ? <Badge variant="accent" size="xs" title={row.sentToEmail ?? undefined}>Customer Purchased</Badge>
+                : <Badge variant="default" size="xs">Manually Issued</Badge>,
+            },
+            { key: 'initialBalance', label: 'Initial', align: 'right', render: (v) => `AED ${Number(v).toFixed(2)}` },
+            { key: 'currentBalance', label: 'Balance', align: 'right', render: (v) => <span className="font-bold text-accent">AED {Number(v).toFixed(2)}</span> },
+            { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Active' : 'Inactive'}</Badge> },
+            { key: 'expiresAt', label: 'Expires', render: (v) => v ? new Date(String(v)).toLocaleDateString() : 'Never' },
+          ]}
+          emptyMessage="No gift cards found."
+        />
+        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      </div>
 
       <AdminModal open={issueOpen} title="Issue Gift Card" onClose={() => setIssueOpen(false)} onSubmit={handleIssue} isSubmitting={submitting} submitLabel="Issue">
         <div className="space-y-4">

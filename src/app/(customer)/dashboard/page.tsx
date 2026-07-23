@@ -12,10 +12,10 @@ export default function DashboardPage() {
   const wishlistCount = useWishlistStore((s) => s.productIds.length);
 
   const stats = [
-    { label: 'Total Orders', value: '0', icon: Package, color: 'text-blue-400', href: '/orders' },
-    { label: 'Wishlist Items', value: wishlistCount.toString(), icon: Heart, color: 'text-pink-400', href: '/wishlist' },
-    { label: 'Loyalty Points', value: (customer?.pointsBalance ?? 0).toString(), icon: Star, color: 'text-yellow-400', href: '/loyalty' },
-    { label: 'Store Credit', value: `AED ${Number(customer?.walletBalance ?? 0).toFixed(2)}`, icon: Wallet, color: 'text-green-400', href: '/store-credit' },
+    { label: 'Total Orders', value: '0', icon: Package, color: 'text-viz-1', href: '/orders' },
+    { label: 'Wishlist Items', value: wishlistCount.toString(), icon: Heart, color: 'text-viz-4', href: '/wishlist' },
+    { label: 'Loyalty Points', value: (customer?.pointsBalance ?? 0).toString(), icon: Star, color: 'text-viz-3', href: '/loyalty' },
+    { label: 'Store Credit', value: `AED ${Number(customer?.walletBalance ?? 0).toFixed(2)}`, icon: Wallet, color: 'text-success', href: '/store-credit' },
   ];
 
   return (
@@ -55,7 +55,7 @@ export default function DashboardPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center justify-between p-4 rounded-xl bg-card border border-border hover:border-accent/40 transition-colors group"
+              className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-sm hover:border-accent/40 hover:shadow-md transition-all group"
             >
               <div>
                 <p className="font-medium text-foreground text-sm group-hover:text-accent transition-colors">{action.label}</p>

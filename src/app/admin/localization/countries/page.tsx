@@ -7,7 +7,7 @@ import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
-import { FormField, FormInput } from '@/components/admin/FormField';
+import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -114,7 +114,7 @@ export default function AdminCountriesPage() {
           { key: 'code', label: 'Code', render: (v) => <Badge variant="default" size="xs">{String(v)}</Badge> },
           { key: 'dialCode', label: 'Dial Code', render: (v) => String(v ?? '—') },
           { key: 'currencyCode', label: 'Currency', render: (v) => String(v ?? '—') },
-          { key: 'taxRate', label: 'Tax Rate', render: (v) => v != null ? `${v}%` : '—' },
+          { key: 'taxRate', label: 'Tax Rate', align: 'right', render: (v) => v != null ? `${v}%` : '—' },
           { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Active' : 'Inactive'}</Badge> },
         ]}
         actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
@@ -129,7 +129,7 @@ export default function AdminCountriesPage() {
           <FormField label="Dial Code"><FormInput value={form.dialCode} onChange={(e) => setForm({ ...form, dialCode: e.target.value })} placeholder="+971" /></FormField>
           <FormField label="Currency Code"><FormInput value={form.currencyCode} maxLength={3} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} /></FormField>
           <FormField label="Tax Rate (%)"><FormInput type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: e.target.value })} /></FormField>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
+          <FormCheckbox label="Active" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
         </div>
       </AdminModal>
 

@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Search, ShoppingCart, Heart, User, Menu, X,
-  ChevronDown, Globe, DollarSign, Bell, LogOut,
+  ChevronDown, DollarSign, Bell, LogOut,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils/cn';
 import { MegaMenu } from './MegaMenu';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from './ThemeToggle';
+import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 
 const NAV_ITEMS = [
   { label: 'Shop', href: '#', hasMega: true },
@@ -33,6 +34,8 @@ const COUNTRIES = [
   { code: 'BH', name: 'Bahrain', flag: '🇧🇭' },
 ];
 
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,11 +43,9 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
-  const [countryOpen, setCountryOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -81,34 +82,48 @@ export function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  // Close the mega menu on outside click / Escape.
+  useEffect(() => {
+    if (!megaOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) setMegaOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMegaOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [megaOpen]);
+
   const selectedCountry = COUNTRIES.find((c) => c.code === country) ?? COUNTRIES[0];
 
   return (
     <>
       {/* ── Top strip ─────────────────────────────── */}
-      <div className="hidden md:flex items-center justify-between bg-background-secondary border-b border-border px-4 py-1.5 text-xs text-foreground-muted">
-        <span>🎮 Free shipping on orders over AED 150 | Same day delivery in Dubai</span>
+      <div className="hidden md:flex items-center justify-between bg-surface-1 border-b border-border px-4 py-1.5 text-xs text-foreground-muted">
+        <span>Free shipping on orders over AED 150 · Same day delivery in Dubai</span>
         <div className="flex items-center gap-4">
-          <Link href="/en/store-locator" className="hover:text-foreground transition-colors">Store Locator</Link>
-          <Link href="/en/track-order" className="hover:text-foreground transition-colors">Track Order</Link>
-          <Link href="/en/faq" className="hover:text-foreground transition-colors">Help</Link>
+          <Link href="/en/store-locator" className={cn('rounded-sm hover:text-foreground transition-colors', focusRing)}>Store Locator</Link>
+          <Link href="/en/track-order" className={cn('rounded-sm hover:text-foreground transition-colors', focusRing)}>Track Order</Link>
+          <Link href="/en/faq" className={cn('rounded-sm hover:text-foreground transition-colors', focusRing)}>Help</Link>
         </div>
       </div>
 
       {/* ── Main header ───────────────────────────── */}
       <header
+        ref={headerRef}
         className={cn(
-          'sticky top-0 z-50 w-full transition-all duration-300',
-          scrolled
-            ? 'bg-background/95 backdrop-blur-xl border-b border-border shadow-lg shadow-black/20'
-            : 'bg-background',
+          'sticky top-0 z-50 w-full border-b transition-shadow duration-300',
+          scrolled ? 'glass shadow-md border-border' : 'bg-surface-0 border-border/60',
         )}
       >
         <div className="mx-auto max-w-[1440px] px-4 md:px-6">
           <div className="flex h-16 items-center gap-4">
             {/* Logo */}
-            <Link href="/en" className="flex-shrink-0 flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">C</div>
+            <Link href="/en" className={cn('flex-shrink-0 flex items-center gap-2 group rounded-md', focusRing)}>
+              <div className="h-8 w-8 rounded-md bg-accent flex items-center justify-center font-heading font-bold text-white text-sm group-hover:scale-105 transition-transform">C</div>
               <span className="font-heading text-2xl font-bold tracking-wide">
                 <span className="text-accent">CGA</span>
                 <span className="text-foreground">GAMES</span>
@@ -122,9 +137,11 @@ export function Header() {
                   <button
                     key={item.label}
                     onClick={() => setMegaOpen((o) => !o)}
+                    aria-expanded={megaOpen}
                     className={cn(
-                      'flex items-center gap-1 px-3 py-2 rounded text-sm font-medium transition-colors',
-                      megaOpen ? 'text-accent' : 'text-foreground-muted hover:text-foreground',
+                      'flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors active:scale-[0.97]',
+                      megaOpen ? 'text-accent bg-accent/10' : 'text-foreground-muted hover:text-foreground hover:bg-surface-1',
+                      focusRing,
                     )}
                   >
                     {item.label}
@@ -134,7 +151,10 @@ export function Header() {
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="px-3 py-2 rounded text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+                    className={cn(
+                      'px-3 py-2 rounded-md text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors',
+                      focusRing,
+                    )}
                   >
                     {item.label}
                   </Link>
@@ -154,7 +174,10 @@ export function Header() {
                   value={desktopSearchQuery}
                   onChange={(e) => setDesktopSearchQuery(e.target.value)}
                   placeholder="Search games, consoles, accessories..."
-                  className="w-full rounded-full bg-background-secondary border border-border pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  className={cn(
+                    'w-full rounded-full bg-surface-1 border border-border pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-foreground-subtle transition-colors',
+                    'focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring',
+                  )}
                 />
               </form>
             </div>
@@ -164,68 +187,76 @@ export function Header() {
               {/* Search (mobile) */}
               <button
                 onClick={() => setSearchOpen((o) => !o)}
-                className="md:hidden p-2 rounded text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                className={cn('md:hidden p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors active:scale-95', focusRing)}
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
               </button>
 
               {/* Country switcher */}
-              <div className="relative hidden sm:block">
-                <button
-                  onClick={() => setCountryOpen((o) => !o)}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+              <div className="hidden sm:block">
+                <Dropdown
+                  align="right"
+                  trigger={({ open, toggle }) => (
+                    <button
+                      onClick={toggle}
+                      aria-expanded={open}
+                      className={cn(
+                        'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors active:scale-95',
+                        open ? 'text-foreground bg-surface-1' : 'text-foreground-muted hover:text-foreground hover:bg-surface-1',
+                        focusRing,
+                      )}
+                    >
+                      <span aria-hidden>{selectedCountry.flag}</span>
+                      <span className="hidden lg:inline">{selectedCountry.name}</span>
+                      <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', open && 'rotate-180')} />
+                    </button>
+                  )}
                 >
-                  <span>{selectedCountry.flag}</span>
-                  <span className="hidden lg:inline">{selectedCountry.name}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-                {countryOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-36 rounded-lg bg-card border border-border shadow-xl animate-slide-down z-50">
-                    {COUNTRIES.map((c) => (
-                      <button
-                        key={c.code}
-                        onClick={() => { setCountry(c.code); setCountryOpen(false); }}
-                        className={cn(
-                          'flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-background-tertiary transition-colors',
-                          country === c.code ? 'text-accent' : 'text-foreground-muted',
-                        )}
-                      >
-                        <span>{c.flag}</span>
-                        <span>{c.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {COUNTRIES.map((c) => (
+                    <DropdownItem
+                      key={c.code}
+                      onClick={() => setCountry(c.code)}
+                      className={cn(country === c.code ? 'text-accent' : 'text-foreground-muted')}
+                    >
+                      <span aria-hidden>{c.flag}</span>
+                      <span>{c.name}</span>
+                    </DropdownItem>
+                  ))}
+                </Dropdown>
               </div>
 
               {/* Currency switcher */}
-              <div className="relative hidden lg:block">
-                <button
-                  onClick={() => setCurrencyOpen((o) => !o)}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded text-xs text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+              <div className="hidden lg:block">
+                <Dropdown
+                  align="right"
+                  trigger={({ open, toggle }) => (
+                    <button
+                      onClick={toggle}
+                      aria-expanded={open}
+                      className={cn(
+                        'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors active:scale-95',
+                        open ? 'text-foreground bg-surface-1' : 'text-foreground-muted hover:text-foreground hover:bg-surface-1',
+                        focusRing,
+                      )}
+                    >
+                      <DollarSign className="h-3.5 w-3.5" />
+                      <span>{currency.code}</span>
+                      <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', open && 'rotate-180')} />
+                    </button>
+                  )}
                 >
-                  <DollarSign className="h-3.5 w-3.5" />
-                  <span>{currency.code}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-                {currencyOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-40 rounded-lg bg-card border border-border shadow-xl animate-slide-down z-50">
-                    {currencies.map((c) => (
-                      <button
-                        key={c.code}
-                        onClick={() => { setCurrency(c.code); setCurrencyOpen(false); }}
-                        className={cn(
-                          'flex items-center justify-between w-full px-3 py-2 text-sm hover:bg-background-tertiary transition-colors',
-                          currency.code === c.code ? 'text-accent' : 'text-foreground-muted',
-                        )}
-                      >
-                        <span>{c.code}</span>
-                        <span className="text-xs text-foreground-subtle">{c.symbol}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {currencies.map((c) => (
+                    <DropdownItem
+                      key={c.code}
+                      onClick={() => setCurrency(c.code)}
+                      className={cn('justify-between', currency.code === c.code ? 'text-accent' : 'text-foreground-muted')}
+                    >
+                      <span>{c.code}</span>
+                      <span className="text-xs text-foreground-subtle">{c.symbol}</span>
+                    </DropdownItem>
+                  ))}
+                </Dropdown>
               </div>
 
               <ThemeToggle />
@@ -233,7 +264,7 @@ export function Header() {
               {/* Wishlist */}
               <Link
                 href="/wishlist"
-                className="relative p-2 rounded text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors hidden sm:flex"
+                className={cn('relative p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors hidden sm:flex active:scale-95', focusRing)}
                 aria-label="Wishlist"
               >
                 <Heart className="h-5 w-5" />
@@ -247,7 +278,7 @@ export function Header() {
               {/* Cart */}
               <Link
                 href="/en/cart"
-                className="relative p-2 rounded text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                className={cn('relative p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors active:scale-95', focusRing)}
                 aria-label="Cart"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -260,38 +291,50 @@ export function Header() {
 
               {/* User menu */}
               {isAuthenticated ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen((o) => !o)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-background-tertiary transition-colors"
-                  >
-                    <div className="h-7 w-7 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-white">
-                      {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
-                    </div>
-                    <span className="hidden lg:inline text-sm text-foreground">{user?.firstName}</span>
-                  </button>
-                  {userMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-48 rounded-lg bg-card border border-border shadow-xl animate-slide-down z-50">
-                      <div className="px-3 py-2 border-b border-border">
-                        <p className="text-sm font-medium text-foreground">{user?.firstName} {user?.lastName}</p>
-                        <p className="text-xs text-foreground-muted truncate">{user?.email}</p>
+                <Dropdown
+                  align="right"
+                  trigger={({ open, toggle }) => (
+                    <button
+                      onClick={toggle}
+                      aria-expanded={open}
+                      className={cn('flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-1 transition-colors active:scale-95', focusRing)}
+                    >
+                      <div className="h-7 w-7 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-white">
+                        {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
                       </div>
-                      <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors">
-                        <User className="h-4 w-4" /> My Account
-                      </Link>
-                      <Link href="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors">
-                        <Bell className="h-4 w-4" /> Orders
-                      </Link>
-                      <button onClick={() => { clearAuth(); setUserMenuOpen(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-background-tertiary transition-colors">
-                        <LogOut className="h-4 w-4" /> Logout
-                      </button>
-                    </div>
+                      <span className="hidden lg:inline text-sm text-foreground">{user?.firstName}</span>
+                    </button>
                   )}
-                </div>
+                >
+                  <div className="px-3.5 py-2 border-b border-border">
+                    <p className="text-sm font-medium text-foreground">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-foreground-muted truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    role="menuitem"
+                    className={cn('flex items-center gap-2 px-3.5 py-2 text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+                  >
+                    <User className="h-4 w-4" /> My Account
+                  </Link>
+                  <Link
+                    href="/orders"
+                    role="menuitem"
+                    className={cn('flex items-center gap-2 px-3.5 py-2 text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+                  >
+                    <Bell className="h-4 w-4" /> Orders
+                  </Link>
+                  <DropdownItem onClick={clearAuth} className="text-error hover:bg-error/10 focus-visible:bg-error/10">
+                    <LogOut className="h-4 w-4" /> Logout
+                  </DropdownItem>
+                </Dropdown>
               ) : (
                 <Link
                   href="/login"
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors"
+                  className={cn(
+                    'hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-white text-sm font-medium transition-colors hover:bg-accent-hover active:scale-95',
+                    focusRing,
+                  )}
                 >
                   <User className="h-4 w-4" />
                   <span>Login</span>
@@ -301,8 +344,9 @@ export function Header() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileOpen((o) => !o)}
-                className="lg:hidden p-2 rounded text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors ml-1"
+                className={cn('lg:hidden p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors ml-1 active:scale-95', focusRing)}
                 aria-label="Menu"
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -320,9 +364,14 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search games, consoles..."
-                  className="w-full rounded-full bg-background-secondary border border-border pl-9 pr-10 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
+                  className="w-full rounded-full bg-surface-1 border border-border pl-9 pr-10 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring"
                 />
-                <button type="button" onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  aria-label="Close search"
+                  className={cn('absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground rounded-sm', focusRing)}
+                >
                   <X className="h-4 w-4" />
                 </button>
               </form>
@@ -331,27 +380,27 @@ export function Header() {
         </div>
 
         {/* Mega Menu */}
-        {megaOpen && (
-          <div>
-            <MegaMenu onClose={() => setMegaOpen(false)} />
-          </div>
-        )}
+        <MegaMenu open={megaOpen} onClose={() => setMegaOpen(false)} />
       </header>
 
       {/* ── Mobile Drawer ─────────────────────────── */}
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 mega-menu-backdrop"
+            className="fixed inset-0 z-40 mega-menu-backdrop animate-fade-in"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed top-0 right-0 z-50 h-full w-80 max-w-[90vw] bg-card border-l border-border shadow-2xl animate-slide-in-right overflow-y-auto">
+          <div className="fixed top-0 right-0 z-50 h-full w-80 max-w-[90vw] bg-card border-l border-border shadow-lg animate-slide-in-right overflow-y-auto">
             {/* Drawer header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-border">
               <span className="font-heading text-xl font-bold">
                 <span className="text-accent">CGA</span>GAMES
               </span>
-              <button onClick={() => setMobileOpen(false)} className="p-2 rounded text-foreground-muted hover:text-foreground">
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close menu"
+                className={cn('p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -395,7 +444,7 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center px-3 py-2.5 rounded text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                  className={cn('flex items-center px-3 py-2.5 rounded-md text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
                 >
                   {item.label}
                 </Link>
@@ -404,17 +453,17 @@ export function Header() {
 
             <div className="border-t border-border px-4 py-4 space-y-1">
               {[
-                { label: '🔥 Deals', href: '/en/deals' },
-                { label: '🆕 New Arrivals', href: '/en/new-arrivals' },
-                { label: '⏰ Pre-Orders', href: '/en/preorders' },
-                { label: '📰 Blog', href: '/en/blog' },
-                { label: '📍 Store Locator', href: '/en/store-locator' },
+                { label: 'Deals', href: '/en/deals' },
+                { label: 'New Arrivals', href: '/en/new-arrivals' },
+                { label: 'Pre-Orders', href: '/en/preorders' },
+                { label: 'Blog', href: '/en/blog' },
+                { label: 'Store Locator', href: '/en/store-locator' },
               ].map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center px-3 py-2.5 rounded text-sm text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                  className={cn('flex items-center px-3 py-2.5 rounded-md text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
                 >
                   {item.label}
                 </Link>
@@ -430,13 +479,14 @@ export function Header() {
                     key={c.code}
                     onClick={() => setCountry(c.code)}
                     className={cn(
-                      'flex items-center gap-1 px-2.5 py-1.5 rounded text-xs border transition-colors',
+                      'flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs border transition-colors active:scale-95',
                       country === c.code
                         ? 'border-accent text-accent bg-accent/10'
                         : 'border-border text-foreground-muted hover:border-border-hover',
+                      focusRing,
                     )}
                   >
-                    <span>{c.flag}</span>
+                    <span aria-hidden>{c.flag}</span>
                     <span>{c.name}</span>
                   </button>
                 ))}
@@ -444,14 +494,6 @@ export function Header() {
             </div>
           </div>
         </>
-      )}
-
-      {/* Backdrop for dropdowns */}
-      {(countryOpen || currencyOpen || userMenuOpen) && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => { setCountryOpen(false); setCurrencyOpen(false); setUserMenuOpen(false); }}
-        />
       )}
     </>
   );

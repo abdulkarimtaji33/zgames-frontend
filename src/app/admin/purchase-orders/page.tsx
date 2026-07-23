@@ -222,7 +222,7 @@ export default function AdminPurchaseOrdersPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -241,6 +241,7 @@ export default function AdminPurchaseOrdersPage() {
             {
               key: 'total',
               label: 'Total',
+              align: 'right',
               render: (v) => (v ? `AED ${Number(v).toFixed(2)}` : '—'),
             },
             {

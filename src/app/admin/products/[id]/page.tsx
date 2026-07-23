@@ -214,7 +214,7 @@ export default function AdminEditProductPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
         <div className="px-2">
           <AdminTabs tabs={tabs} active={activeTab} onChange={(t) => setActiveTab(t as TabId)} />
         </div>

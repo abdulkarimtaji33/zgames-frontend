@@ -13,7 +13,7 @@ export default function StoreLocatorPage() {
       </div>
 
       {/* Map placeholder */}
-      <div className="rounded-2xl bg-background-tertiary border border-border h-64 md:h-96 flex items-center justify-center mb-10">
+      <div className="rounded-xl bg-surface-2 border border-border h-64 md:h-96 flex items-center justify-center mb-10 shadow-sm">
         <div className="text-center text-foreground-muted">
           <p className="text-4xl mb-3">🗺️</p>
           <p className="font-medium">Interactive Map</p>
@@ -22,19 +22,27 @@ export default function StoreLocatorPage() {
       </div>
 
       {/* Store cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {stores.map((store) => (
-          <div key={store.name} className="rounded-xl bg-card border border-border p-5">
-            <h3 className="font-heading text-lg font-bold text-foreground mb-1">{store.name}</h3>
-            <p className="text-sm text-foreground-muted mb-3">{store.address}, {store.city}</p>
-            <div className="space-y-1 text-sm">
-              <p><span className="text-foreground-subtle">📞</span> <span className="text-foreground-muted">{store.phone}</span></p>
-              <p><span className="text-foreground-subtle">🕐</span> <span className="text-foreground-muted">{store.hours}</span></p>
+      {stores.length > 0 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {stores.map((store) => (
+            <div key={store.name} className="rounded-xl bg-card border border-border p-5 shadow-sm transition-shadow hover:shadow-md hover:border-border-hover">
+              <h3 className="font-heading text-lg font-bold text-foreground mb-1">{store.name}</h3>
+              <p className="text-sm text-foreground-muted mb-3">{store.address}, {store.city}</p>
+              <div className="space-y-1 text-sm">
+                <p><span className="text-foreground-subtle">📞</span> <span className="text-foreground-muted">{store.phone}</span></p>
+                <p><span className="text-foreground-subtle">🕐</span> <span className="text-foreground-muted">{store.hours}</span></p>
+              </div>
+              <a href="#" className="mt-4 inline-flex text-sm text-accent hover:underline focus-visible:underline">Get Directions →</a>
             </div>
-            <a href="#" className="mt-4 inline-flex text-sm text-accent hover:underline">Get Directions →</a>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 rounded-xl bg-card border border-border">
+          <p className="text-4xl mb-3">📍</p>
+          <h2 className="font-heading text-xl font-bold mb-2">No stores found nearby</h2>
+          <p className="text-foreground-muted">Try a different city, or shop online with GCC-wide delivery.</p>
+        </div>
+      )}
     </div>
   );
 }

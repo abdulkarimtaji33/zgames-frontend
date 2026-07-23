@@ -4,10 +4,10 @@ import { Star, Gift } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 const TIERS = [
-  { name: 'Bronze', min: 0, max: 499, color: 'text-orange-400', bg: 'bg-orange-900/20' },
-  { name: 'Silver', min: 500, max: 1499, color: 'text-gray-300', bg: 'bg-gray-800/20' },
-  { name: 'Gold', min: 1500, max: 4999, color: 'text-yellow-400', bg: 'bg-yellow-900/20' },
-  { name: 'Platinum', min: 5000, max: Infinity, color: 'text-cyan-300', bg: 'bg-cyan-900/20' },
+  { name: 'Bronze', min: 0, max: 499, color: 'text-accent-orange', bg: 'bg-accent-orange/20' },
+  { name: 'Silver', min: 500, max: 1499, color: 'text-foreground-muted', bg: 'bg-surface-3' },
+  { name: 'Gold', min: 1500, max: 4999, color: 'text-viz-3', bg: 'bg-viz-3/20' },
+  { name: 'Platinum', min: 5000, max: Infinity, color: 'text-viz-5', bg: 'bg-viz-5/20' },
 ];
 
 export default function LoyaltyPage() {
@@ -19,7 +19,7 @@ export default function LoyaltyPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-heading text-2xl font-bold">Loyalty Rewards</h1>
-      <div className="rounded-2xl bg-card border border-border p-6">
+      <div className="rounded-xl bg-card border border-border p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-sm text-foreground-muted">Your Tier</p>
@@ -42,7 +42,7 @@ export default function LoyaltyPage() {
           </div>
         )}
       </div>
-      <div className="rounded-xl bg-card border border-border p-5">
+      <div className="rounded-xl bg-card border border-border p-5 shadow-sm">
         <h3 className="font-heading text-lg font-bold mb-3 flex items-center gap-2">
           <Gift className="h-5 w-5 text-accent" /> How to Earn Points
         </h3>

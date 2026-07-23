@@ -61,10 +61,11 @@ export default function FaqPage() {
                   const key = `${section.category}-${i}`;
                   const isOpen = !!openItems[key];
                   return (
-                    <div key={key} className="rounded-xl bg-card border border-border overflow-hidden">
+                    <div key={key} className="rounded-xl bg-card border border-border overflow-hidden shadow-sm transition-shadow hover:shadow-md">
                       <button
                         onClick={() => toggle(key)}
-                        className="flex items-center justify-between w-full px-5 py-4 text-left"
+                        aria-expanded={isOpen}
+                        className="flex items-center justify-between w-full px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-xl"
                       >
                         <span className="font-medium text-foreground text-sm pr-4">{item.q}</span>
                         <ChevronDown className={cn('h-4 w-4 text-foreground-muted flex-shrink-0 transition-transform', isOpen && 'rotate-180')} />

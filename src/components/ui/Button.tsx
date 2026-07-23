@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils/cn';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 select-none active:translate-y-px',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-[transform,background-color,border-color,box-shadow,color] duration-[var(--duration-fast)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 select-none active:translate-y-px',
   {
     variants: {
       variant: {
@@ -16,12 +16,12 @@ const buttonVariants = cva(
         outline:
           'border border-accent text-accent hover:bg-accent hover:text-white active:scale-95',
         danger:
-          'bg-red-600 text-white hover:bg-red-700 active:scale-95',
+          'bg-error text-white hover:brightness-90 active:scale-95',
         link:
           'text-accent underline-offset-4 hover:underline p-0 h-auto',
       },
       size: {
-        xs: 'h-7 px-2.5 text-xs rounded',
+        xs: 'h-7 px-2.5 text-xs rounded-md',
         sm: 'h-8 px-3 text-sm',
         md: 'h-10 px-4 text-sm',
         lg: 'h-12 px-6 text-base',

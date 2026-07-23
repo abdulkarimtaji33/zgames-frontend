@@ -31,7 +31,7 @@ function SearchContent() {
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-8">
-      <div className="mb-8">
+      <div className="mb-8 animate-fade-in">
         <h1 className="font-heading text-3xl font-bold mb-1">
           {query ? `Search results for "${query}"` : 'Search'}
         </h1>
@@ -40,12 +40,19 @@ function SearchContent() {
         )}
       </div>
       {!query ? (
-        <div className="text-center py-20">
-          <Search className="h-16 w-16 text-foreground-subtle mx-auto mb-4" />
-          <p className="text-foreground-muted">Enter a search term to find products</p>
+        <div className="flex flex-col items-center justify-center text-center py-20 animate-fade-in">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2">
+            <Search className="h-7 w-7 text-foreground-subtle" />
+          </div>
+          <h3 className="font-heading text-lg font-bold text-foreground mb-1">Search our catalog</h3>
+          <p className="text-sm text-foreground-muted max-w-sm">
+            Enter a game title, platform, or brand above to find what you&apos;re looking for.
+          </p>
         </div>
       ) : (
-        <ProductGrid products={products} isLoading={isLoading} cols={4} />
+        <div key={query} className="animate-fade-in">
+          <ProductGrid products={products} isLoading={isLoading} cols={4} />
+        </div>
       )}
     </div>
   );

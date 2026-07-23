@@ -134,7 +134,7 @@ export default function AdminBrandsPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div>
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -170,6 +170,7 @@ export default function AdminBrandsPage() {
             {
               key: 'sortOrder',
               label: 'Sort',
+              align: 'right',
               render: (v) => String(v ?? 0),
             },
             {
@@ -185,7 +186,7 @@ export default function AdminBrandsPage() {
           actions={(row) => (
             <CrudActions onEdit={() => openEdit(row)} onDelete={() => openDelete(row)} />
           )}
-          emptyMessage="No brands found."
+          emptyMessage="No brands yet. Add your first brand to get started."
         />
         <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>

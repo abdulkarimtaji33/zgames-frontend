@@ -19,8 +19,7 @@ export function ConfirmDialog({ open, title, message, onConfirm, onCancel, isLoa
       <p className="text-sm text-foreground-muted mb-4">{message}</p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button variant={destructive ? 'primary' : 'primary'} size="sm" onClick={onConfirm} isLoading={isLoading}
-          className={destructive ? 'bg-error hover:bg-error/90' : ''}>
+        <Button variant={destructive ? 'danger' : 'primary'} size="sm" onClick={onConfirm} isLoading={isLoading}>
           Confirm
         </Button>
       </div>

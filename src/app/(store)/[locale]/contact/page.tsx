@@ -33,13 +33,13 @@ export default function ContactPage() {
         {/* Contact info */}
         <div className="space-y-5">
           {[
-            { icon: Phone, title: 'Phone', value: '+971 4 XXX XXXX', sub: 'Sun–Thu: 9am–6pm', color: 'text-blue-400' },
-            { icon: Mail, title: 'Email', value: 'support@cgagames.com', sub: 'Response within 24hrs', color: 'text-green-400' },
-            { icon: MessageCircle, title: 'WhatsApp', value: '+971 50 XXX XXXX', sub: 'Available 9am–9pm', color: 'text-green-500' },
+            { icon: Phone, title: 'Phone', value: '+971 4 XXX XXXX', sub: 'Sun–Thu: 9am–6pm', color: 'text-viz-1' },
+            { icon: Mail, title: 'Email', value: 'support@cgagames.com', sub: 'Response within 24hrs', color: 'text-viz-2' },
+            { icon: MessageCircle, title: 'WhatsApp', value: '+971 50 XXX XXXX', sub: 'Available 9am–9pm', color: 'text-success' },
             { icon: MapPin, title: 'Store', value: 'Dubai Mall, Level 2', sub: 'Daily: 10am–11pm', color: 'text-accent' },
           ].map(({ icon: Icon, title, value, sub, color }) => (
-            <div key={title} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border">
-              <div className={`h-10 w-10 rounded-full bg-background-tertiary flex items-center justify-center flex-shrink-0 ${color}`}>
+            <div key={title} className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border shadow-sm transition-shadow hover:shadow-md">
+              <div className={`h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center flex-shrink-0 ${color}`}>
                 <Icon className="h-5 w-5" />
               </div>
               <div>
@@ -52,7 +52,7 @@ export default function ContactPage() {
         </div>
 
         {/* Contact form */}
-        <div className="lg:col-span-2 rounded-2xl bg-card border border-border p-6">
+        <div className="lg:col-span-2 rounded-xl bg-card border border-border p-6 shadow-sm">
           {submitted ? (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <CheckCircle2 className="h-14 w-14 text-success mb-4" />
@@ -75,9 +75,10 @@ export default function ContactPage() {
                 <textarea
                   rows={5}
                   placeholder="Describe your issue or question..."
-                  className="w-full rounded border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent resize-none"
+                  className="w-full rounded-lg border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring/40 transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-standard)] resize-none"
                   {...register('message', { required: 'Required' })}
                 />
+                {errors.message && <p className="mt-1 text-xs text-error">{errors.message.message}</p>}
               </div>
               <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
                 Send Message

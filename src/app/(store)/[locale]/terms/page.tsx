@@ -4,7 +4,7 @@ export default function TermsPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-4xl font-bold mb-3">Terms & Conditions</h1>
         <p className="text-sm text-foreground-muted mb-8">Last updated: January 1, 2025</p>
-        <div className="prose prose-invert max-w-none space-y-6">
+        <div className="prose-measure space-y-6">
           {[
             { title: '1. Acceptance of Terms', body: 'By accessing and using CGA Games (cgagames.com), you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to these terms, you may not use our services.' },
             { title: '2. Products and Pricing', body: 'All products displayed on our website are subject to availability. Prices are listed in AED and are inclusive of VAT where applicable. We reserve the right to change prices at any time without prior notice.' },

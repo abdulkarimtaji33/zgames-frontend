@@ -11,13 +11,12 @@ import { productsApi, categoriesApi } from '@/lib/api';
 import type { Product, PaginatedResponse, Category } from '@/types';
 
 const CATEGORY_TILE_COLORS = [
-  'from-blue-900/40 to-blue-800/10',
-  'from-green-900/40 to-green-800/10',
-  'from-red-900/40 to-red-800/10',
-  'from-purple-900/40 to-purple-800/10',
-  'from-yellow-900/40 to-yellow-800/10',
-  'from-gray-900/40 to-gray-800/10',
-  'from-orange-900/40 to-orange-800/10',
+  'from-viz-1/25 to-viz-1/5',
+  'from-viz-2/25 to-viz-2/5',
+  'from-viz-3/25 to-viz-3/5',
+  'from-viz-4/25 to-viz-4/5',
+  'from-viz-5/25 to-viz-5/5',
+  'from-viz-6/25 to-viz-6/5',
 ];
 
 function useFeaturedCategories() {
@@ -38,9 +37,9 @@ function useFeaturedCategories() {
 }
 
 const PLATFORMS = [
-  { name: 'PlayStation 5', apiPlatform: 'ps5', logo: '🎮', slug: 'playstation-5', desc: 'Exclusive titles & accessories', color: 'from-blue-700 to-blue-500', games: ['PS5 Console', 'God of War Ragnarök', 'Spider-Man 2', 'Demon Souls'] },
-  { name: 'Xbox Series X', apiPlatform: 'xbox_series_x', logo: '🟩', slug: 'xbox-series-x', desc: 'Game Pass & next-gen gaming', color: 'from-green-700 to-green-500', games: ['Xbox Series X', 'Forza Horizon 5', 'Halo Infinite', 'Starfield'] },
-  { name: 'Nintendo Switch', apiPlatform: 'nintendo_switch', logo: '🔴', slug: 'nintendo-switch', desc: 'Play anywhere, anytime', color: 'from-red-700 to-red-500', games: ['Switch OLED', 'Zelda TotK', 'Mario Kart 8', 'Splatoon 3'] },
+  { name: 'PlayStation 5', apiPlatform: 'ps5', logo: '🎮', slug: 'playstation-5', desc: 'Exclusive titles & accessories', color: 'from-viz-1/20 to-viz-1/5', games: ['PS5 Console', 'God of War Ragnarök', 'Spider-Man 2', 'Demon Souls'] },
+  { name: 'Xbox Series X', apiPlatform: 'xbox_series_x', logo: '🟩', slug: 'xbox-series-x', desc: 'Game Pass & next-gen gaming', color: 'from-viz-2/20 to-viz-2/5', games: ['Xbox Series X', 'Forza Horizon 5', 'Halo Infinite', 'Starfield'] },
+  { name: 'Nintendo Switch', apiPlatform: 'nintendo_switch', logo: '🔴', slug: 'nintendo-switch', desc: 'Play anywhere, anytime', color: 'from-viz-6/20 to-viz-6/5', games: ['Switch OLED', 'Zelda TotK', 'Mario Kart 8', 'Splatoon 3'] },
 ];
 
 const BRANDS = ['Sony', 'Microsoft', 'Nintendo', 'Ubisoft', 'EA Sports', 'Capcom', 'Razer', 'ASUS ROG', 'Logitech G', 'Pokémon', 'Yu-Gi-Oh!', 'Magic'];
@@ -168,9 +167,51 @@ function ProductSection({ title, href, params }: { title: string; href: string; 
   }, []);
 
   return (
-    <section className="mb-14">
+    <section className="mb-14 reveal">
       <SectionHeader title={title} href={href} />
       <ProductGrid products={products} isLoading={isLoading} cols={4} />
+    </section>
+  );
+}
+
+function Newsletter() {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubscribed(true);
+  };
+
+  return (
+    <section className="mb-6 reveal">
+      <div className="rounded-2xl bg-gradient-to-br from-accent/20 via-background-secondary to-background-tertiary border border-accent/20 p-8 md:p-12 text-center">
+        <h2 className="font-heading text-3xl md:text-4xl font-bold mb-3">
+          Join the <span className="text-accent">CGA Games</span> Community
+        </h2>
+        <p className="text-foreground-muted mb-6 max-w-md mx-auto">
+          Get exclusive deals, early access to new arrivals, and gaming news delivered to your inbox.
+        </p>
+        {subscribed ? (
+          <p className="max-w-sm mx-auto rounded-full bg-success/20 border border-success/30 text-success px-4 py-2.5 text-sm font-medium">
+            Thanks — you're subscribed!
+          </p>
+        ) : (
+          <form className="flex gap-2 max-w-sm mx-auto" onSubmit={handleSubmit}>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              aria-label="Email address"
+              className="flex-1 rounded-full bg-background-tertiary border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-colors"
+            />
+            <Button type="submit" variant="primary" size="md" className="rounded-full">Subscribe</Button>
+          </form>
+        )}
+      </div>
     </section>
   );
 }
@@ -184,7 +225,7 @@ export default function HomePage() {
       <HeroSlider />
 
       {/* Category grid */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <h2 className="font-heading text-2xl font-bold mb-5">Shop by Category</h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
           {categoriesLoading ? (
@@ -207,7 +248,7 @@ export default function HomePage() {
       </section>
 
       {/* Flash Deals */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
             <Zap className="h-6 w-6 text-accent" />
@@ -228,8 +269,8 @@ export default function HomePage() {
 
       {/* Platform sections */}
       {PLATFORMS.map((platform) => (
-        <section key={platform.slug} className="mb-14">
-          <div className={`rounded-2xl bg-gradient-to-br ${platform.color}/10 border border-border/50 p-6 md:p-8 mb-6`}>
+        <section key={platform.slug} className="mb-14 reveal">
+          <div className={`rounded-2xl bg-gradient-to-br ${platform.color} border border-border/50 p-6 md:p-8 mb-6`}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -257,10 +298,10 @@ export default function HomePage() {
       ))}
 
       {/* Pre-orders */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Package className="h-6 w-6 text-purple-400" />
+            <Package className="h-6 w-6 text-viz-4" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold">Pre-Orders</h2>
           </div>
           <Link href="/en/preorders" className="text-sm text-accent hover:underline font-medium flex items-center gap-1">
@@ -271,10 +312,10 @@ export default function HomePage() {
       </section>
 
       {/* Best Sellers */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Star className="h-6 w-6 text-yellow-400" />
+            <Star className="h-6 w-6 text-viz-3" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold">Best Sellers</h2>
           </div>
           <Link href="/en/best-sellers" className="text-sm text-accent hover:underline font-medium flex items-center gap-1">
@@ -285,10 +326,10 @@ export default function HomePage() {
       </section>
 
       {/* Coming Soon */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Clock className="h-6 w-6 text-orange-400" />
+            <Clock className="h-6 w-6 text-accent-orange" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold">Coming Soon</h2>
           </div>
           <Link href="/en/coming-soon" className="text-sm text-accent hover:underline font-medium flex items-center gap-1">
@@ -299,7 +340,7 @@ export default function HomePage() {
       </section>
 
       {/* Brand showcase */}
-      <section className="mb-14">
+      <section className="mb-14 reveal">
         <h2 className="font-heading text-2xl md:text-3xl font-bold mb-6">Shop by Brand</h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {BRANDS.map((brand) => (
@@ -313,24 +354,7 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="mb-6">
-        <div className="rounded-2xl bg-gradient-to-br from-accent/20 via-background-secondary to-background-tertiary border border-accent/20 p-8 md:p-12 text-center">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-3">
-            Join the <span className="text-accent">CGA Games</span> Community
-          </h2>
-          <p className="text-foreground-muted mb-6 max-w-md mx-auto">
-            Get exclusive deals, early access to new arrivals, and gaming news delivered to your inbox.
-          </p>
-          <form className="flex gap-2 max-w-sm mx-auto" onSubmit={(e) => e.preventDefault()}>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 rounded-full bg-background-tertiary border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
-            />
-            <Button type="submit" variant="primary" size="md" className="rounded-full">Subscribe</Button>
-          </form>
-        </div>
-      </section>
+      <Newsletter />
     </main>
   );
 }

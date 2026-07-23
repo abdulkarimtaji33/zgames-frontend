@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { FormField, FormInput } from '@/components/admin/FormField';
@@ -50,7 +51,10 @@ export default function AdminAnalyticsPage() {
       .finally(() => setViewsLoading(false));
   }, [startDate, endDate]);
 
-  const maxViews = Math.max(...pageViews.map((p) => Number(p.views ?? p.count ?? 0)), 1);
+  const viewsData = pageViews.map((p) => ({
+    label: String(p.page ?? p.path ?? 'Unknown'),
+    views: Number(p.views ?? p.count ?? 0),
+  }));
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -62,30 +66,37 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-5">
+      <div className="rounded-xl bg-card border border-border p-5 shadow-sm">
         <h3 className="font-heading font-bold mb-4">Page Views</h3>
         {viewsLoading ? (
-          <div className="h-32 flex items-center justify-center"><div className="h-6 w-6 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
-        ) : pageViews.length === 0 ? (
+          <div className="h-48 skeleton rounded-lg" />
+        ) : viewsData.length === 0 ? (
           <p className="text-sm text-foreground-muted">No page view data.</p>
         ) : (
-          <div className="space-y-3">
-            {pageViews.map((p, i) => {
-              const views = Number(p.views ?? p.count ?? 0);
-              const pct = Math.round((views / maxViews) * 100);
-              return (
-                <div key={i}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="truncate">{String(p.page ?? p.path ?? 'Unknown')}</span>
-                    <span className="font-bold ml-2">{views}</span>
-                  </div>
-                  <div className="h-2 bg-background-tertiary rounded-full overflow-hidden">
-                    <div className="h-full bg-accent/80 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ResponsiveContainer width="100%" height={Math.max(viewsData.length * 32, 160)}>
+            <BarChart data={viewsData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: 'var(--color-foreground-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis
+                type="category"
+                dataKey="label"
+                tick={{ fill: 'var(--color-foreground)', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                width={140}
+              />
+              <Tooltip
+                cursor={{ fill: 'var(--color-background-tertiary)' }}
+                contentStyle={{
+                  background: 'var(--color-surface-2)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+              <Bar dataKey="views" fill="var(--color-accent)" radius={[0, 4, 4, 0]} animationDuration={400} />
+            </BarChart>
+          </ResponsiveContainer>
         )}
       </div>
 

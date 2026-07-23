@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Rocket } from 'lucide-react';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { Pagination } from '@/components/shared/Pagination';
@@ -29,11 +30,18 @@ export default function ListingPage() {
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-6">
       <Breadcrumbs items={[{ label: 'Shop', href: '/en' }, { label: 'Coming Soon' }]} className="mb-6" />
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold mb-1">Coming Soon</h1>
-        <p className="text-sm text-foreground-muted">Products arriving soon — be the first to know.</p>
+      <div className="mb-8 flex items-center gap-4 animate-fade-in">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent-orange/10 text-accent-orange">
+          <Rocket className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="font-heading text-3xl font-bold">Coming Soon</h1>
+          <p className="text-sm text-foreground-muted">Products arriving soon — be the first to know.</p>
+        </div>
       </div>
-      <ProductGrid products={products} isLoading={isLoading} cols={4} />
+      <div key={page} className="animate-fade-in">
+        <ProductGrid products={products} isLoading={isLoading} cols={4} />
+      </div>
       {totalPages > 1 && (
         <div className="mt-10 flex justify-center">
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />

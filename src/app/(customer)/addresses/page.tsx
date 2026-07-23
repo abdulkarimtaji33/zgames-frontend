@@ -135,7 +135,7 @@ export default function AddressesPage() {
       {isLoading ? (
         <div className="p-10 flex justify-center"><div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
       ) : addresses.length === 0 ? (
-        <div className="text-center py-16 rounded-xl bg-card border border-border">
+        <div className="text-center py-16 rounded-xl bg-card border border-border shadow-sm">
           <MapPin className="h-14 w-14 text-foreground-subtle mx-auto mb-4" />
           <h2 className="font-heading text-xl font-bold mb-2">No addresses saved</h2>
           <p className="text-foreground-muted mb-4">Add delivery addresses for faster checkout.</p>
@@ -144,7 +144,7 @@ export default function AddressesPage() {
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {addresses.map((addr) => (
-            <div key={addr.id} className="rounded-xl bg-card border border-border p-5 space-y-2">
+            <div key={addr.id} className="rounded-xl bg-card border border-border p-5 space-y-2 shadow-sm transition-shadow hover:shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase text-foreground-subtle">{addr.label || 'Address'}</span>
                 {addr.isDefault && (
@@ -176,7 +176,7 @@ export default function AddressesPage() {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mega-menu-backdrop animate-fade-in" onClick={() => setShowForm(false)}>
           <div
             className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-card border border-border p-6"
             onClick={(e) => e.stopPropagation()}

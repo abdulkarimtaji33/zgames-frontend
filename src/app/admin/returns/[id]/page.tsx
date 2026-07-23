@@ -106,7 +106,7 @@ export default function AdminReturnDetailPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-xl bg-card border border-border p-5 space-y-3 text-sm">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-3 text-sm">
           <h2 className="font-semibold text-sm uppercase tracking-wider text-foreground-muted">Details</h2>
           <dl className="space-y-2">
             <div className="flex justify-between"><dt className="text-foreground-muted">Order ID</dt><dd className="font-mono text-xs">{ret.orderId}</dd></div>
@@ -122,7 +122,7 @@ export default function AdminReturnDetailPage() {
           </dl>
         </div>
 
-        <div className="rounded-xl bg-card border border-border p-5 space-y-4">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-sm uppercase tracking-wider text-foreground-muted">Update Status</h2>
           <FormField label="Status">
             <FormSelect value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -142,7 +142,7 @@ export default function AdminReturnDetailPage() {
             data={ret.items!}
             columns={[
               { key: 'orderItemId', label: 'Order Item', render: (v) => <span className="font-mono text-xs">{String(v).slice(0, 8)}…</span> },
-              { key: 'quantity', label: 'Qty' },
+              { key: 'quantity', label: 'Qty', align: 'right' },
               { key: 'reason', label: 'Reason', render: (v) => String(v ?? '—') },
             ]}
             emptyMessage="No items."

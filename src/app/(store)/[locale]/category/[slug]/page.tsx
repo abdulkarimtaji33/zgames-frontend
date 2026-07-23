@@ -150,7 +150,7 @@ export default function CategoryPage() {
       />
 
       {/* Page header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div className="flex items-start justify-between mb-6 gap-4 animate-fade-in">
         <div>
           <h1 className="font-heading text-3xl font-bold">{categoryName}</h1>
           {!isLoading && (
@@ -188,13 +188,13 @@ export default function CategoryPage() {
               <div className="hidden sm:flex items-center gap-1 border border-border rounded p-0.5">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={cn('p-1.5 rounded transition-colors', viewMode === 'grid' ? 'bg-background-tertiary text-foreground' : 'text-foreground-muted')}
+                  className={cn('p-1.5 rounded transition-colors', viewMode === 'grid' ? 'bg-surface-2 text-foreground' : 'text-foreground-muted')}
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={cn('p-1.5 rounded transition-colors', viewMode === 'list' ? 'bg-background-tertiary text-foreground' : 'text-foreground-muted')}
+                  className={cn('p-1.5 rounded transition-colors', viewMode === 'list' ? 'bg-surface-2 text-foreground' : 'text-foreground-muted')}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -218,7 +218,7 @@ export default function CategoryPage() {
                           key={opt.value}
                           onClick={() => { setSortBy(opt.value); setSortOpen(false); setPage(1); }}
                           className={cn(
-                            'w-full text-left px-3 py-2 text-sm hover:bg-background-tertiary transition-colors',
+                            'w-full text-left px-3 py-2 text-sm hover:bg-surface-2 transition-colors',
                             sortBy === opt.value ? 'text-accent font-medium' : 'text-foreground-muted',
                           )}
                         >
@@ -233,7 +233,9 @@ export default function CategoryPage() {
           </div>
 
           {/* Products */}
-          <ProductGrid products={products} isLoading={isLoading} cols={viewMode === 'list' ? 2 : 4} />
+          <div key={`${page}-${sortBy}-${JSON.stringify(selectedFilters)}`} className="animate-fade-in">
+            <ProductGrid products={products} isLoading={isLoading} cols={viewMode === 'list' ? 2 : 4} />
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -247,7 +249,7 @@ export default function CategoryPage() {
       {/* Mobile filter drawer */}
       {filterOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setFilterOpen(false)} />
+          <div className="fixed inset-0 z-40 mega-menu-backdrop animate-fade-in" onClick={() => setFilterOpen(false)} />
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-heading text-xl font-bold">Filters</h3>

@@ -134,45 +134,47 @@ export default function AdminWarehousesPage() {
         </Button>
       </div>
 
-      <DataTable
-        data={warehouses}
-        isLoading={isLoading}
-        searchable
-        columns={[
-          { key: 'name', label: 'Name', sortable: true },
-          { key: 'code', label: 'Code', render: (v) => String(v ?? '—') },
-          {
-            key: 'address',
-            label: 'Address',
-            render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
-          },
-          {
-            key: 'isDefault',
-            label: 'Default',
-            render: (v) => (v ? <Badge variant="success" size="xs">Default</Badge> : null),
-          },
-          {
-            key: 'isActive',
-            label: 'Status',
-            render: (v) => (
-              <Badge variant={v !== false ? 'success' : 'error'} size="xs">
-                {v !== false ? 'Active' : 'Inactive'}
-              </Badge>
-            ),
-          },
-        ]}
-        actions={(row) => (
-          <>
-            {!row.isDefault && (
-              <Button variant="ghost" size="xs" onClick={() => handleSetDefault(row)}>
-                Set Default
-              </Button>
-            )}
-            <CrudActions onEdit={() => openEdit(row)} onDelete={() => { setDeleting(row); setDeleteOpen(true); }} />
-          </>
-        )}
-        emptyMessage="No warehouses found."
-      />
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <DataTable
+          data={warehouses}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'name', label: 'Name', sortable: true },
+            { key: 'code', label: 'Code', render: (v) => String(v ?? '—') },
+            {
+              key: 'address',
+              label: 'Address',
+              render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
+            },
+            {
+              key: 'isDefault',
+              label: 'Default',
+              render: (v) => (v ? <Badge variant="success" size="xs">Default</Badge> : null),
+            },
+            {
+              key: 'isActive',
+              label: 'Status',
+              render: (v) => (
+                <Badge variant={v !== false ? 'success' : 'error'} size="xs">
+                  {v !== false ? 'Active' : 'Inactive'}
+                </Badge>
+              ),
+            },
+          ]}
+          actions={(row) => (
+            <>
+              {!row.isDefault && (
+                <Button variant="ghost" size="xs" onClick={() => handleSetDefault(row)}>
+                  Set Default
+                </Button>
+              )}
+              <CrudActions onEdit={() => openEdit(row)} onDelete={() => { setDeleting(row); setDeleteOpen(true); }} />
+            </>
+          )}
+          emptyMessage="No warehouses found."
+        />
+      </div>
 
       <AdminModal
         open={modalOpen}

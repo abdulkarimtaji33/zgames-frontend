@@ -112,21 +112,23 @@ export default function AdminAffiliatesPage() {
         <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Add Affiliate</Button>
       </div>
 
-      <DataTable
-        data={items}
-        isLoading={isLoading}
-        searchable
-        columns={[
-          { key: 'code', label: 'Code', render: (v) => <code className="font-mono text-sm text-accent">{String(v)}</code> },
-          { key: 'customerId', label: 'Customer', render: (v) => <span className="text-xs font-mono">{String(v).slice(0, 8)}…</span> },
-          { key: 'commissionRate', label: 'Commission', render: (v) => `${v}%` },
-          { key: 'totalEarnings', label: 'Total Earnings', render: (v) => `AED ${Number(v).toFixed(2)}` },
-          { key: 'pendingEarnings', label: 'Pending', render: (v) => `AED ${Number(v).toFixed(2)}` },
-          { key: 'status', label: 'Status', render: (v) => <Badge variant={statusVariant(String(v))} size="xs">{String(v)}</Badge> },
-        ]}
-        actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
-        emptyMessage="No affiliates found."
-      />
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <DataTable
+          data={items}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'code', label: 'Code', render: (v) => <code className="font-mono text-sm text-accent">{String(v)}</code> },
+            { key: 'customerId', label: 'Customer', render: (v) => <span className="text-xs font-mono">{String(v).slice(0, 8)}…</span> },
+            { key: 'commissionRate', label: 'Commission', align: 'right', render: (v) => `${v}%` },
+            { key: 'totalEarnings', label: 'Total Earnings', align: 'right', render: (v) => `AED ${Number(v).toFixed(2)}` },
+            { key: 'pendingEarnings', label: 'Pending', align: 'right', render: (v) => `AED ${Number(v).toFixed(2)}` },
+            { key: 'status', label: 'Status', render: (v) => <Badge variant={statusVariant(String(v))} size="xs">{String(v)}</Badge> },
+          ]}
+          actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
+          emptyMessage="No affiliates found."
+        />
+      </div>
 
       <AdminModal open={modalOpen} title={editing ? 'Edit Affiliate' : 'Create Affiliate'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting}>
         <div className="space-y-4">

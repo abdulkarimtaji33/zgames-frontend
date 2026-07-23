@@ -97,7 +97,7 @@ export default function AdminReviewsPage() {
           searchable
           searchPlaceholder="Search reviews..."
           columns={[
-            { key: 'rating', label: 'Rating', render: (v) => <span className="text-yellow-400">{'★'.repeat(Number(v))}</span> },
+            { key: 'rating', label: 'Rating', render: (v) => <span className="text-viz-3">{'★'.repeat(Number(v))}</span> },
             {
               key: 'title',
               label: 'Review',

@@ -87,7 +87,7 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div>
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -149,6 +149,7 @@ export default function AdminProductsPage() {
               key: 'price',
               label: 'Price',
               sortable: true,
+              align: 'right',
               render: (v, row) => (
                 <div>
                   <p className="font-medium">AED {Number(v).toFixed(2)}</p>
@@ -183,7 +184,11 @@ export default function AdminProductsPage() {
               onDelete={() => openDelete(row)}
             />
           )}
-          emptyMessage="No products found."
+          emptyMessage={
+            search || categoryId || brandId || status
+              ? 'No products match your filters. Try adjusting search or clearing filters.'
+              : 'No products yet. Add your first product to get started.'
+          }
         />
         <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>

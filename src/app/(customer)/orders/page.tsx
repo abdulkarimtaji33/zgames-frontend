@@ -40,7 +40,7 @@ export default function OrdersPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} height={80} />)}
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-16 rounded-xl bg-card border border-border">
+        <div className="text-center py-16 rounded-xl bg-card border border-border shadow-sm">
           <Package className="h-14 w-14 text-foreground-subtle mx-auto mb-4" />
           <h2 className="font-heading text-xl font-bold mb-2">No orders yet</h2>
           <p className="text-foreground-muted mb-6">When you place an order, it will appear here.</p>
@@ -51,7 +51,7 @@ export default function OrdersPage() {
       ) : (
         <div className="space-y-3">
           {orders.map((order) => (
-            <div key={order.id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border hover:border-border-hover transition-colors group">
+            <div key={order.id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-sm hover:border-border-hover hover:shadow-md transition-all group">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full bg-background-tertiary flex items-center justify-center flex-shrink-0">
                   <Package className="h-5 w-5 text-foreground-muted" />

@@ -17,7 +17,7 @@ export function StarRating({ rating, max = 5, size = 'sm', showCount, count }: S
         {Array.from({ length: max }).map((_, i) => (
           <Star
             key={i}
-            className={cn(sizeClass, i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-none text-foreground-subtle')}
+            className={cn(sizeClass, i < Math.floor(rating) ? 'fill-viz-3 text-viz-3' : 'fill-none text-foreground-subtle')}
           />
         ))}
       </div>

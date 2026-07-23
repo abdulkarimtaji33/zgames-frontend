@@ -21,7 +21,7 @@ export default function AboutPage() {
             { value: '5', label: 'GCC Countries' },
             { value: '2019', label: 'Founded' },
           ].map(({ value, label }) => (
-            <div key={label} className="text-center p-6 rounded-2xl bg-card border border-border">
+            <div key={label} className="text-center p-6 rounded-xl bg-card border border-border shadow-sm">
               <p className="font-heading text-4xl font-bold text-accent mb-1">{value}</p>
               <p className="text-sm text-foreground-muted">{label}</p>
             </div>
@@ -33,13 +33,13 @@ export default function AboutPage() {
           <h2 className="font-heading text-3xl font-bold text-center mb-10">Why CGA Games?</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: Shield, title: '100% Authentic', desc: 'Every product sourced directly from official distributors. No counterfeits, ever.', color: 'text-blue-400' },
-              { icon: Award, title: 'Best Prices', desc: 'We price-match and run regular flash deals to ensure you always get value.', color: 'text-yellow-400' },
-              { icon: Users, title: 'Expert Team', desc: 'Our staff are passionate gamers who know products inside and out.', color: 'text-green-400' },
+              { icon: Shield, title: '100% Authentic', desc: 'Every product sourced directly from official distributors. No counterfeits, ever.', color: 'text-viz-1' },
+              { icon: Award, title: 'Best Prices', desc: 'We price-match and run regular flash deals to ensure you always get value.', color: 'text-viz-3' },
+              { icon: Users, title: 'Expert Team', desc: 'Our staff are passionate gamers who know products inside and out.', color: 'text-viz-2' },
               { icon: MapPin, title: 'Local Presence', desc: 'Physical stores in Dubai + fast GCC-wide delivery from our warehouses.', color: 'text-accent' },
             ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="flex gap-4 p-5 rounded-xl bg-card border border-border">
-                <div className={`h-10 w-10 rounded-full bg-background-tertiary flex items-center justify-center flex-shrink-0 ${color}`}>
+              <div key={title} className="flex gap-4 p-5 rounded-xl bg-card border border-border shadow-sm transition-shadow hover:shadow-md">
+                <div className={`h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center flex-shrink-0 ${color}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>

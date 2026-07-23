@@ -156,28 +156,30 @@ export default function AdminCouponsPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Active Coupons" value={String(active)} icon={<Ticket className="h-4 w-4" />} color="text-green-400" />
-        <StatCard title="Total Coupons" value={String(total)} icon={<Ticket className="h-4 w-4" />} color="text-blue-400" />
+        <StatCard title="Active Coupons" value={String(active)} icon={<Ticket className="h-4 w-4" />} color="text-success" />
+        <StatCard title="Total Coupons" value={String(total)} icon={<Ticket className="h-4 w-4" />} color="text-info" />
         <StatCard title="Total Redemptions" value={String(items.reduce((s, c) => s + couponUsage(c), 0))} icon={<Ticket className="h-4 w-4" />} color="text-accent" />
         <StatCard title="Expired/Inactive" value={String(items.length - active)} icon={<Ticket className="h-4 w-4" />} color="text-error" />
       </div>
 
-      <DataTable
-        data={items}
-        isLoading={isLoading}
-        searchable
-        columns={[
-          { key: 'code', label: 'Code', render: (v) => <code className="bg-background-tertiary px-2 py-0.5 rounded text-accent font-mono text-sm">{String(v)}</code> },
-          { key: 'discountType', label: 'Type', render: (_, row) => <Badge variant="default" size="xs">{couponType(row)}</Badge> },
-          { key: 'discountValue', label: 'Discount', render: (_, row) => couponType(row).includes('percentage') ? `${couponValue(row)}%` : `AED ${couponValue(row)}` },
-          { key: 'usageCount', label: 'Used', render: (_, row) => `${couponUsage(row)} / ${row.usageLimit ?? '∞'}` },
-          { key: 'expiresAt', label: 'Expires', render: (_, row) => <span className="text-xs text-foreground-muted">{couponExpires(row) ? new Date(couponExpires(row)!).toLocaleDateString() : 'Never'}</span> },
-          { key: 'isActive', label: 'Active', render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Yes' : 'No'}</Badge> },
-        ]}
-        actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
-        emptyMessage="No coupons found."
-      />
-      <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <DataTable
+          data={items}
+          isLoading={isLoading}
+          searchable
+          columns={[
+            { key: 'code', label: 'Code', render: (v) => <code className="bg-background-tertiary px-2 py-0.5 rounded text-accent font-mono text-sm">{String(v)}</code> },
+            { key: 'discountType', label: 'Type', render: (_, row) => <Badge variant="default" size="xs">{couponType(row)}</Badge> },
+            { key: 'discountValue', label: 'Discount', align: 'right', render: (_, row) => couponType(row).includes('percentage') ? `${couponValue(row)}%` : `AED ${couponValue(row)}` },
+            { key: 'usageCount', label: 'Used', align: 'right', render: (_, row) => `${couponUsage(row)} / ${row.usageLimit ?? '∞'}` },
+            { key: 'expiresAt', label: 'Expires', render: (_, row) => <span className="text-xs text-foreground-muted">{couponExpires(row) ? new Date(couponExpires(row)!).toLocaleDateString() : 'Never'}</span> },
+            { key: 'isActive', label: 'Active', render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Yes' : 'No'}</Badge> },
+          ]}
+          actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
+          emptyMessage="No coupons found."
+        />
+        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      </div>
 
       <AdminModal open={modalOpen} title={editing ? 'Edit Coupon' : 'Create Coupon'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting}>
         <div className="space-y-4">

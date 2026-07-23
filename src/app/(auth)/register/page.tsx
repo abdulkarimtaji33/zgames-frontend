@@ -58,7 +58,7 @@ export default function RegisterPage() {
       router.push('/en');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setServerError(msg ?? 'Registration failed. Please try again.');
+      setServerError(msg ?? "We couldn't create your account — that email may already be registered, or something went wrong on our end. Please try again.");
     }
   };
 

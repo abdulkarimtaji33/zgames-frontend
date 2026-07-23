@@ -226,7 +226,7 @@ export default function AdminAttributesPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div>
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -269,7 +269,7 @@ export default function AdminAttributesPage() {
           actions={(row) => (
             <CrudActions onEdit={() => openEdit(row)} onDelete={() => openDelete(row)} />
           )}
-          emptyMessage="No attributes found."
+          emptyMessage="No attributes yet. Add one like Size or Color to build product variants."
         />
         <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>

@@ -35,7 +35,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         {/* Sidebar */}
         <aside className="lg:w-64 flex-shrink-0">
           {/* User info */}
-          <div className="rounded-xl bg-card border border-border p-5 mb-4">
+          <div className="rounded-xl bg-card border border-border p-5 mb-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
                 {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
@@ -60,13 +60,13 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </div>
 
           {/* Nav */}
-          <nav className="rounded-xl bg-card border border-border overflow-hidden">
+          <nav className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 text-sm border-b border-border last:border-b-0 transition-colors',
+                  'flex items-center gap-3 px-4 py-3 text-sm border-b border-border last:border-b-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:-outline-offset-2',
                   pathname === href
                     ? 'bg-accent/10 text-accent font-medium'
                     : 'text-foreground-muted hover:text-foreground hover:bg-background-tertiary',
@@ -78,7 +78,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
             ))}
             <button
               onClick={() => { clearAuth(); router.push('/login'); }}
-              className="flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-background-tertiary transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-background-tertiary transition-colors w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               <LogOut className="h-4 w-4 flex-shrink-0" />
               Logout

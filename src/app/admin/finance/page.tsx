@@ -118,8 +118,8 @@ export default function AdminFinancePage() {
       <h1 className="font-heading text-2xl font-bold">Finance</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard title="Total Revenue" value={summaryLoading ? '...' : `AED ${Number(summary.revenue ?? 0).toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="text-green-400" />
-        <StatCard title="Paid Orders" value={summaryLoading ? '...' : String(summary.orderCount ?? 0)} icon={<CreditCard className="h-4 w-4" />} color="text-blue-400" />
+        <StatCard title="Total Revenue" value={summaryLoading ? '...' : `AED ${Number(summary.revenue ?? 0).toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="text-success" />
+        <StatCard title="Paid Orders" value={summaryLoading ? '...' : String(summary.orderCount ?? 0)} icon={<CreditCard className="h-4 w-4" />} color="text-info" />
         <StatCard title="Avg Order Value" value={summaryLoading ? '...' : `AED ${Number(summary.aov ?? 0).toFixed(0)}`} icon={<TrendingUp className="h-4 w-4" />} color="text-accent" />
       </div>
 
@@ -132,7 +132,7 @@ export default function AdminFinancePage() {
           columns={[
             { key: 'orderNumber', label: 'Order', render: (v) => <span className="font-medium">{String(v ?? '—')}</span> },
             { key: 'method', label: 'Method', render: (v) => String(v ?? '—') },
-            { key: 'amount', label: 'Amount', render: (v) => <span className="font-bold text-accent">AED {Number(v).toFixed(2)}</span> },
+            { key: 'amount', label: 'Amount', align: 'right', render: (v) => <span className="font-bold text-accent">AED {Number(v).toFixed(2)}</span> },
             { key: 'status', label: 'Status', render: (v) => <Badge variant={statusVariant(String(v))} size="xs">{String(v)}</Badge> },
             { key: 'createdAt', label: 'Date', render: (v) => v ? new Date(String(v)).toLocaleDateString() : '—' },
           ]}

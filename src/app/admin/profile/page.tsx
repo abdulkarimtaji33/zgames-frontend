@@ -46,7 +46,7 @@ export default function AdminProfilePage() {
     <div className="p-4 md:p-6 space-y-8 max-w-xl">
       <h1 className="font-heading text-2xl font-bold">My Profile</h1>
 
-      <section className="rounded-xl bg-card border border-border p-5 space-y-4">
+      <section className="rounded-xl bg-card border border-border p-5 space-y-4 shadow-sm">
         <h2 className="font-semibold">Account Info</h2>
         <p className="text-sm text-foreground-muted">{user?.email}</p>
         <FormField label="First Name"><FormInput value={profile.firstName} onChange={(e) => setProfile({ ...profile, firstName: e.target.value })} /></FormField>
@@ -55,7 +55,7 @@ export default function AdminProfilePage() {
         <Button variant="primary" size="sm" onClick={saveProfile} isLoading={saving}>Save Profile</Button>
       </section>
 
-      <section className="rounded-xl bg-card border border-border p-5 space-y-4">
+      <section className="rounded-xl bg-card border border-border p-5 space-y-4 shadow-sm">
         <h2 className="font-semibold">Change Password</h2>
         <FormField label="Current Password"><FormInput type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} /></FormField>
         <FormField label="New Password"><FormInput type="password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} /></FormField>

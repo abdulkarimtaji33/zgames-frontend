@@ -4,7 +4,7 @@ export default function PrivacyPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-4xl font-bold mb-3">Privacy Policy</h1>
         <p className="text-sm text-foreground-muted mb-8">Last updated: January 1, 2025</p>
-        <div className="prose prose-invert max-w-none space-y-6">
+        <div className="prose-measure space-y-6">
           {[
             { title: '1. Information We Collect', body: 'We collect information you provide directly, such as when you create an account, place an order, or contact support. This includes your name, email address, phone number, delivery addresses, and payment information.' },
             { title: '2. How We Use Your Information', body: 'Your information is used to process orders, communicate with you about your orders, send promotional emails (with your consent), improve our website, and comply with legal obligations.' },

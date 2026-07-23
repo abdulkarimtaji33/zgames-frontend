@@ -174,7 +174,7 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-5 space-y-3">
+      <div className="rounded-xl bg-card border border-border p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-accent" />
           <h3 className="font-heading font-bold text-sm">New Order Notifications</h3>
@@ -183,18 +183,18 @@ export default function AdminSettingsPage() {
           Whenever a new order comes in (Cash on Delivery instantly, card payments once paid), an alert email is sent here and an in-app notification is created for admin/super-admin staff.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
-          <input
+          <FormInput
             type="email"
             value={notifyEmail}
             onChange={(e) => setNotifyEmail(e.target.value)}
             placeholder="orders@cgagames.com"
-            className="flex-1 px-3 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
+            className="flex-1"
           />
           <Button variant="primary" size="sm" onClick={handleSaveNotifyEmail} isLoading={savingNotifyEmail}>Save</Button>
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-5 space-y-3">
+      <div className="rounded-xl bg-card border border-border p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2">
           <h3 className="font-heading font-bold text-sm">Storefront Theme</h3>
         </div>
@@ -220,13 +220,13 @@ export default function AdminSettingsPage() {
       </div>
 
       {settings.length === 0 ? (
-        <div className="rounded-xl bg-card border border-border p-8 text-center">
+        <div className="rounded-xl bg-card border border-border p-8 text-center shadow-sm">
           <p className="text-sm text-foreground-muted mb-4">No settings configured yet.</p>
           <Button variant="primary" size="sm" onClick={() => setAddOpen(true)}><Plus className="h-4 w-4" /> Add First Setting</Button>
         </div>
       ) : (
         Array.from(groups.entries()).map(([group, items]) => (
-          <div key={group} className="rounded-xl bg-card border border-border overflow-hidden">
+          <div key={group} className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
             <div className="px-5 py-3 bg-background-tertiary border-b border-border">
               <h3 className="font-heading font-bold text-sm capitalize">{group}</h3>
             </div>
@@ -237,8 +237,8 @@ export default function AdminSettingsPage() {
                     <p className="text-sm font-medium">{s.label ?? s.key}</p>
                     <p className="text-xs text-foreground-muted font-mono">{s.key}</p>
                   </div>
-                  <input
-                    className="sm:w-64 px-3 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
+                  <FormInput
+                    className="sm:w-64"
                     value={s.value}
                     onChange={(e) => setSettings((prev) => prev.map((x) => x.key === s.key ? { ...x, value: e.target.value } : x))}
                   />

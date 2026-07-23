@@ -89,10 +89,28 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-20 text-center">
-        <span className="text-6xl mb-4 block">😢</span>
-        <h2 className="font-heading text-2xl font-bold mb-2">Product not found</h2>
-        <Link href="/en" className="text-accent hover:underline">← Back to shop</Link>
+      <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-24 text-center animate-fade-in">
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-surface-2 text-4xl">
+          🕹️
+        </div>
+        <h2 className="font-heading text-2xl font-bold text-foreground mb-2">We couldn&apos;t find that product</h2>
+        <p className="mx-auto max-w-md text-sm text-foreground-muted mb-6">
+          It may have been removed, renamed, or the link is out of date. Try browsing our catalog instead.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            href="/en"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+          >
+            Back to shop
+          </Link>
+          <Link
+            href="/en/search"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-accent px-4 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-white"
+          >
+            Search products
+          </Link>
+        </div>
       </div>
     );
   }
@@ -116,8 +134,8 @@ export default function ProductDetailPage() {
 
       <div className="grid md:grid-cols-2 gap-10 lg:gap-16">
         {/* ── Image Gallery ──────────────────────── */}
-        <div className="space-y-4">
-          <div className="relative rounded-2xl bg-background-tertiary overflow-hidden aspect-square group">
+        <div className="space-y-4 animate-fade-in">
+          <div className="relative rounded-2xl bg-surface-2 overflow-hidden aspect-square group">
             {currentImage ? (
               <Image
                 src={currentImage.url}
@@ -172,7 +190,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ── Product Info ───────────────────────── */}
-        <div className="space-y-5">
+        <div className="space-y-5 animate-slide-up">
           {/* Title & badges */}
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -219,7 +237,7 @@ export default function ProductDetailPage() {
 
           {/* Release date */}
           {product.isPreorder && product.releaseDate && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-900/20 border border-purple-500/20">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-info/10 border border-info/30">
               <span className="text-lg">📅</span>
               <div>
                 <p className="text-sm font-medium text-foreground">Release Date</p>
@@ -235,14 +253,14 @@ export default function ProductDetailPage() {
                 <div className="flex items-center border border-border rounded-full overflow-hidden">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-4 py-2.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                    className="px-4 py-2.5 text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="px-4 py-2.5 font-semibold min-w-[3rem] text-center">{quantity}</span>
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="px-4 py-2.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                    className="px-4 py-2.5 text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -286,7 +304,7 @@ export default function ProductDetailPage() {
           )}
 
           {/* Delivery info */}
-          <div className="rounded-xl bg-background-tertiary p-4 space-y-3">
+          <div className="rounded-xl bg-surface-2 p-4 space-y-3">
             <div className="flex items-start gap-3">
               <Truck className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
               <div>
@@ -307,7 +325,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-wrap gap-2 items-center">
             <p className="text-xs text-foreground-subtle">Pay with:</p>
             {['VISA', 'Mastercard', 'Tabby', 'Tamara', 'COD'].map((m) => (
-              <span key={m} className="px-2 py-0.5 rounded bg-background-tertiary border border-border text-xs text-foreground-muted font-medium">{m}</span>
+              <span key={m} className="px-2 py-0.5 rounded bg-surface-2 border border-border text-xs text-foreground-muted font-medium">{m}</span>
             ))}
           </div>
         </div>
@@ -331,9 +349,9 @@ export default function ProductDetailPage() {
             </button>
           ))}
         </div>
-        <div className="py-8">
+        <div className="py-8 animate-fade-in" key={activeTab}>
           {activeTab === 'Description' && (
-            <div className="prose prose-invert max-w-none">
+            <div className="prose-measure">
               {product.description ? (
                 <p className="text-foreground-muted leading-relaxed whitespace-pre-wrap">{product.description}</p>
               ) : (
@@ -351,20 +369,37 @@ export default function ProductDetailPage() {
                 ['Developer', product.developer],
                 ['SKU', product.sku],
                 ['Barcode', product.barcode],
-              ].filter(([, v]) => v).map(([k, v]) => (
-                <div key={k} className="flex justify-between py-3 border-b border-border">
-                  <span className="text-sm text-foreground-muted">{k}</span>
-                  <span className="text-sm text-foreground font-medium">{v}</span>
-                </div>
-              ))}
+              ].filter(([, v]) => v).length === 0 ? (
+                <p className="text-foreground-muted">No specifications available for this product.</p>
+              ) : (
+                [
+                  ['Platform', product.platform],
+                  ['Genre', product.genre],
+                  ['Region', product.region],
+                  ['Publisher', product.publisher],
+                  ['Developer', product.developer],
+                  ['SKU', product.sku],
+                  ['Barcode', product.barcode],
+                ].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k} className="flex justify-between py-3 border-b border-border">
+                    <span className="text-sm text-foreground-muted">{k}</span>
+                    <span className="text-sm text-foreground font-medium">{v}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
           {activeTab === 'Reviews' && (
             <div className="space-y-6">
               {product.reviewCount === 0 ? (
-                <div className="text-center py-10">
-                  <Star className="h-10 w-10 text-foreground-subtle mx-auto mb-3" />
-                  <p className="text-foreground-muted">No reviews yet. Be the first!</p>
+                <div className="flex flex-col items-center justify-center text-center py-16">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface-2">
+                    <Star className="h-6 w-6 text-foreground-subtle" />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-foreground mb-1">No reviews yet</h3>
+                  <p className="text-sm text-foreground-muted max-w-sm">
+                    Be the first to share what you think about {product.name}.
+                  </p>
                 </div>
               ) : (
                 <div>
@@ -381,7 +416,9 @@ export default function ProductDetailPage() {
             </div>
           )}
           {activeTab === 'FAQ' && (
-            <p className="text-foreground-muted">No FAQ available for this product.</p>
+            <div className="flex flex-col items-center justify-center text-center py-16">
+              <p className="text-foreground-muted">No FAQ available for this product yet.</p>
+            </div>
           )}
         </div>
       </div>

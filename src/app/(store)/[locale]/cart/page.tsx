@@ -39,10 +39,12 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-20 text-center">
-        <ShoppingBag className="h-20 w-20 text-foreground-subtle mx-auto mb-6" />
+      <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-20 text-center animate-fade-in">
+        <div className="h-24 w-24 rounded-full bg-surface-2 border border-border flex items-center justify-center mx-auto mb-6">
+          <ShoppingBag className="h-11 w-11 text-foreground-subtle" />
+        </div>
         <h1 className="font-heading text-3xl font-bold mb-3">Your Cart is Empty</h1>
-        <p className="text-foreground-muted mb-8">Add some products to get started!</p>
+        <p className="text-foreground-muted mb-8">Looks like you haven&apos;t added anything yet — browse our catalog to find your next favorite game.</p>
         <Link href="/en">
           <Button variant="primary" size="lg">Continue Shopping</Button>
         </Link>
@@ -60,7 +62,7 @@ export default function CartPage() {
         {/* Cart items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex gap-4 p-4 rounded-xl bg-card border border-border">
+            <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex gap-4 p-4 rounded-xl bg-card border border-border transition-shadow hover:shadow-md">
               {/* Image */}
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg bg-background-tertiary overflow-hidden flex-shrink-0">
                 {item.imageUrl ? (
@@ -83,14 +85,16 @@ export default function CartPage() {
                   <div className="flex items-center border border-border rounded-full overflow-hidden">
                     <button
                       onClick={() => updateQuantity(item.productId, item.variantId, item.quantity - 1)}
-                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                      aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="px-3 text-sm font-semibold min-w-[2rem] text-center">{item.quantity}</span>
+                    <span className="px-3 text-sm font-semibold min-w-[2rem] text-center tabular-nums">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
-                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+                      aria-label="Increase quantity"
+                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -107,7 +111,8 @@ export default function CartPage() {
                     )}
                     <button
                       onClick={() => removeItem(item.productId, item.variantId)}
-                      className="text-foreground-subtle hover:text-error transition-colors"
+                      aria-label="Remove from cart"
+                      className="text-foreground-subtle hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -139,7 +144,7 @@ export default function CartPage() {
                   <span className="text-foreground-muted flex items-center gap-1">
                     <Tag className="h-3.5 w-3.5 text-accent" />
                     Coupon ({couponCode})
-                    <button onClick={removeCoupon} className="text-foreground-subtle hover:text-error transition-colors ml-1 text-xs">✕</button>
+                    <button onClick={removeCoupon} aria-label="Remove coupon" className="text-foreground-subtle hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors ml-1 text-xs">✕</button>
                   </span>
                   <span className="text-success font-medium">-{format(discount)}</span>
                 </div>
@@ -151,7 +156,7 @@ export default function CartPage() {
             </div>
 
             {shipping > 0 && (
-              <div className="text-xs text-foreground-muted mb-4 p-2 rounded bg-background-tertiary">
+              <div className="text-xs text-info mb-4 p-2.5 rounded-lg bg-info/10 border border-info/30">
                 💡 Add <strong>{format(150 - subtotal)}</strong> more for free shipping
               </div>
             )}

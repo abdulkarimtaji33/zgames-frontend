@@ -29,12 +29,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded border bg-background-secondary px-3 py-2.5 text-sm text-foreground',
+              'w-full rounded-lg border bg-background-secondary px-3 py-2.5 text-sm text-foreground',
               'placeholder:text-foreground-subtle',
-              'border-border focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
-              'transition-colors duration-150',
+              'border-border focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring/40',
+              'transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-standard)]',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              error && 'border-error focus:border-error focus:ring-error',
+              error && 'border-error focus:border-error focus:ring-error/30',
               leftIcon && 'pl-9',
               rightIcon && 'pr-9',
               className,

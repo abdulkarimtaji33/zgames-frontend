@@ -6,7 +6,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
-import { FormField, FormInput } from '@/components/admin/FormField';
+import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -120,7 +120,7 @@ export default function AdminCurrenciesPage() {
           { key: 'code', label: 'Code', render: (v) => <Badge variant="default" size="xs">{String(v)}</Badge> },
           { key: 'name', label: 'Name', sortable: true },
           { key: 'symbol', label: 'Symbol' },
-          { key: 'exchangeRate', label: 'Rate', render: (v) => Number(v ?? 1).toFixed(4) },
+          { key: 'exchangeRate', label: 'Rate', align: 'right', render: (v) => Number(v ?? 1).toFixed(4) },
           { key: 'isDefault', label: 'Default', render: (v) => v ? <Badge variant="success" size="xs">Default</Badge> : null },
           { key: 'isActive', label: 'Status', render: (v) => <Badge variant={v !== false ? 'success' : 'error'} size="xs">{v !== false ? 'Active' : 'Inactive'}</Badge> },
         ]}
@@ -143,7 +143,7 @@ export default function AdminCurrenciesPage() {
           <FormField label="Name"><FormInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></FormField>
           <FormField label="Symbol"><FormInput value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} /></FormField>
           <FormField label="Exchange Rate"><FormInput type="number" min="0" step="0.0001" value={form.exchangeRate} onChange={(e) => setForm({ ...form, exchangeRate: e.target.value })} /></FormField>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
+          <FormCheckbox label="Active" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
         </div>
       </AdminModal>
 

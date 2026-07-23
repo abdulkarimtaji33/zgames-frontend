@@ -1,16 +1,18 @@
-﻿'use client';
+'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Zap, Clock, Tag, Star } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 
 interface MegaMenuProps {
+  open: boolean;
   onClose: () => void;
 }
 
 const MENU_DATA = {
   consoles: {
     label: 'Console Gaming',
-    color: '#006FCF',
     sections: [
       {
         title: 'PlayStation',
@@ -147,23 +149,52 @@ const MENU_DATA = {
 
 type TabKey = keyof typeof MENU_DATA;
 
-const TABS: { key: TabKey; label: string; icon?: string }[] = [
-  { key: 'consoles', label: 'Console Gaming', icon: '🎮' },
-  { key: 'pc', label: 'PC Gaming', icon: '💻' },
-  { key: 'cards', label: 'Trading Cards', icon: '🃏' },
-  { key: 'more', label: 'Merchandise', icon: '✨' },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'consoles', label: 'Console Gaming' },
+  { key: 'pc', label: 'PC Gaming' },
+  { key: 'cards', label: 'Trading Cards' },
+  { key: 'more', label: 'Merchandise' },
 ];
 
 const QUICK_LINKS = [
-  { icon: Zap, label: 'Flash Deals', href: '/en/deals', color: 'text-yellow-500' },
-  { icon: Clock, label: 'Pre-Orders', href: '/en/preorders', color: 'text-purple-400' },
-  { icon: Tag, label: 'New Arrivals', href: '/en/new-arrivals', color: 'text-green-400' },
-  { icon: Star, label: 'Best Sellers', href: '/en/best-sellers', color: 'text-accent' },
+  { icon: Zap, label: 'Flash Deals', href: '/en/deals', color: 'text-viz-3' },
+  { icon: Clock, label: 'Pre-Orders', href: '/en/preorders', color: 'text-viz-4' },
+  { icon: Tag, label: 'New Arrivals', href: '/en/new-arrivals', color: 'text-viz-2' },
+  { icon: Star, label: 'Best Sellers', href: '/en/best-sellers', color: 'text-viz-5' },
 ];
 
-export function MegaMenu({ onClose }: MegaMenuProps) {
+/** Keeps the panel mounted through its exit transition before unmounting. */
+function useMountedForExit(open: boolean): boolean {
+  const [mounted, setMounted] = useState(open);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  // Adjust state during render when `open` changes, rather than in an
+  // effect, so opening shows the panel on the same render (no flash).
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setMounted(true);
+  }
+
+  useEffect(() => {
+    if (open || !mounted) return;
+    const t = setTimeout(() => setMounted(false), 250);
+    return () => clearTimeout(t);
+  }, [open, mounted]);
+
+  return mounted;
+}
+
+export function MegaMenu({ open, onClose }: MegaMenuProps) {
+  const mounted = useMountedForExit(open);
+
+  if (!mounted) return null;
+
   return (
-    <div className="w-full border-b border-border bg-card/95 backdrop-blur-xl shadow-2xl animate-slide-down">
+    <div
+      data-transition-panel
+      data-state={open ? 'open' : 'closed'}
+      className="w-full glass border-t-0 shadow-lg origin-top"
+    >
       <div className="mx-auto max-w-[1440px] px-6 py-6">
         {/* Quick links strip */}
         <div className="flex gap-6 mb-6 border-b border-border pb-4">
@@ -172,9 +203,9 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
               key={href}
               href={href}
               onClick={onClose}
-              className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground transition-colors group"
+              className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground transition-colors group rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Icon className={`h-4 w-4 ${color} group-hover:scale-110 transition-transform`} />
+              <Icon className={cn('h-4 w-4 group-hover:scale-110 transition-transform', color)} />
               <span>{label}</span>
             </Link>
           ))}
@@ -197,7 +228,7 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
                   {section.sections.map((sub) => (
                     <div key={sub.title}>
                       <p className="text-xs font-semibold text-foreground-subtle uppercase tracking-wider mb-2 flex items-center gap-1">
-                        <span>{sub.emoji}</span>
+                        <span aria-hidden>{sub.emoji}</span>
                         <span>{sub.title}</span>
                       </p>
                       <ul className="space-y-1">
@@ -206,7 +237,7 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
                             <Link
                               href={link.href}
                               onClick={onClose}
-                              className="text-sm text-foreground-muted hover:text-accent transition-colors block py-0.5"
+                              className="text-sm text-foreground-muted hover:text-accent transition-colors block py-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               {link.label}
                             </Link>
@@ -222,7 +253,7 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
                   <Link
                     href={section.featured.href}
                     onClick={onClose}
-                    className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors group"
+                    className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <span className="flex-1 text-sm font-medium text-accent group-hover:underline">
                       {section.featured.label}
@@ -242,9 +273,9 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
           <Link
             href="/en/preorders"
             onClick={onClose}
-            className="flex items-center gap-3 p-3 rounded-lg bg-purple-900/20 border border-purple-500/20 hover:border-purple-500/40 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg bg-viz-4/20 border border-viz-4/30 hover:border-viz-4/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-2xl">⏰</span>
+            <span className="text-2xl" aria-hidden>⏰</span>
             <div>
               <p className="text-sm font-semibold text-foreground">Pre-Orders Open</p>
               <p className="text-xs text-foreground-muted">Secure yours before launch</p>
@@ -253,9 +284,9 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
           <Link
             href="/en/coming-soon"
             onClick={onClose}
-            className="flex items-center gap-3 p-3 rounded-lg bg-accent/10 border border-accent/20 hover:border-accent/40 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg bg-accent/10 border border-accent/20 hover:border-accent/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-2xl">🔥</span>
+            <span className="text-2xl" aria-hidden>🔥</span>
             <div>
               <p className="text-sm font-semibold text-foreground">Coming Soon</p>
               <p className="text-xs text-foreground-muted">Upcoming releases & drops</p>
@@ -264,9 +295,9 @@ export function MegaMenu({ onClose }: MegaMenuProps) {
           <Link
             href="/en/deals"
             onClick={onClose}
-            className="flex items-center gap-3 p-3 rounded-lg bg-green-900/20 border border-green-500/20 hover:border-green-500/40 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-lg bg-viz-2/20 border border-viz-2/30 hover:border-viz-2/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-2xl">💰</span>
+            <span className="text-2xl" aria-hidden>💰</span>
             <div>
               <p className="text-sm font-semibold text-foreground">Flash Deals</p>
               <p className="text-xs text-foreground-muted">Limited time discounts</p>

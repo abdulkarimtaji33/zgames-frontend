@@ -119,7 +119,7 @@ export default function AdminSuppliersPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
         <DataTable
           data={items}
           isLoading={isLoading}

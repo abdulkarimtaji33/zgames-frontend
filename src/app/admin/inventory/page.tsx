@@ -155,7 +155,7 @@ export default function AdminInventoryPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total SKUs" value={String(total)} color="text-blue-400" icon={<Boxes className="h-4 w-4" />} />
+        <StatCard title="Total SKUs" value={String(total)} color="text-info" icon={<Boxes className="h-4 w-4" />} />
         <StatCard
           title="Low Stock Items"
           value={String(lowStockItems.length)}
@@ -169,7 +169,7 @@ export default function AdminInventoryPage() {
           icon={<TrendingDown className="h-4 w-4" />}
           color="text-error"
         />
-        <StatCard title="Total Units" value={String(totalUnits)} color="text-green-400" icon={<Hash className="h-4 w-4" />} />
+        <StatCard title="Total Units" value={String(totalUnits)} color="text-success" icon={<Hash className="h-4 w-4" />} />
       </div>
 
       {lowStockItems.length > 0 && (
@@ -190,7 +190,7 @@ export default function AdminInventoryPage() {
         </div>
       )}
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
         <DataTable
           data={items}
           isLoading={isLoading}
@@ -217,6 +217,7 @@ export default function AdminInventoryPage() {
               key: 'quantity',
               label: 'In Stock',
               sortable: true,
+              align: 'right',
               render: (v, row) => (
                 <span
                   className={`font-bold ${
@@ -230,11 +231,13 @@ export default function AdminInventoryPage() {
             {
               key: 'reservedQuantity',
               label: 'Reserved',
+              align: 'right',
               render: (v) => <span className="text-foreground-muted">{String(v ?? 0)}</span>,
             },
             {
               key: 'reorderPoint',
               label: 'Threshold',
+              align: 'right',
               render: (v) => String(v ?? 10),
             },
           ]}

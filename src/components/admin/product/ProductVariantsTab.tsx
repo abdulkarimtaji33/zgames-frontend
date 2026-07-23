@@ -143,8 +143,8 @@ export function ProductVariantsTab({ productId, variants, onChange }: ProductVar
                 <tr>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">SKU</th>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">Options</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">Price</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">Sale</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-foreground-muted">Price</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-foreground-muted">Sale</th>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted">Status</th>
                   <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-foreground-muted">Actions</th>
                 </tr>
@@ -170,8 +170,8 @@ export function ProductVariantsTab({ productId, variants, onChange }: ProductVar
                             ))}
                           </div>
                         </td>
-                        <td className="px-3 py-2"><input type="number" value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} className="w-20 px-2 py-1 rounded bg-background-tertiary border border-border text-xs" /></td>
-                        <td className="px-3 py-2"><input type="number" value={editForm.salePrice} onChange={(e) => setEditForm((f) => ({ ...f, salePrice: e.target.value }))} className="w-20 px-2 py-1 rounded bg-background-tertiary border border-border text-xs" placeholder="—" /></td>
+                        <td className="px-3 py-2 text-right"><input type="number" value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} className="w-20 px-2 py-1 rounded bg-background-tertiary border border-border text-xs text-right tabular-nums" /></td>
+                        <td className="px-3 py-2 text-right"><input type="number" value={editForm.salePrice} onChange={(e) => setEditForm((f) => ({ ...f, salePrice: e.target.value }))} className="w-20 px-2 py-1 rounded bg-background-tertiary border border-border text-xs text-right tabular-nums" placeholder="—" /></td>
                         <td className="px-3 py-2">
                           <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))} className="accent-accent h-4 w-4" />
                         </td>
@@ -190,8 +190,8 @@ export function ProductVariantsTab({ productId, variants, onChange }: ProductVar
                             ))}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5">AED {Number(v.price).toFixed(2)}</td>
-                        <td className="px-3 py-2.5">{v.salePrice != null ? `AED ${Number(v.salePrice).toFixed(2)}` : '—'}</td>
+                        <td className="px-3 py-2.5 text-right tabular-nums">AED {Number(v.price).toFixed(2)}</td>
+                        <td className="px-3 py-2.5 text-right tabular-nums">{v.salePrice != null ? `AED ${Number(v.salePrice).toFixed(2)}` : '—'}</td>
                         <td className="px-3 py-2.5">
                           <Badge variant={v.isActive ? 'success' : 'error'} size="xs">{v.isActive ? 'Active' : 'Inactive'}</Badge>
                         </td>

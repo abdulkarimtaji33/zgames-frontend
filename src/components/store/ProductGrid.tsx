@@ -38,7 +38,7 @@ export function ProductGrid({ products, isLoading, skeletonCount = 12, cols = 4 
   }
 
   return (
-    <div className={`grid ${COL_CLASSES[cols]} gap-4`}>
+    <div className={`grid ${COL_CLASSES[cols]} items-stretch gap-4`}>
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}

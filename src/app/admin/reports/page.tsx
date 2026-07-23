@@ -2,12 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FormField, FormInput } from '@/components/admin/FormField';
 import { StatCard } from '@/components/admin/StatCard';
 import { Button } from '@/components/ui/Button';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminReportsApi } from '@/lib/api/adminApi';
 import { DollarSign, ShoppingBag, Users, Package } from 'lucide-react';
+
+function RevenueTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 shadow-lg text-xs">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="text-accent font-semibold">AED {Number(payload[0].value).toLocaleString()}</p>
+    </div>
+  );
+}
 
 interface PeriodRow {
   period?: string;
@@ -52,8 +63,6 @@ export default function AdminReportsPage() {
 
   useEffect(() => { load(); }, [startDate, endDate]);
 
-  const maxRevenue = Math.max(...revenuePeriods.map((p) => Number(p.revenue ?? 0)), 1);
-
   const exportCsv = () => {
     if (revenuePeriods.length === 0) {
       toast('No data to export', 'info');
@@ -85,28 +94,28 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Revenue" value={isLoading ? '...' : `AED ${Number(summary.revenue ?? 0).toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="text-green-400" />
-        <StatCard title="Orders" value={isLoading ? '...' : String(summary.orderCount ?? 0)} icon={<ShoppingBag className="h-4 w-4" />} color="text-blue-400" />
-        <StatCard title="Customers" value={isLoading ? '...' : String(summary.total ?? 0)} icon={<Users className="h-4 w-4" />} color="text-purple-400" />
+        <StatCard title="Revenue" value={isLoading ? '...' : `AED ${Number(summary.revenue ?? 0).toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="text-success" />
+        <StatCard title="Orders" value={isLoading ? '...' : String(summary.orderCount ?? 0)} icon={<ShoppingBag className="h-4 w-4" />} color="text-info" />
+        <StatCard title="Customers" value={isLoading ? '...' : String(summary.total ?? 0)} icon={<Users className="h-4 w-4" />} color="text-viz-4" />
         <StatCard title="Avg Order" value={isLoading ? '...' : `AED ${Number(summary.aov ?? 0).toFixed(0)}`} icon={<Package className="h-4 w-4" />} color="text-accent" />
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-5">
+      <div className="rounded-xl bg-card border border-border p-5 shadow-sm">
         <h3 className="font-heading font-bold mb-4">Revenue by Period</h3>
-        {revenuePeriods.length === 0 ? (
+        {isLoading ? (
+          <div className="h-48 skeleton rounded-lg" />
+        ) : revenuePeriods.length === 0 ? (
           <p className="text-sm text-foreground-muted">No revenue data for selected range.</p>
         ) : (
-          <div className="flex items-end gap-1 h-40 overflow-x-auto">
-            {revenuePeriods.map((p, i) => {
-              const h = Math.round((Number(p.revenue ?? 0) / maxRevenue) * 100);
-              return (
-                <div key={i} className="flex flex-col items-center gap-1 min-w-[32px]">
-                  <div className="w-full bg-accent/80 rounded-t" style={{ height: `${Math.max(h, 4)}%`, minHeight: 4 }} title={`AED ${p.revenue}`} />
-                  <span className="text-[9px] text-foreground-subtle truncate max-w-[48px]">{String(p.period ?? p.date ?? i + 1).slice(-5)}</span>
-                </div>
-              );
-            })}
-          </div>
+          <ResponsiveContainer width="100%" height={192}>
+            <BarChart data={revenuePeriods.map((p, i) => ({ label: String(p.period ?? p.date ?? i + 1).slice(-5), revenue: Number(p.revenue ?? 0) }))} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <XAxis dataKey="label" tick={{ fill: 'var(--color-foreground-muted)', fontSize: 10 }} axisLine={{ stroke: 'var(--color-border)' }} tickLine={false} />
+              <YAxis tick={{ fill: 'var(--color-foreground-muted)', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+              <Tooltip content={<RevenueTooltip />} cursor={{ fill: 'var(--color-background-tertiary)' }} />
+              <Bar dataKey="revenue" fill="var(--color-accent)" radius={[4, 4, 0, 0]} animationDuration={400} />
+            </BarChart>
+          </ResponsiveContainer>
         )}
       </div>
 

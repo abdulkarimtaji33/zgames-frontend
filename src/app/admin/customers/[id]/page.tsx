@@ -125,7 +125,7 @@ export default function AdminCustomerDetailPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-xl bg-card border border-border p-5 space-y-4">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-4">
           <h2 className="font-semibold text-sm uppercase tracking-wider text-foreground-muted">Profile</h2>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between"><dt className="text-foreground-muted">Name</dt><dd>{customer.firstName} {customer.lastName}</dd></div>
@@ -138,7 +138,7 @@ export default function AdminCustomerDetailPage() {
           </dl>
         </div>
 
-        <div className="rounded-xl bg-card border border-border p-5 space-y-4">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-sm uppercase tracking-wider text-foreground-muted">Balances</h2>
             <Button variant="secondary" size="sm" onClick={() => setAdjustOpen(true)}>
@@ -159,11 +159,11 @@ export default function AdminCustomerDetailPage() {
           isLoading={false}
           columns={[
             { key: 'type', label: 'Type', render: (v) => <Badge variant="default" size="xs">{String(v)}</Badge> },
-            { key: 'points', label: 'Points', render: (v) => {
+            { key: 'points', label: 'Points', align: 'right', render: (v) => {
               const n = Number(v);
               return <span className={n >= 0 ? 'text-success' : 'text-error'}>{n >= 0 ? '+' : ''}{n}</span>;
             }},
-            { key: 'balance', label: 'Balance', render: (v) => String(v) },
+            { key: 'balance', label: 'Balance', align: 'right', render: (v) => String(v) },
             { key: 'description', label: 'Reason', render: (v) => String(v ?? '—') },
             { key: 'createdAt', label: 'Date', render: (v) => <span className="text-xs text-foreground-muted">{new Date(String(v)).toLocaleString()}</span> },
           ]}

@@ -14,9 +14,9 @@ const badgeVariants = cva(
         error: 'bg-error/20 text-error border border-error/30',
         info: 'bg-info/20 text-info border border-info/30',
         outline: 'border border-border text-foreground-muted',
-        new: 'bg-green-600 text-white',
+        new: 'bg-success text-white',
         sale: 'bg-accent text-white',
-        preorder: 'bg-purple-600 text-white',
+        preorder: 'bg-viz-4 text-white',
         comingsoon: 'bg-accent-orange text-white',
       },
       size: {

@@ -60,10 +60,10 @@ export default function AdminLoyaltyPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Enrolled Customers" value={isLoading ? '...' : String(totalCustomers)} icon={<Users className="h-4 w-4" />} color="text-purple-400" />
+        <StatCard title="Enrolled Customers" value={isLoading ? '...' : String(totalCustomers)} icon={<Users className="h-4 w-4" />} color="text-viz-4" />
         <StatCard title="Total Points Issued" value={isLoading ? '...' : totalPoints.toLocaleString()} icon={<Star className="h-4 w-4" />} color="text-accent" />
-        <StatCard title="Avg Points / Customer" value={isLoading ? '...' : totalCustomers ? Math.round(totalPoints / totalCustomers).toLocaleString() : '0'} icon={<Star className="h-4 w-4" />} color="text-blue-400" />
-        <StatCard title="Program Status" value="Active" icon={<Star className="h-4 w-4" />} color="text-green-400" />
+        <StatCard title="Avg Points / Customer" value={isLoading ? '...' : totalCustomers ? Math.round(totalPoints / totalCustomers).toLocaleString() : '0'} icon={<Star className="h-4 w-4" />} color="text-info" />
+        <StatCard title="Program Status" value="Active" icon={<Star className="h-4 w-4" />} color="text-success" />
       </div>
 
       <AdminModal open={modalOpen} title="Adjust Loyalty Points" onClose={() => setModalOpen(false)} onSubmit={handleAdjust} isSubmitting={submitting} submitLabel="Adjust">

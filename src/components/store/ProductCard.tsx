@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { StarRating } from './StarRating';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -21,6 +22,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const { productIds: wishlist, addProduct, removeProduct } = useWishlistStore();
   const isWishlisted = wishlist.includes(product.id);
+  const format = useCurrencyStore((s) => s.format);
 
   const featuredImage = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];
   const imageUrl = !imageError && featuredImage?.url ? featuredImage.url : null;
@@ -50,7 +52,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   };
 
   return (
-    <Link href={`/en/products/${product.slug}`} className={cn('group block', className)}>
+    <Link href={`/en/products/${product.slug}`} className={cn('group block h-full', className)}>
       <div className="rounded-xl bg-card border border-border overflow-hidden card-hover h-full flex flex-col">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-background-tertiary overflow-hidden flex-shrink-0">
@@ -106,7 +108,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           {/* Platform badge */}
           {product.platform && (
             <div className="absolute bottom-2 left-2">
-              <span className="px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-medium backdrop-blur-sm">
+              <span className="px-2 py-0.5 rounded-full bg-surface-3/80 text-foreground text-xs font-medium backdrop-blur-sm">
                 {product.platform}
               </span>
             </div>
@@ -132,12 +134,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <div>
               {product.salePrice ? (
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-accent">AED {Number(product.salePrice).toFixed(2)}</span>
-                  <span className="text-xs text-foreground-subtle line-through">AED {Number(product.price).toFixed(2)}</span>
+                  <span className="font-bold text-accent">{format(Number(product.salePrice))}</span>
+                  <span className="text-xs text-foreground-subtle line-through">{format(Number(product.price))}</span>
                 </div>
               ) : (
                 <span className="font-bold text-foreground">
-                  AED {Number(product.price).toFixed(2)}
+                  {format(Number(product.price))}
                 </span>
               )}
             </div>

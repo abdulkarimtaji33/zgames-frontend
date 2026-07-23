@@ -152,12 +152,12 @@ export default function AdminSupportDetailPage() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-card border border-border p-4 space-y-2 text-sm">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-4 space-y-2 text-sm">
           <p><span className="text-foreground-muted">Priority:</span> <span className="capitalize">{ticket.priority}</span></p>
           <p><span className="text-foreground-muted">Customer ID:</span> {ticket.customerId.slice(0, 8)}…</p>
           {ticket.orderId && <p><span className="text-foreground-muted">Order ID:</span> {ticket.orderId.slice(0, 8)}…</p>}
         </div>
-        <div className="md:col-span-2 rounded-xl bg-card border border-border p-4 flex items-end gap-3">
+        <div className="md:col-span-2 rounded-xl bg-card border border-border shadow-sm p-4 flex items-end gap-3">
           <FormField label="Status" className="flex-1">
             <FormSelect value={status} onChange={(e) => setStatus(e.target.value)}>
               {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -169,7 +169,7 @@ export default function AdminSupportDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-5 space-y-4">
+      <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-4">
         <h2 className="font-semibold text-sm uppercase tracking-wider text-foreground-muted">Messages</h2>
         {messages.length === 0 ? (
           <p className="text-sm text-foreground-muted text-center py-8">No messages yet.</p>
@@ -198,7 +198,7 @@ export default function AdminSupportDetailPage() {
       </div>
 
       {ticket.status !== 'closed' && (
-        <div className="rounded-xl bg-card border border-border p-5 space-y-3">
+        <div className="rounded-xl bg-card border border-border shadow-sm p-5 space-y-3">
           <FormField label="Agent Reply">
             <FormTextarea
               value={reply}

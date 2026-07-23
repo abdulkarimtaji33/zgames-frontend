@@ -39,7 +39,7 @@ export default function WishlistPage() {
           {[...Array(6)].map((_, i) => <Skeleton key={i} height={280} />)}
         </div>
       ) : productIds.length === 0 ? (
-        <div className="text-center py-16 rounded-xl bg-card border border-border">
+        <div className="text-center py-16 rounded-xl bg-card border border-border shadow-sm">
           <Heart className="h-14 w-14 text-foreground-subtle mx-auto mb-4" />
           <h2 className="font-heading text-xl font-bold mb-2">Your wishlist is empty</h2>
           <p className="text-foreground-muted">Save products you love and find them here.</p>

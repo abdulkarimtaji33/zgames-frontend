@@ -10,6 +10,8 @@ export type Column<T> = {
   sortable?: boolean;
   render?: (value: unknown, row: T) => React.ReactNode;
   className?: string;
+  /** Right-aligns the column and uses tabular-nums — set for numeric/currency columns. */
+  align?: 'left' | 'right';
 };
 
 interface DataTableProps<T> {
@@ -32,6 +34,21 @@ interface DataTableProps<T> {
 
 function getValue<T>(row: T, key: string): unknown {
   return key.split('.').reduce((obj: unknown, k) => (obj as Record<string, unknown>)?.[k], row);
+}
+
+/** Compares as numbers or dates when both sides parse cleanly; falls back to locale string compare. */
+function compareValues(a: unknown, b: unknown): number {
+  const na = typeof a === 'number' ? a : Number(a);
+  const nb = typeof b === 'number' ? b : Number(b);
+  if (a !== '' && b !== '' && a != null && b != null && !Number.isNaN(na) && !Number.isNaN(nb)) {
+    return na - nb;
+  }
+  const da = Date.parse(String(a ?? ''));
+  const db = Date.parse(String(b ?? ''));
+  if (!Number.isNaN(da) && !Number.isNaN(db) && String(a).length > 4) {
+    return da - db;
+  }
+  return String(a ?? '').localeCompare(String(b ?? ''));
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -69,9 +86,8 @@ export function DataTable<T extends { id: string | number }>({
 
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
-        const va = String(getValue(a, sortKey) ?? '');
-        const vb = String(getValue(b, sortKey) ?? '');
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        const cmp = compareValues(getValue(a, sortKey), getValue(b, sortKey));
+        return sortDir === 'asc' ? cmp : -cmp;
       })
     : filtered;
 
@@ -86,7 +102,7 @@ export function DataTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="rounded-xl bg-card border border-border overflow-hidden">
+    <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
       {(searchable || filters) && (
         <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center gap-3">
           {searchable && (
@@ -97,7 +113,8 @@ export function DataTable<T extends { id: string | number }>({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-tertiary border border-border text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-accent"
+                aria-label={searchPlaceholder}
+                className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-tertiary border border-border text-sm text-foreground placeholder:text-foreground-subtle transition-colors duration-[var(--duration-fast)] focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring/30"
               />
             </div>
           )}
@@ -106,27 +123,46 @@ export function DataTable<T extends { id: string | number }>({
       )}
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent sm:hidden z-[1]" />
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="bg-background-tertiary border-b border-border">
+          <thead className="bg-background-tertiary border-b border-border sticky top-0 z-[2]">
             <tr>
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
+                  scope="col"
+                  aria-sort={
+                    col.sortable
+                      ? sortKey === String(col.key)
+                        ? sortDir === 'asc' ? 'ascending' : 'descending'
+                        : 'none'
+                      : undefined
+                  }
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground-muted',
-                    col.sortable && 'cursor-pointer hover:text-foreground select-none',
+                    'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-foreground-muted',
+                    col.align === 'right' ? 'text-right' : 'text-left',
                     col.className,
                   )}
-                  onClick={col.sortable ? () => handleSort(String(col.key)) : undefined}
                 >
-                  <div className="flex items-center gap-1.5">
-                    {col.label}
-                    {col.sortable && <SortIcon k={String(col.key)} />}
-                  </div>
+                  {col.sortable ? (
+                    <button
+                      onClick={() => handleSort(String(col.key))}
+                      className={cn(
+                        'flex items-center gap-1.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
+                        col.align === 'right' && 'ml-auto',
+                      )}
+                    >
+                      {col.label}
+                      <SortIcon k={String(col.key)} />
+                    </button>
+                  ) : (
+                    <div className={cn('flex items-center gap-1.5', col.align === 'right' && 'justify-end')}>
+                      {col.label}
+                    </div>
+                  )}
                 </th>
               ))}
-              {actions && <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-foreground-muted">Actions</th>}
+              {actions && <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-foreground-muted">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -135,10 +171,10 @@ export function DataTable<T extends { id: string | number }>({
                 <tr key={i}>
                   {columns.map((col) => (
                     <td key={String(col.key)} className="px-4 py-3">
-                      <div className="h-4 bg-background-tertiary rounded animate-pulse w-3/4" />
+                      <div className="h-4 skeleton rounded w-3/4" />
                     </td>
                   ))}
-                  {actions && <td className="px-4 py-3"><div className="h-4 bg-background-tertiary rounded animate-pulse w-16 ml-auto" /></td>}
+                  {actions && <td className="px-4 py-3"><div className="h-4 skeleton rounded w-16 ml-auto" /></td>}
                 </tr>
               ))
             ) : sorted.length === 0 ? (
@@ -149,11 +185,18 @@ export function DataTable<T extends { id: string | number }>({
               </tr>
             ) : (
               sorted.map((row) => (
-                <tr key={row.id} className="hover:bg-background-tertiary/50 transition-colors">
+                <tr key={row.id} className="hover:bg-background-tertiary/50 transition-colors duration-[var(--duration-fast)]">
                   {columns.map((col) => {
                     const val = getValue(row, String(col.key));
                     return (
-                      <td key={String(col.key)} className={cn('px-4 py-3 text-foreground', col.className)}>
+                      <td
+                        key={String(col.key)}
+                        className={cn(
+                          'px-4 py-3 text-foreground',
+                          col.align === 'right' && 'text-right tabular-nums',
+                          col.className,
+                        )}
+                      >
                         {col.render ? col.render(val, row) : String(val ?? '—')}
                       </td>
                     );

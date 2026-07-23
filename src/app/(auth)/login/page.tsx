@@ -41,7 +41,7 @@ export default function LoginPage() {
       router.push('/en');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setServerError(msg ?? 'Invalid email or password. Please try again.');
+      setServerError(msg ?? "That email or password didn't match — try again, or reset your password below.");
     }
   };
 

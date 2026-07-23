@@ -56,8 +56,8 @@ export default function AdminCustomersPage() {
               ),
             },
             { key: 'phone', label: 'Phone', render: (v) => (v ? String(v) : '—') },
-            { key: 'loyaltyPoints', label: 'Points', render: (v) => String(v ?? 0) },
-            { key: 'storeCredit', label: 'Wallet', render: (v) => `AED ${Number(v ?? 0).toFixed(2)}` },
+            { key: 'loyaltyPoints', label: 'Points', align: 'right', render: (v) => String(v ?? 0) },
+            { key: 'storeCredit', label: 'Wallet', align: 'right', render: (v) => `AED ${Number(v ?? 0).toFixed(2)}` },
             {
               key: 'createdAt',
               label: 'Joined',

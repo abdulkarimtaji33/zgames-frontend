@@ -6,7 +6,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
-import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
+import { FormField, FormInput, FormTextarea, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -135,7 +135,7 @@ export default function AdminCmsPagesPage() {
           <FormField label="Title"><FormInput value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></FormField>
           <FormField label="Slug" hint="Auto-generated from title"><FormInput value={form.slug} disabled placeholder="auto-generated" /></FormField>
           <FormField label="Content"><FormTextarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} /></FormField>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
+          <FormCheckbox label="Published" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} />
         </div>
       </AdminModal>
 

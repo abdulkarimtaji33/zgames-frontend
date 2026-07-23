@@ -145,7 +145,7 @@ export default function AdminNewProductPage() {
         <h1 className="font-heading text-2xl font-bold">New Product</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl bg-card border border-border p-5 md:p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="rounded-xl bg-card border border-border shadow-sm p-5 md:p-6 space-y-5">
         <FormField label="Cover Image">
           <div className="flex items-center gap-3">
             {coverImage ? (

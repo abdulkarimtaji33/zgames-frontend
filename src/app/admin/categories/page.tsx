@@ -316,13 +316,30 @@ export default function AdminCategoriesPage() {
         />
       </div>
 
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl bg-card border border-border overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredCategories.length === 0 ? (
-          <p className="text-sm text-foreground-muted text-center py-12">No categories found.</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
+            <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+              <Package className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {search ? 'No categories match your search.' : 'No categories yet.'}
+              </p>
+              <p className="text-sm text-foreground-muted mt-0.5">
+                {search ? 'Try a different search term.' : 'Add your first category to start organizing products.'}
+              </p>
+            </div>
+            {!search && (
+              <Button variant="primary" size="sm" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> Add Category
+              </Button>
+            )}
+          </div>
         ) : (
           filteredCategories.map((cat) => (
             <CategoryTreeRow

@@ -32,7 +32,7 @@ export default function TrackOrderPage() {
       const res = await ordersApi.trackByNumber(orderNumber.trim(), email.trim());
       setOrder(res.data.data);
     } catch {
-      setError('Order not found. Please check your order number and email.');
+      setError("We couldn't find a matching order — double-check the order number and email, then try again.");
     } finally {
       setLoading(false);
     }

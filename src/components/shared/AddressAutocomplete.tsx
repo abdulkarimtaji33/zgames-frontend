@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { loadGoogleMaps, isGoogleMapsConfigured } from '@/lib/googleMaps';
 
 export interface ParsedAddress {
@@ -55,6 +55,8 @@ export function AddressAutocomplete({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [mapsReady, setMapsReady] = useState(false);
   const configured = isGoogleMapsConfigured();
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
 
   useEffect(() => {
     if (!configured) return;
@@ -80,17 +82,24 @@ export function AddressAutocomplete({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
       <input
         ref={inputRef}
+        id={inputId}
         type="text"
         defaultValue={defaultValue}
         placeholder={configured ? placeholder : placeholder.replace('…', ' (manual entry)')}
         onChange={(e) => onTextChange?.(e.target.value)}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
         className="w-full rounded border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent"
         autoComplete="off"
       />
-      {error && <p className="mt-1 text-xs text-error">{error}</p>}
+      {error && (
+        <p id={errorId} className="mt-1 text-xs text-error">
+          {error}
+        </p>
+      )}
       {!configured && (
         <p className="mt-1 text-xs text-foreground-subtle">Address suggestions will appear here once Google Maps is configured.</p>
       )}

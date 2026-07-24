@@ -29,18 +29,18 @@ export function CrudActions({ viewHref, onEdit, onDelete }: CrudActionsProps) {
       <div className="hidden sm:flex items-center gap-0.5">
         {viewHref && (
           <Link href={viewHref}>
-            <button className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors" title="View">
+            <button className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" title="View" aria-label="View">
               <Eye className="h-3.5 w-3.5" />
             </button>
           </Link>
         )}
         {onEdit && (
-          <button onClick={onEdit} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors" title="Edit">
+          <button onClick={onEdit} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" title="Edit" aria-label="Edit">
             <Edit2 className="h-3.5 w-3.5" />
           </button>
         )}
         {onDelete && (
-          <button onClick={onDelete} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-error transition-colors" title="Delete">
+          <button onClick={onDelete} className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" title="Delete" aria-label="Delete">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
@@ -50,8 +50,9 @@ export function CrudActions({ viewHref, onEdit, onDelete }: CrudActionsProps) {
       <div className="relative sm:hidden" ref={menuRef}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors"
+          className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title="Actions"
+          aria-label="Actions"
         >
           <MoreVertical className="h-4 w-4" />
         </button>
@@ -59,7 +60,7 @@ export function CrudActions({ viewHref, onEdit, onDelete }: CrudActionsProps) {
           <div className="absolute right-0 top-full mt-1 z-20 w-36 rounded-lg border border-border bg-card shadow-xl py-1">
             {viewHref && (
               <Link href={viewHref} onClick={() => setOpen(false)}>
-                <span className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-background-tertiary text-foreground">
+                <span className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-background-tertiary text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Eye className="h-3.5 w-3.5" /> View
                 </span>
               </Link>
@@ -67,7 +68,7 @@ export function CrudActions({ viewHref, onEdit, onDelete }: CrudActionsProps) {
             {onEdit && (
               <button
                 onClick={() => { setOpen(false); onEdit(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-background-tertiary text-foreground text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-background-tertiary text-foreground text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Edit2 className="h-3.5 w-3.5" /> Edit
               </button>
@@ -75,7 +76,7 @@ export function CrudActions({ viewHref, onEdit, onDelete }: CrudActionsProps) {
             {onDelete && (
               <button
                 onClick={() => { setOpen(false); onDelete(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-error/10 text-error text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-error/10 text-error text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete
               </button>

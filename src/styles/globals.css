@@ -286,6 +286,51 @@ h1, h2, h3 {
 
 .prose-measure { max-width: 66ch; }
 
+/* ── Rich text editor content (admin Tiptap) ────────────────────── */
+.prose-admin { line-height: 1.6; }
+.prose-admin .ProseMirror { min-height: 1.5em; }
+.prose-admin p { margin: 0 0 0.75em; }
+.prose-admin p:last-child { margin-bottom: 0; }
+.prose-admin h1, .prose-admin h2, .prose-admin h3 {
+  font-family: var(--font-rajdhani), system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 1.1em 0 0.5em;
+}
+.prose-admin h1:first-child, .prose-admin h2:first-child, .prose-admin h3:first-child { margin-top: 0; }
+.prose-admin h2 { font-size: 1.25em; }
+.prose-admin h3 { font-size: 1.1em; }
+.prose-admin ul, .prose-admin ol { margin: 0 0 0.75em; padding-left: 1.5em; }
+.prose-admin ul { list-style: disc; }
+.prose-admin ol { list-style: decimal; }
+.prose-admin li { margin: 0.25em 0; }
+.prose-admin blockquote {
+  margin: 0 0 0.75em;
+  padding: 0.25em 0 0.25em 0.9em;
+  border-left: 3px solid var(--border-hover, var(--border));
+  color: var(--foreground-muted);
+  font-style: italic;
+}
+.prose-admin code {
+  background: var(--background-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+.prose-admin pre {
+  background: var(--background-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0 0 0.75em;
+}
+.prose-admin pre code { background: none; border: none; padding: 0; }
+.prose-admin a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.prose-admin strong { font-weight: 700; }
+
 /* ── Focus styles ────────────────────────────────────────────── */
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--radius-sm); }
 

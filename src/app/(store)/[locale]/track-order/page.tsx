@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, Search, CheckCircle2, Clock, Truck, AlertCircle } from 'lucide-react';
+import { Package, Search, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ordersApi } from '@/lib/api';
@@ -38,7 +38,8 @@ export default function TrackOrderPage() {
     }
   };
 
-  const currentStepIndex = order ? STATUS_STEPS.indexOf(order.status) : -1;
+  const isCancelled = order?.status === 'CANCELLED';
+  const currentStepIndex = order && !isCancelled ? STATUS_STEPS.indexOf(order.status) : -1;
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-12">
@@ -78,33 +79,46 @@ export default function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Status timeline */}
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-              <div className="space-y-4">
-                {STATUS_STEPS.map((status, i) => {
-                  const done = i <= currentStepIndex;
-                  const current = i === currentStepIndex;
-                  return (
-                    <div key={status} className={`relative flex items-center gap-4 pl-10 ${done ? '' : 'opacity-40'}`}>
-                      <div className={`absolute left-0 h-8 w-8 rounded-full flex items-center justify-center z-10 ${
-                        done ? (current ? 'bg-accent' : 'bg-success') : 'bg-background-tertiary border border-border'
-                      }`}>
-                        {done && !current ? <CheckCircle2 className="h-4 w-4 text-white" /> :
-                         current ? <Clock className="h-4 w-4 text-white" /> :
-                         <div className="h-2 w-2 rounded-full bg-foreground-subtle" />}
-                      </div>
-                      <div>
-                        <p className={`font-medium text-sm ${current ? 'text-accent' : done ? 'text-foreground' : 'text-foreground-muted'}`}>
-                          {STATUS_LABELS[status]}
-                        </p>
-                        {current && <p className="text-xs text-foreground-muted">Current status</p>}
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Cancelled orders get a distinct treatment instead of a partially-filled timeline */}
+            {isCancelled ? (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-error/10 border border-error/30">
+                <XCircle className="h-6 w-6 text-error shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-error">This order was cancelled</p>
+                  <p className="text-sm text-foreground-muted mt-1">
+                    No further shipping updates will follow. If you were charged, a refund will be issued to your original payment method — contact support if you have questions.
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Status timeline */
+              <div className="relative">
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                <div className="space-y-4">
+                  {STATUS_STEPS.map((status, i) => {
+                    const done = i <= currentStepIndex;
+                    const current = i === currentStepIndex;
+                    return (
+                      <div key={status} className={`relative flex items-center gap-4 pl-10 ${done ? '' : 'opacity-40'}`}>
+                        <div className={`absolute left-0 h-8 w-8 rounded-full flex items-center justify-center z-10 ${
+                          done ? (current ? 'bg-accent' : 'bg-success') : 'bg-background-tertiary border border-border'
+                        }`}>
+                          {done && !current ? <CheckCircle2 className="h-4 w-4 text-white" /> :
+                           current ? <Clock className="h-4 w-4 text-white" /> :
+                           <div className="h-2 w-2 rounded-full bg-foreground-subtle" />}
+                        </div>
+                        <div>
+                          <p className={`font-medium text-sm ${current ? 'text-accent' : done ? 'text-foreground' : 'text-foreground-muted'}`}>
+                            {STATUS_LABELS[status]}
+                          </p>
+                          {current && <p className="text-xs text-foreground-muted">Current status</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

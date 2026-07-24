@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useForm } from 'react-hook-form';
+import { supportTicketsApi } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 interface ContactForm {
   name: string;
@@ -15,11 +17,31 @@ interface ContactForm {
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ContactForm>();
 
-  const onSubmit = async () => {
-    await new Promise((r) => setTimeout(r, 1000));
-    setSubmitted(true);
+  // The backend's /support-tickets endpoint requires a logged-in customer
+  // session (no public/anonymous route exists yet). For signed-in customers
+  // this creates a real support ticket. For anonymous visitors there's no
+  // backend endpoint to wire up, so we fall back to a mailto link rather
+  // than faking a success state.
+  const onSubmit = async (data: ContactForm) => {
+    setSubmitError('');
+    if (!isAuthenticated) {
+      window.location.href = `mailto:support@cgagames.com?subject=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(`From: ${data.name} <${data.email}>\n\n${data.message}`)}`;
+      setSubmitted(true);
+      return;
+    }
+    try {
+      await supportTicketsApi.create({
+        subject: data.subject,
+        message: `From: ${data.name} <${data.email}>\n\n${data.message}`,
+      });
+      setSubmitted(true);
+    } catch {
+      setSubmitError("We couldn't send your message. Please try again or email us directly at support@cgagames.com.");
+    }
   };
 
   return (
@@ -32,6 +54,8 @@ export default function ContactPage() {
       <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
         {/* Contact info */}
         <div className="space-y-5">
+          {/* TODO: placeholder phone numbers — replace with real business
+              contact numbers before launch. */}
           {[
             { icon: Phone, title: 'Phone', value: '+971 4 XXX XXXX', sub: 'Sun–Thu: 9am–6pm', color: 'text-viz-1' },
             { icon: Mail, title: 'Email', value: 'support@cgagames.com', sub: 'Response within 24hrs', color: 'text-viz-2' },
@@ -56,12 +80,24 @@ export default function ContactPage() {
           {submitted ? (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <CheckCircle2 className="h-14 w-14 text-success mb-4" />
-              <h3 className="font-heading text-xl font-bold mb-2">Message Sent!</h3>
-              <p className="text-foreground-muted">We will get back to you within 24 hours.</p>
+              <h3 className="font-heading text-xl font-bold mb-2">
+                {isAuthenticated ? 'Message Sent!' : 'Almost there!'}
+              </h3>
+              <p className="text-foreground-muted">
+                {isAuthenticated
+                  ? 'We will get back to you within 24 hours.'
+                  : "We've opened your email app with your message pre-filled — just hit send. (Sign in to submit support requests directly instead.)"}
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <h2 className="font-heading text-xl font-bold mb-4">Send a Message</h2>
+              {submitError && (
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-error/10 border border-error/30 text-sm text-error">
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{submitError}</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Your Name" placeholder="John Doe" error={errors.name?.message}
                   {...register('name', { required: 'Required' })} />

@@ -60,6 +60,7 @@ export default function ForgotPasswordPage() {
                 label="Email Address"
                 type="email"
                 placeholder="you@example.com"
+                autoComplete="email"
                 leftIcon={<Mail className="h-4 w-4" />}
                 error={errors.email?.message}
                 {...register('email', {

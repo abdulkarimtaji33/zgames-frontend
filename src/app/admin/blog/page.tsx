@@ -2,12 +2,14 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { FormField, FormInput, FormSelect, FormTextarea } from '@/components/admin/FormField';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -51,10 +53,12 @@ export default function AdminBlogPage() {
   const [editing, setEditing] = useState<PostRow | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [slugError, setSlugError] = useState<string | undefined>(undefined);
 
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setSlugError(undefined);
     setModalOpen(true);
   };
 
@@ -79,14 +83,18 @@ export default function AdminBlogPage() {
         excerpt: row.excerpt ?? '',
       });
     }
+    setSlugError(undefined);
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setSlugError(undefined);
     try {
+      const trimmedSlug = form.slug.trim();
       const payload = {
         title: form.title,
+        slug: trimmedSlug || undefined,
         excerpt: form.excerpt || undefined,
         content: form.content,
         status: form.status,
@@ -101,8 +109,14 @@ export default function AdminBlogPage() {
       }
       setModalOpen(false);
       reload();
-    } catch {
-      toast('Failed to save post', 'error');
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 409) {
+        const message = (err.response.data as { message?: string })?.message ?? 'That slug is already taken. Please choose another.';
+        setSlugError(message);
+        toast(message, 'error');
+      } else {
+        toast('Failed to save post', 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -160,9 +174,26 @@ export default function AdminBlogPage() {
       <AdminModal open={modalOpen} title={editing ? 'Edit Post' : 'New Post'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting} wide>
         <div className="space-y-4">
           <FormField label="Title"><FormInput value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></FormField>
-          <FormField label="Slug" hint="Auto-generated from title on save"><FormInput value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" disabled={!editing} /></FormField>
+          <FormField
+            label="Slug"
+            hint={slugError ? undefined : 'Leave blank to auto-generate from title'}
+            error={slugError}
+          >
+            <FormInput
+              value={form.slug}
+              onChange={(e) => { setForm({ ...form, slug: e.target.value }); if (slugError) setSlugError(undefined); }}
+              placeholder="auto-generated"
+              error={!!slugError}
+            />
+          </FormField>
           <FormField label="Excerpt"><FormTextarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} rows={2} /></FormField>
-          <FormField label="Content"><FormTextarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} /></FormField>
+          <FormField label="Content">
+            <RichTextEditor
+              value={form.content}
+              onChange={(html) => setForm({ ...form, content: html })}
+              placeholder="Write the post content…"
+            />
+          </FormField>
           <FormField label="Status">
             <FormSelect value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
               <option value="draft">Draft</option>

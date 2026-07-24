@@ -417,14 +417,45 @@ export function Header() {
               </div>
             )}
             {isAuthenticated && (
-              <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
-                  {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
+              <div className="border-b border-border">
+                <div className="px-4 py-3 flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
+                    {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-foreground-muted">{user?.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-foreground-muted">{user?.email}</p>
-                </div>
+                <nav className="px-4 pb-3 space-y-1">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn('flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+                  >
+                    <User className="h-4 w-4" /> My Account
+                  </Link>
+                  <Link
+                    href="/orders"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn('flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+                  >
+                    <Bell className="h-4 w-4" /> Orders
+                  </Link>
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn('flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors', focusRing)}
+                  >
+                    <Heart className="h-4 w-4" /> Wishlist
+                  </Link>
+                  <button
+                    onClick={() => { clearAuth(); setMobileOpen(false); }}
+                    className={cn('flex w-full items-center gap-2 px-3 py-2.5 rounded-md text-sm text-error hover:bg-error/10 transition-colors', focusRing)}
+                  >
+                    <LogOut className="h-4 w-4" /> Logout
+                  </button>
+                </nav>
               </div>
             )}
 

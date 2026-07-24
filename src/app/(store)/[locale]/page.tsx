@@ -313,7 +313,9 @@ export default function HomePage() {
   const { categories: featuredCategories, isLoading: categoriesLoading } = useFeaturedCategories();
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 md:px-6 py-6">
+    <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-6">
+      <h1 className="sr-only">CGA Games — Gaming Store</h1>
+
       {/* Hero */}
       <HeroSlider />
 
@@ -448,6 +450,6 @@ export default function HomePage() {
 
       {/* Newsletter CTA */}
       <Newsletter />
-    </main>
+    </div>
   );
 }

@@ -1,27 +1,97 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trash2, Plus, Minus, ShoppingBag, Tag, Gift } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, Tag, Gift, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useCartStore } from '@/store/cartStore';
 import { useCurrencyStore } from '@/store/currencyStore';
-import { couponsApi } from '@/lib/api';
+import { couponsApi, productsApi } from '@/lib/api';
+import { FREE_SHIPPING_THRESHOLD, getShippingCost } from '@/lib/shipping';
+import type { CartItem, Product, ProductVariant } from '@/types';
+
+function stockKey(productId: string, variantId?: string) {
+  return `${productId}:${variantId ?? ''}`;
+}
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, couponCode, couponDiscount, applyCoupon, removeCoupon, getSubtotal, getItemCount } = useCartStore();
+  const { items, updateQuantity, removeItem, addItem, couponCode, couponDiscount, applyCoupon, removeCoupon, getSubtotal, getItemCount } = useCartStore();
   const { format } = useCurrencyStore();
   const [couponInput, setCouponInput] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [undoToast, setUndoToast] = useState<CartItem | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const subtotal = getSubtotal();
-  const shipping = subtotal > 150 ? 0 : 15;
+  const shipping = getShippingCost(subtotal);
   const discount = couponDiscount;
   const total = subtotal + shipping - discount;
   const itemCount = getItemCount();
+
+  // Fetch current stock levels for items in the cart so the quantity stepper
+  // can be clamped to what's actually available.
+  useEffect(() => {
+    const uniqueProductIds = Array.from(new Set(items.map((i) => i.productId)));
+    if (uniqueProductIds.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        uniqueProductIds.map(async (productId) => {
+          try {
+            const res = await productsApi.findOne(productId);
+            return { productId, product: res.data.data as Product & { stockQuantity?: number } };
+          } catch {
+            return { productId, product: null };
+          }
+        }),
+      );
+      if (cancelled) return;
+      setStockMap((prev) => {
+        const next = { ...prev };
+        for (const { productId, product } of entries) {
+          if (!product) continue;
+          const cartItemsForProduct = items.filter((i) => i.productId === productId);
+          for (const ci of cartItemsForProduct) {
+            let qty: number | undefined;
+            if (ci.variantId && product.variants) {
+              const variant = product.variants.find((v: ProductVariant) => v.id === ci.variantId);
+              qty = variant?.stockQuantity;
+            } else {
+              qty = product.stockQuantity;
+            }
+            if (typeof qty === 'number') {
+              next[stockKey(productId, ci.variantId)] = qty;
+            }
+          }
+        }
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map((i) => `${i.productId}:${i.variantId ?? ''}`).join(',')]);
+
+  const handleDecrement = (item: CartItem) => {
+    if (item.quantity <= 1) {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      updateQuantity(item.productId, item.variantId, 0);
+      setUndoToast(item);
+      undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
+      return;
+    }
+    updateQuantity(item.productId, item.variantId, item.quantity - 1);
+  };
+
+  const handleUndo = () => {
+    if (!undoToast) return;
+    addItem(undoToast);
+    setUndoToast(null);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  };
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -82,22 +152,45 @@ export default function CartPage() {
                 )}
                 <div className="flex flex-wrap items-center justify-between mt-3 gap-2 sm:gap-4">
                   {/* Quantity */}
-                  <div className="flex items-center border border-border rounded-full overflow-hidden">
-                    <button
-                      onClick={() => updateQuantity(item.productId, item.variantId, item.quantity - 1)}
-                      aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
-                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="px-3 text-sm font-semibold min-w-[2rem] text-center tabular-nums">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
-                      aria-label="Increase quantity"
-                      className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
+                  <div>
+                    <div className="flex items-center border border-border rounded-full overflow-hidden w-fit">
+                      <button
+                        onClick={() => handleDecrement(item)}
+                        aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                        className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="px-3 text-sm font-semibold min-w-[2rem] text-center tabular-nums">{item.quantity}</span>
+                      {(() => {
+                        const maxStock = stockMap[stockKey(item.productId, item.variantId)];
+                        const atLimit = typeof maxStock === 'number' && item.quantity >= maxStock;
+                        return (
+                          <button
+                            onClick={() => !atLimit && updateQuantity(item.productId, item.variantId, item.quantity + 1)}
+                            aria-label="Increase quantity"
+                            disabled={atLimit}
+                            className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-background-tertiary active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        );
+                      })()}
+                    </div>
+                    {(() => {
+                      const maxStock = stockMap[stockKey(item.productId, item.variantId)];
+                      if (typeof maxStock !== 'number') return null;
+                      if (maxStock <= 0) {
+                        return <p className="mt-1 text-xs text-error font-medium">Out of stock</p>;
+                      }
+                      if (item.quantity >= maxStock) {
+                        return <p className="mt-1 text-xs text-warning font-medium">Only {maxStock} left in stock</p>;
+                      }
+                      if (maxStock - item.quantity <= 3) {
+                        return <p className="mt-1 text-xs text-foreground-muted">Only {maxStock} left in stock</p>;
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -157,7 +250,7 @@ export default function CartPage() {
 
             {shipping > 0 && (
               <div className="text-xs text-info mb-4 p-2.5 rounded-lg bg-info/10 border border-info/30">
-                💡 Add <strong>{format(150 - subtotal)}</strong> more for free shipping
+                💡 Add <strong>{format(FREE_SHIPPING_THRESHOLD - subtotal)}</strong> more for free shipping
               </div>
             )}
 
@@ -204,6 +297,26 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* Undo toast for accidental removals via the quantity stepper */}
+      {undoToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground text-background shadow-lg animate-slide-up max-w-sm">
+          <span className="text-sm">Removed <strong>{undoToast.name}</strong></span>
+          <button
+            onClick={handleUndo}
+            className="flex items-center gap-1 text-sm font-semibold text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded shrink-0"
+          >
+            <Undo2 className="h-3.5 w-3.5" /> Undo
+          </button>
+          <button
+            onClick={() => setUndoToast(null)}
+            aria-label="Dismiss"
+            className="text-background/60 hover:text-background shrink-0"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

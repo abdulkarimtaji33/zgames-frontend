@@ -2,14 +2,167 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { SlidersHorizontal, X, LayoutGrid, List, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { SlidersHorizontal, X, LayoutGrid, List, ChevronDown, Heart, ShoppingCart } from 'lucide-react';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { Pagination } from '@/components/shared/Pagination';
 import { ProductGrid } from '@/components/store/ProductGrid';
 import { FilterSidebar } from '@/components/store/FilterSidebar';
+import { StarRating } from '@/components/store/StarRating';
+import { Badge } from '@/components/ui/Badge';
+import { ProductCardSkeleton } from '@/components/ui/Skeleton';
+import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import type { Product, PaginatedResponse } from '@/types';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { cn } from '@/lib/utils/cn';
+
+/** Compact horizontal row used for the "list" view toggle — image-left, details-right.
+ * Kept local to this page rather than added to ProductCard, which is owned elsewhere. */
+function ProductListRow({ product }: { product: Product }) {
+  const addItem = useCartStore((s) => s.addItem);
+  const { productIds: wishlist, addProduct, removeProduct } = useWishlistStore();
+  const isWishlisted = wishlist.includes(product.id);
+  const format = useCurrencyStore((s) => s.format);
+
+  const featuredImage = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];
+  const discountPercent = product.salePrice
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
+    : 0;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addItem({
+      productId: product.id,
+      quantity: 1,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      imageUrl: featuredImage?.url,
+      slug: product.slug,
+      platform: product.platform,
+      type: product.type,
+    });
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isWishlisted) removeProduct(product.id);
+    else addProduct(product.id);
+  };
+
+  return (
+    <Link
+      href={`/en/products/${product.slug}`}
+      className="group flex gap-4 rounded-xl bg-card border border-border p-3 card-hover"
+    >
+      <div className="relative h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 rounded-lg bg-background-tertiary overflow-hidden">
+        {featuredImage?.url ? (
+          <Image
+            src={featuredImage.url}
+            alt={featuredImage.alt ?? product.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="128px"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-3xl">🎮</div>
+        )}
+        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1">
+          {product.isPreorder && <Badge variant="preorder">Pre-Order</Badge>}
+          {product.isComingSoon && <Badge variant="comingsoon">Soon</Badge>}
+          {!product.isPreorder && !product.isComingSoon && discountPercent > 0 && (
+            <Badge variant="sale">-{discountPercent}%</Badge>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-xs text-foreground-muted mb-0.5 line-clamp-1">
+              {product.brand?.name ?? product.category?.name ?? ''}
+              {product.platform ? ` · ${product.platform}` : ''}
+            </p>
+            <h3 className="font-medium text-foreground line-clamp-2 leading-snug group-hover:text-accent transition-colors">
+              {product.name}
+            </h3>
+          </div>
+          <button
+            onClick={handleWishlist}
+            className={cn(
+              'h-8 w-8 flex-shrink-0 rounded-full flex items-center justify-center transition-colors',
+              isWishlisted ? 'text-accent' : 'text-foreground-muted hover:text-accent',
+            )}
+            aria-label="Wishlist"
+          >
+            <Heart className={cn('h-4 w-4', isWishlisted && 'fill-current')} />
+          </button>
+        </div>
+
+        {product.avgRating > 0 && (
+          <div className="mt-1.5">
+            <StarRating rating={product.avgRating} showCount count={product.reviewCount} />
+          </div>
+        )}
+
+        {product.shortDescription && (
+          <p className="hidden sm:block text-sm text-foreground-muted mt-1.5 line-clamp-2">
+            {product.shortDescription}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-auto pt-2">
+          <div>
+            {product.salePrice ? (
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-accent">{format(Number(product.salePrice))}</span>
+                <span className="text-xs text-foreground-subtle line-through">{format(Number(product.price))}</span>
+              </div>
+            ) : (
+              <span className="font-bold text-foreground">{format(Number(product.price))}</span>
+            )}
+          </div>
+          {!product.isComingSoon && (
+            <button
+              onClick={handleAddToCart}
+              className="h-9 w-9 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
+              aria-label="Add to cart"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ProductListView({ products, isLoading }: { products: Product[]; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 12 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+      </div>
+    );
+  }
+  if (!products.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <span className="text-6xl mb-4">🎮</span>
+        <h3 className="font-heading text-xl font-bold text-foreground mb-2">No products found</h3>
+        <p className="text-sm text-foreground-muted">Try adjusting your filters or search term.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {products.map((product) => <ProductListRow key={product.id} product={product} />)}
+    </div>
+  );
+}
 
 const SORT_OPTIONS = [
   { label: 'Newest', value: 'createdAt:DESC' },
@@ -236,7 +389,11 @@ export default function CategoryPage() {
 
           {/* Products */}
           <div key={`${page}-${sortBy}-${JSON.stringify(selectedFilters)}`} className="animate-fade-in">
-            <ProductGrid products={products} isLoading={isLoading} cols={viewMode === 'list' ? 2 : 4} />
+            {viewMode === 'list' ? (
+              <ProductListView products={products} isLoading={isLoading} />
+            ) : (
+              <ProductGrid products={products} isLoading={isLoading} cols={4} />
+            )}
           </div>
 
           {/* Pagination */}

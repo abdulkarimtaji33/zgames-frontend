@@ -19,7 +19,7 @@ export function StatCard({ title, value, change, changeUp, icon, color = 'text-a
           {icon}
         </div>
       </div>
-      <p className="font-heading text-2xl font-bold text-foreground">{value}</p>
+      <p className="font-heading text-2xl font-bold text-foreground truncate" title={String(value)}>{value}</p>
       {change && (
         <p className={cn('text-xs mt-1 font-medium', changeUp ? 'text-success' : 'text-error')}>
           {changeUp ? '▲' : '▼'} {change} vs last month

@@ -82,6 +82,7 @@ export default function RegisterPage() {
             <Input
               label="First Name"
               placeholder="John"
+              autoComplete="given-name"
               leftIcon={<User className="h-4 w-4" />}
               error={errors.firstName?.message}
               {...register('firstName', { required: 'First name is required' })}
@@ -89,6 +90,7 @@ export default function RegisterPage() {
             <Input
               label="Last Name"
               placeholder="Doe"
+              autoComplete="family-name"
               error={errors.lastName?.message}
               {...register('lastName', { required: 'Last name is required' })}
             />
@@ -98,6 +100,7 @@ export default function RegisterPage() {
             label="Email Address"
             type="email"
             placeholder="you@example.com"
+            autoComplete="email"
             leftIcon={<Mail className="h-4 w-4" />}
             error={errors.email?.message}
             {...register('email', {
@@ -110,6 +113,7 @@ export default function RegisterPage() {
             label="Phone Number (optional)"
             type="tel"
             placeholder="+971 50 123 4567"
+            autoComplete="tel"
             leftIcon={<Phone className="h-4 w-4" />}
             {...register('phone')}
           />
@@ -119,9 +123,14 @@ export default function RegisterPage() {
               label="Password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Create a strong password"
+              autoComplete="new-password"
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
-                <button type="button" onClick={() => setShowPassword((s) => !s)} tabIndex={-1}>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               }
@@ -152,9 +161,14 @@ export default function RegisterPage() {
             label="Confirm Password"
             type={showConfirm ? 'text' : 'password'}
             placeholder="Repeat your password"
+            autoComplete="new-password"
             leftIcon={<Lock className="h-4 w-4" />}
             rightIcon={
-              <button type="button" onClick={() => setShowConfirm((s) => !s)} tabIndex={-1}>
+              <button
+                type="button"
+                onClick={() => setShowConfirm((s) => !s)}
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             }

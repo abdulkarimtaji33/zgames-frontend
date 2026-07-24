@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { MapPin, Plus, Pencil, Trash2, Star, X } from 'lucide-react';
+import { MapPin, Plus, Pencil, Trash2, Star, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Dialog } from '@/components/ui/Dialog';
 import { AddressAutocomplete, type ParsedAddress } from '@/components/shared/AddressAutocomplete';
 import { customerApi } from '@/lib/api';
 
@@ -48,6 +49,14 @@ export default function AddressesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddressFormValues>({ defaultValues: EMPTY });
 
@@ -104,13 +113,18 @@ export default function AddressesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this address?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await customerApi.deleteAddress(id);
+      await customerApi.deleteAddress(deleteTarget);
       load();
+      showToast('Address deleted.', 'success');
     } catch {
-      alert('Failed to delete address.');
+      showToast('Failed to delete address.', 'error');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -118,8 +132,9 @@ export default function AddressesPage() {
     try {
       await customerApi.setDefaultAddress(id);
       load();
+      showToast('Default address updated.', 'success');
     } catch {
-      alert('Failed to set default address.');
+      showToast('Failed to set default address.', 'error');
     }
   };
 
@@ -161,7 +176,7 @@ export default function AddressesPage() {
                 <button onClick={() => openEdit(addr)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors">
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
-                <button onClick={() => handleDelete(addr.id)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-error transition-colors">
+                <button onClick={() => setDeleteTarget(addr.id)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-error transition-colors">
                   <Trash2 className="h-3.5 w-3.5" /> Delete
                 </button>
                 {!addr.isDefault && (
@@ -190,10 +205,10 @@ export default function AddressesPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input label="Label" placeholder="Home, Office…" {...register('label')} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="First Name" error={errors.firstName?.message} {...register('firstName', { required: 'Required' })} />
-                <Input label="Last Name" error={errors.lastName?.message} {...register('lastName', { required: 'Required' })} />
+                <Input label="First Name" autoComplete="given-name" error={errors.firstName?.message} {...register('firstName', { required: 'Required' })} />
+                <Input label="Last Name" autoComplete="family-name" error={errors.lastName?.message} {...register('lastName', { required: 'Required' })} />
               </div>
-              <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567" error={errors.phone?.message} {...register('phone', { required: 'Required' })} />
+              <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567" autoComplete="tel" error={errors.phone?.message} {...register('phone', { required: 'Required' })} />
 
               <AddressAutocomplete
                 label="Address Line 1"
@@ -209,16 +224,17 @@ export default function AddressesPage() {
                 }}
               />
               <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
-              <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor" {...register('addressLine2')} />
+              <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor" autoComplete="address-line2" {...register('addressLine2')} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input label="City" error={errors.city?.message} {...register('city', { required: 'Required' })} />
-                <Input label="State / Emirate (optional)" {...register('state')} />
+                <Input label="City" autoComplete="address-level2" error={errors.city?.message} {...register('city', { required: 'Required' })} />
+                <Input label="State / Emirate (optional)" autoComplete="address-level1" {...register('state')} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Country</label>
                   <select {...register('countryCode')}
+                    autoComplete="country"
                     className="w-full rounded border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent"
                   >
                     <option value="AE">🇦🇪 United Arab Emirates</option>
@@ -228,7 +244,7 @@ export default function AddressesPage() {
                     <option value="BH">🇧🇭 Bahrain</option>
                   </select>
                 </div>
-                <Input label="Postal Code (optional)" {...register('zipCode')} />
+                <Input label="Postal Code (optional)" autoComplete="postal-code" {...register('zipCode')} />
               </div>
 
               {errorMsg && <p className="text-sm text-error">{errorMsg}</p>}
@@ -239,6 +255,26 @@ export default function AddressesPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Address">
+        <p className="text-sm text-foreground-muted mb-4">Are you sure you want to delete this address? This cannot be undone.</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button variant="danger" size="sm" onClick={confirmDelete} isLoading={deleting}>Delete</Button>
+        </div>
+      </Dialog>
+
+      {toast && (
+        <div
+          role="status"
+          className={`fixed bottom-4 right-4 z-[60] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium ${
+            toast.type === 'success' ? 'bg-success/10 border-success/30 text-success' : 'bg-error/10 border-error/30 text-error'
+          }`}
+        >
+          {toast.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          {toast.message}
         </div>
       )}
     </div>

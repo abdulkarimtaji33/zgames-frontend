@@ -22,6 +22,7 @@
   releaseDate?: string;
   avgRating: number;
   reviewCount: number;
+  stockQuantity?: number;
   brandId?: string;
   categoryId?: string;
   brand?: Brand;
@@ -145,6 +146,14 @@ export interface Order {
   currency: string;
   createdAt: string;
   items?: OrderItem[];
+  customerId?: string | null;
+  customer?: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  } | null;
 }
 
 export interface OrderItem {

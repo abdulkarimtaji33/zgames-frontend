@@ -1,4 +1,4 @@
-﻿import { type InputHTMLAttributes, forwardRef } from 'react';
+﻿import { type InputHTMLAttributes, forwardRef, useId } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -11,7 +11,9 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, hint, leftIcon, rightIcon, id, ...props }, ref) => {
+    const generatedId = useId();
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
+    const errorId = `${inputId ?? generatedId}-error`;
     return (
       <div className="w-full">
         {label && (
@@ -28,6 +30,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
             className={cn(
               'w-full rounded-lg border bg-background-secondary px-3 py-2.5 text-sm text-foreground',
               'placeholder:text-foreground-subtle',
@@ -47,7 +51,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="mt-1 text-xs text-error">{error}</p>}
+        {error && (
+          <p id={errorId} className="mt-1 text-xs text-error">
+            {error}
+          </p>
+        )}
         {hint && !error && <p className="mt-1 text-xs text-foreground-muted">{hint}</p>}
       </div>
     );

@@ -1,17 +1,73 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { blogApi } from '@/lib/api';
+import { BLOG_POSTS as STATIC_POSTS } from './data';
 
-const BLOG_POSTS = [
-  { slug: 'top-ps5-games-2025', title: 'Top 10 PS5 Games to Play in 2025', excerpt: 'From action-packed exclusives to epic RPGs, here are the must-play PS5 games this year.', category: 'PlayStation', date: '2025-01-15', readTime: '5 min read' },
-  { slug: 'pokemon-tcg-guide', title: 'Beginner Guide to Pokémon TCG', excerpt: 'New to trading cards? We break down everything you need to know to start your Pokémon TCG journey.', category: 'Trading Cards', date: '2025-01-10', readTime: '8 min read' },
-  { slug: 'xbox-vs-playstation-2025', title: 'Xbox vs PlayStation in 2025: Which to Buy?', excerpt: 'An honest comparison of both platforms to help you make the right choice for your gaming style.', category: 'Consoles', date: '2025-01-05', readTime: '6 min read' },
-  { slug: 'best-gaming-monitors', title: 'Best Gaming Monitors for PC Gamers in 2025', excerpt: 'Upgrade your setup with our picks for the best 144Hz+ monitors across all budgets.', category: 'PC Gaming', date: '2024-12-28', readTime: '7 min read' },
-  { slug: 'how-to-store-pokemon-cards', title: 'How to Store and Protect Your Pokémon Cards', excerpt: 'Keep your collection safe and valuable with these storage and grading tips.', category: 'Trading Cards', date: '2024-12-20', readTime: '4 min read' },
-  { slug: 'nintendo-switch-2-preview', title: 'Nintendo Switch 2: Everything We Know', excerpt: 'The most anticipated gaming hardware of 2025 — specs, release date, and games.', category: 'Nintendo', date: '2024-12-15', readTime: '5 min read' },
-];
+interface DisplayPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  readTime: string;
+}
 
-const CATEGORIES = ['All', 'PlayStation', 'Xbox', 'Nintendo', 'PC Gaming', 'Trading Cards', 'Consoles'];
+const FALLBACK_CATEGORIES = ['PlayStation', 'Xbox', 'Nintendo', 'PC Gaming', 'Trading Cards', 'Consoles'];
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<DisplayPost[] | null>(null);
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  useEffect(() => {
+    let cancelled = false;
+    blogApi.findAll({ limit: 50 })
+      .then((res) => {
+        if (cancelled) return;
+        const items = res.data.data.items ?? [];
+        if (items.length === 0) {
+          setPosts(
+            STATIC_POSTS.map((p) => ({
+              slug: p.slug, title: p.title, excerpt: p.excerpt, category: p.category, date: p.date, readTime: p.readTime,
+            })),
+          );
+          return;
+        }
+        setPosts(
+          items.map((p) => ({
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt ?? '',
+            category: p.category?.name ?? 'General',
+            date: p.publishedAt ?? '',
+            readTime: '5 min read',
+          })),
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPosts(
+          STATIC_POSTS.map((p) => ({
+            slug: p.slug, title: p.title, excerpt: p.excerpt, category: p.category, date: p.date, readTime: p.readTime,
+          })),
+        );
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const displayPosts = posts ?? [];
+
+  const categories = useMemo(() => {
+    const fromPosts = Array.from(new Set(displayPosts.map((p) => p.category)));
+    return ['All', ...(fromPosts.length > 0 ? fromPosts : FALLBACK_CATEGORIES)];
+  }, [displayPosts]);
+
+  const filteredPosts = useMemo(
+    () => (activeCategory === 'All' ? displayPosts : displayPosts.filter((p) => p.category === activeCategory)),
+    [displayPosts, activeCategory],
+  );
+
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-12">
       {/* Header */}
@@ -22,32 +78,38 @@ export default function BlogPage() {
 
       {/* Category filter */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
-        {CATEGORIES.map((cat) => (
-          <button key={cat} className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-            cat === 'All' ? 'bg-accent text-white border-accent' : 'border-border text-foreground-muted hover:border-border-hover hover:text-foreground'
-          }`}>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => setActiveCategory(cat)}
+            aria-pressed={activeCategory === cat}
+            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+              activeCategory === cat ? 'bg-accent text-white border-accent' : 'border-border text-foreground-muted hover:border-border-hover hover:text-foreground'
+            }`}
+          >
             {cat}
           </button>
         ))}
       </div>
 
       {/* Featured post */}
-      {BLOG_POSTS.length > 0 ? (
+      {filteredPosts.length > 0 ? (
         <div className="mb-10 reveal">
-          <Link href={`/en/blog/${BLOG_POSTS[0].slug}`} className="group">
+          <Link href={`/en/blog/${filteredPosts[0].slug}`} className="group">
             <div className="rounded-xl bg-gradient-to-br from-accent/15 via-surface-1 to-surface-2 border border-border overflow-hidden shadow-sm transition-shadow hover:shadow-md">
               <div className="p-8 md:p-12">
                 <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium border border-accent/30 mb-4">
-                  {BLOG_POSTS[0].category}
+                  {filteredPosts[0].category}
                 </span>
                 <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4 group-hover:text-accent transition-colors">
-                  {BLOG_POSTS[0].title}
+                  {filteredPosts[0].title}
                 </h2>
-                <p className="text-foreground-muted text-lg mb-4 max-w-2xl">{BLOG_POSTS[0].excerpt}</p>
+                <p className="text-foreground-muted text-lg mb-4 max-w-2xl">{filteredPosts[0].excerpt}</p>
                 <div className="flex items-center gap-4 text-sm text-foreground-subtle">
-                  <span>{BLOG_POSTS[0].date}</span>
+                  <span>{filteredPosts[0].date}</span>
                   <span>·</span>
-                  <span>{BLOG_POSTS[0].readTime}</span>
+                  <span>{filteredPosts[0].readTime}</span>
                 </div>
               </div>
             </div>
@@ -56,9 +118,9 @@ export default function BlogPage() {
       ) : null}
 
       {/* Post grid */}
-      {BLOG_POSTS.length > 1 ? (
+      {filteredPosts.length > 1 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {BLOG_POSTS.slice(1).map((post) => (
+          {filteredPosts.slice(1).map((post) => (
             <Link key={post.slug} href={`/en/blog/${post.slug}`} className="group reveal">
               <div className="rounded-xl bg-card border border-border overflow-hidden hover:border-border-hover hover:shadow-md transition-all h-full flex flex-col shadow-sm">
                 <div className="bg-surface-2 h-40 flex items-center justify-center text-4xl">🎮</div>
@@ -80,13 +142,17 @@ export default function BlogPage() {
             </Link>
           ))}
         </div>
-      ) : (
+      ) : filteredPosts.length === 0 && posts !== null ? (
         <div className="text-center py-16 rounded-xl bg-card border border-border">
           <p className="text-4xl mb-3">📰</p>
           <h2 className="font-heading text-xl font-bold mb-2">No articles yet</h2>
-          <p className="text-foreground-muted">Check back soon for gaming news, reviews, and guides.</p>
+          <p className="text-foreground-muted">
+            {activeCategory === 'All'
+              ? 'Check back soon for gaming news, reviews, and guides.'
+              : `No articles found in "${activeCategory}" yet. Try another category.`}
+          </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

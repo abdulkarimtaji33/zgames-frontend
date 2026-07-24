@@ -2,11 +2,13 @@
 
 import { useCallback, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
-import { FormField, FormInput, FormTextarea, FormCheckbox } from '@/components/admin/FormField';
+import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -51,10 +53,12 @@ export default function AdminCmsPagesPage() {
   const [editing, setEditing] = useState<CmsRow | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [slugError, setSlugError] = useState<string | undefined>(undefined);
 
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setSlugError(undefined);
     setModalOpen(true);
   };
 
@@ -66,14 +70,18 @@ export default function AdminCmsPagesPage() {
       content: contentToString(row.content),
       isPublished: isPublished(row),
     });
+    setSlugError(undefined);
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setSlugError(undefined);
     try {
+      const trimmedSlug = form.slug.trim();
       const payload = {
         title: form.title,
+        slug: trimmedSlug || undefined,
         content: form.content,
         isActive: form.isPublished,
       };
@@ -86,8 +94,14 @@ export default function AdminCmsPagesPage() {
       }
       setModalOpen(false);
       reload();
-    } catch {
-      toast('Failed to save page', 'error');
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 409) {
+        const message = (err.response.data as { message?: string })?.message ?? 'That slug is already taken. Please choose another.';
+        setSlugError(message);
+        toast(message, 'error');
+      } else {
+        toast('Failed to save page', 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -133,8 +147,25 @@ export default function AdminCmsPagesPage() {
       <AdminModal open={modalOpen} title={editing ? 'Edit Page' : 'New Page'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting} wide>
         <div className="space-y-4">
           <FormField label="Title"><FormInput value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></FormField>
-          <FormField label="Slug" hint="Auto-generated from title"><FormInput value={form.slug} disabled placeholder="auto-generated" /></FormField>
-          <FormField label="Content"><FormTextarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} /></FormField>
+          <FormField
+            label="Slug"
+            hint={slugError ? undefined : 'Leave blank to auto-generate from title'}
+            error={slugError}
+          >
+            <FormInput
+              value={form.slug}
+              onChange={(e) => { setForm({ ...form, slug: e.target.value }); if (slugError) setSlugError(undefined); }}
+              placeholder="auto-generated"
+              error={!!slugError}
+            />
+          </FormField>
+          <FormField label="Content">
+            <RichTextEditor
+              value={form.content}
+              onChange={(html) => setForm({ ...form, content: html })}
+              placeholder="Write the page content…"
+            />
+          </FormField>
           <FormCheckbox label="Published" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} />
         </div>
       </AdminModal>

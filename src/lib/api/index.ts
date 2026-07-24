@@ -47,6 +47,8 @@ export const categoriesApi = {
 export const brandsApi = {
   findAll: () =>
     apiClient.get<{ data: Brand[] }>('/brands'),
+  findBySlug: (slug: string) =>
+    apiClient.get<{ data: Brand }>(`/brands/by-slug/${slug}`),
 };
 
 /* Orders */
@@ -124,6 +126,35 @@ export const customerApi = {
   removeFromWishlist: (productId: string) =>
     apiClient.delete(`/wishlist/${productId}`),
 };
+/* Blog */
+export interface BlogPostDto {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: Record<string, unknown> | string | null;
+  featuredImage: string | null;
+  tags: string[] | null;
+  publishedAt: string | null;
+  author: { id: string; name: string; avatar: string | null } | null;
+  category: { id: string; name: string; slug: string } | null;
+}
+
+export const blogApi = {
+  findAll: (params?: Record<string, unknown>) =>
+    apiClient.get<{ data: PaginatedResponse<BlogPostDto> }>('/blog/posts', { params }),
+  findBySlug: (slug: string) =>
+    apiClient.get<{ data: BlogPostDto }>(`/blog/posts/by-slug/${slug}`),
+  findCategories: () =>
+    apiClient.get<{ data: { id: string; name: string; slug: string }[] }>('/blog/categories'),
+};
+
+/* Support / Contact (requires an authenticated customer session — backend has no public/anonymous endpoint) */
+export const supportTicketsApi = {
+  create: (data: { subject: string; message: string; priority?: string; orderId?: string }) =>
+    apiClient.post('/support-tickets', data),
+};
+
 /* Payments */
 export const paymentsApi = {
   createIntent: (data: { orderId: string; method: string; currency?: string }) =>

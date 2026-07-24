@@ -14,6 +14,9 @@ import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { adminAuthApi } from '@/lib/api/adminApi';
 import { AdminToastContainer } from '@/components/admin/AdminToast';
 import { Sidebar, type NavItem } from '@/components/admin/Sidebar';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
+
+const SIDEBAR_COLLAPSED_KEY = 'cgagames-admin-sidebar-collapsed';
 
 const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -88,6 +91,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(isLoginPage);
 
+  // Restore persisted sidebar collapse state after mount (avoids SSR/localStorage mismatch).
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (stored !== null) setSidebarCollapsed(stored === 'true');
+    } catch { /* ignore (private browsing, etc.) */ }
+  }, []);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (isLoginPage) {
       if (isAuthenticated) router.replace('/admin');
@@ -144,7 +165,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="hidden lg:flex">
         <Sidebar
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          onToggleCollapse={toggleSidebarCollapsed}
           navItems={filteredNav}
           onLogout={handleLogout}
         />
@@ -184,6 +205,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-3 ml-auto">
+            <ThemeToggle />
             <Link
               href="/admin/guide"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

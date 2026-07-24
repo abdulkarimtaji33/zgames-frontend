@@ -1,18 +1,34 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Package, Heart, Star, Wallet, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { Card, CardBody } from '@/components/ui/Card';
+import { ordersApi } from '@/lib/api';
+import type { PaginatedResponse, Order } from '@/types';
 
 export default function DashboardPage() {
   const { customer } = useAuthStore();
   const user = customer;
   const wishlistCount = useWishlistStore((s) => s.productIds.length);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    ordersApi.findByCustomer().then((res) => {
+      if (cancelled) return;
+      const data = res.data.data as PaginatedResponse<Order>;
+      setOrderCount(data.meta?.total ?? data.items?.length ?? 0);
+    }).catch(() => {
+      if (!cancelled) setOrderCount(0);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const stats = [
-    { label: 'Total Orders', value: '0', icon: Package, color: 'text-viz-1', href: '/orders' },
+    { label: 'Total Orders', value: orderCount === null ? '…' : orderCount.toString(), icon: Package, color: 'text-viz-1', href: '/orders' },
     { label: 'Wishlist Items', value: wishlistCount.toString(), icon: Heart, color: 'text-viz-4', href: '/wishlist' },
     { label: 'Loyalty Points', value: (customer?.pointsBalance ?? 0).toString(), icon: Star, color: 'text-viz-3', href: '/loyalty' },
     { label: 'Store Credit', value: `AED ${Number(customer?.walletBalance ?? 0).toFixed(2)}`, icon: Wallet, color: 'text-success', href: '/store-credit' },

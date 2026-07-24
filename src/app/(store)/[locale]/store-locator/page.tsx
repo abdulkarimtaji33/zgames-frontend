@@ -1,9 +1,15 @@
+// TODO: these are placeholder phone numbers — replace with real store contact
+// numbers before launch. Not something that can be filled in without actual
+// business data.
 export default function StoreLocatorPage() {
   const stores = [
     { name: 'CGA Games Dubai Mall', address: 'Dubai Mall, Level 2, Near Food Court', city: 'Dubai', phone: '+971 4 XXX XXXX', hours: 'Daily: 10am – 11pm' },
     { name: 'CGA Games Mall of Emirates', address: 'Mall of the Emirates, Level 1', city: 'Dubai', phone: '+971 4 XXX YYYY', hours: 'Daily: 10am – 11pm' },
     { name: 'CGA Games Abu Dhabi', address: 'Yas Mall, Ground Floor', city: 'Abu Dhabi', phone: '+971 2 XXX XXXX', hours: 'Daily: 10am – 10pm' },
   ];
+
+  const directionsUrl = (store: { address: string; city: string }) =>
+    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${store.address}, ${store.city}, UAE`)}`;
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-12">
@@ -32,7 +38,14 @@ export default function StoreLocatorPage() {
                 <p><span className="text-foreground-subtle">📞</span> <span className="text-foreground-muted">{store.phone}</span></p>
                 <p><span className="text-foreground-subtle">🕐</span> <span className="text-foreground-muted">{store.hours}</span></p>
               </div>
-              <a href="#" className="mt-4 inline-flex text-sm text-accent hover:underline focus-visible:underline">Get Directions →</a>
+              <a
+                href={directionsUrl(store)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex text-sm text-accent hover:underline focus-visible:underline"
+              >
+                Get Directions →
+              </a>
             </div>
           ))}
         </div>

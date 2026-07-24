@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
@@ -12,7 +13,13 @@ import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminOrdersApi } from '@/lib/api/adminApi';
 import type { PaginatedResponse, Order } from '@/types';
 
-type OrderRow = Order & { customerId?: string | null };
+type OrderRow = Order;
+
+function customerName(customer: OrderRow['customer']): string | null {
+  if (!customer) return null;
+  const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(' ').trim();
+  return fullName || customer.email || null;
+}
 
 const STATUS_TABS = ['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const STATUS_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
@@ -25,10 +32,10 @@ const STATUS_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error'
 };
 
 function exportOrdersCsv(orders: OrderRow[]) {
-  const headers = ['Order #', 'Customer ID', 'Total', 'Currency', 'Status', 'Payment', 'Date'];
+  const headers = ['Order #', 'Customer', 'Total', 'Currency', 'Status', 'Payment', 'Date'];
   const rows = orders.map((o) => [
     o.orderNumber,
-    o.customerId ?? 'Guest',
+    customerName(o.customer) ?? 'Guest',
     String(o.total),
     o.currency,
     o.status,
@@ -114,13 +121,22 @@ export default function AdminOrdersPage() {
           columns={[
             { key: 'orderNumber', label: 'Order #', sortable: true },
             {
-              key: 'customerId',
+              key: 'customer',
               label: 'Customer',
-              render: (v) => (
-                <span className="text-sm font-mono text-xs">
-                  {v ? `${String(v).slice(0, 8)}...` : 'Guest'}
-                </span>
-              ),
+              render: (_v, row) => {
+                const name = customerName(row.customer);
+                if (!name) return <span className="text-sm text-foreground-muted">Guest</span>;
+                const customerId = row.customer?.id;
+                if (!customerId) return <span className="text-sm">{name}</span>;
+                return (
+                  <Link
+                    href={`/admin/customers/${customerId}`}
+                    className="text-sm text-accent hover:underline underline-offset-2"
+                  >
+                    {name}
+                  </Link>
+                );
+              },
             },
             {
               key: 'total',

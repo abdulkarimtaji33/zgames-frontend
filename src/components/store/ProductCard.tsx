@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { Badge } from '@/components/ui/Badge';
 import { StarRating } from './StarRating';
@@ -81,28 +81,20 @@ export function ProductCard({ product, className }: ProductCardProps) {
             )}
           </div>
 
-          {/* Actions overlay */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Actions overlay — always visible on touch/coarse-pointer devices since hover can't reveal them there */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
             <button
               onClick={handleWishlist}
               className={cn(
-                'h-9 w-9 rounded-full flex items-center justify-center shadow-lg transition-colors',
+                'flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors',
                 isWishlisted
                   ? 'bg-accent text-white'
                   : 'bg-card/90 text-foreground-muted hover:bg-accent hover:text-white',
               )}
-              aria-label="Wishlist"
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
-              <Heart className={cn('h-3.5 w-3.5', isWishlisted && 'fill-current')} />
+              <Heart className={cn('h-4 w-4', isWishlisted && 'fill-current')} />
             </button>
-            <Link
-              href={`/en/products/${product.slug}`}
-              onClick={(e) => e.stopPropagation()}
-              className="h-9 w-9 rounded-full bg-card/90 flex items-center justify-center shadow-lg text-foreground-muted hover:bg-background-tertiary transition-colors"
-              aria-label="Quick view"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </Link>
           </div>
 
           {/* Platform badge */}
@@ -146,7 +138,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {!product.isComingSoon && (
               <button
                 onClick={handleAddToCart}
-                className="h-9 w-9 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
+                className="h-10 w-10 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
                 aria-label="Add to cart"
               >
                 <ShoppingCart className="h-3.5 w-3.5" />

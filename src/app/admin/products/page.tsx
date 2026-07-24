@@ -8,6 +8,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { FormSelect } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminProductsApi, adminCategoriesApi, adminBrandsApi } from '@/lib/api/adminApi';
@@ -90,37 +91,27 @@ export default function AdminProductsPage() {
       <div>
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
           searchable
           searchPlaceholder="Search all products..."
           onSearch={setSearch}
           filters={(
             <>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="px-2.5 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
-              >
+              <FormSelect value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-auto min-w-[9rem]">
                 <option value="">All Categories</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <select
-                value={brandId}
-                onChange={(e) => setBrandId(e.target.value)}
-                className="px-2.5 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
-              >
+              </FormSelect>
+              <FormSelect value={brandId} onChange={(e) => setBrandId(e.target.value)} className="w-auto min-w-[9rem]">
                 <option value="">All Brands</option>
                 {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="px-2.5 py-2 rounded-lg bg-background-tertiary border border-border text-sm focus:outline-none focus:border-accent"
-              >
+              </FormSelect>
+              <FormSelect value={status} onChange={(e) => setStatus(e.target.value)} className="w-auto min-w-[9rem]">
                 <option value="">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-              </select>
+              </FormSelect>
             </>
           )}
           columns={[

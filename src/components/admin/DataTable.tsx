@@ -30,6 +30,15 @@ interface DataTableProps<T> {
   onSearch?: (query: string) => void;
   /** Extra filter controls rendered next to the search box (e.g. dropdowns). */
   filters?: React.ReactNode;
+  /**
+   * Total record count across all pages (from the server), used for the "Showing X of Y"
+   * footer on server-paginated tables — pass the same total given to `AdminPagination`.
+   * Without it, in server-paginated mode (`onSearch` present) the footer avoids implying
+   * `data.length` is the full count.
+   */
+  total?: number;
+  /** Hide the built-in "Showing X of Y" footer — set this when the page also renders AdminPagination, which already shows the total. */
+  hideFooter?: boolean;
 }
 
 function getValue<T>(row: T, key: string): unknown {
@@ -61,6 +70,8 @@ export function DataTable<T extends { id: string | number }>({
   emptyMessage = 'No records found.',
   onSearch,
   filters,
+  total,
+  hideFooter,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -213,9 +224,13 @@ export function DataTable<T extends { id: string | number }>({
         </table>
         </div>
       </div>
-      {sorted.length > 0 && (
+      {!hideFooter && sorted.length > 0 && (
         <div className="px-4 py-3 border-t border-border text-xs text-foreground-muted">
-          Showing {sorted.length} of {data.length} records
+          {total !== undefined
+            ? `Showing ${sorted.length} of ${total} records`
+            : onSearch
+              ? `Showing ${sorted.length} records`
+              : `Showing ${sorted.length} of ${data.length} records`}
         </div>
       )}
     </div>

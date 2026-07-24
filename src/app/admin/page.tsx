@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShoppingBag, Users, DollarSign, Package, TrendingUp, RotateCcw, Clock, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Users, DollarSign, Package, TrendingUp, RotateCcw, Clock, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '@/components/admin/StatCard';
 import Link from 'next/link';
@@ -45,8 +45,12 @@ export default function AdminDashboardPage() {
     pendingOrders: '0',
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    setIsLoading(true);
+    setError(false);
     Promise.all([
       adminReportsApi.revenueSummary({}),
       adminReportsApi.customerStats({}),
@@ -87,9 +91,9 @@ export default function AdminDashboardPage() {
           })),
         );
       })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [reloadKey]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -105,6 +109,24 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </div>
+
+      {error && (
+        <div className="flex items-start sm:items-center justify-between gap-3 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm flex-col sm:flex-row">
+          <div className="flex items-start sm:items-center gap-2.5 text-error">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <p>
+              <span className="font-medium">Couldn&apos;t load dashboard data.</span>{' '}
+              <span className="text-error/80">The stats below may be incomplete or stale. Check your connection and try again.</span>
+            </p>
+          </div>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-error/30 px-3 py-1.5 text-xs font-medium text-error hover:bg-error/10 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Revenue" value={isLoading ? '...' : stats.revenue} icon={<DollarSign className="h-4 w-4" />} color="text-success" />

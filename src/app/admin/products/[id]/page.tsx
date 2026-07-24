@@ -63,6 +63,36 @@ function flattenCategories(cats: Category[], depth = 0): { id: string; label: st
   return result;
 }
 
+function validateProductForm(form: ProductForm): Partial<Record<keyof ProductForm, string>> {
+  const errors: Partial<Record<keyof ProductForm, string>> = {};
+
+  if (!form.name.trim()) {
+    errors.name = 'Name is required.';
+  } else if (form.name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters.';
+  }
+
+  if (!form.price.trim()) {
+    errors.price = 'Price is required.';
+  } else if (Number.isNaN(Number(form.price)) || Number(form.price) < 0) {
+    errors.price = 'Enter a valid price of 0 or more.';
+  }
+
+  if (form.salePrice.trim()) {
+    if (Number.isNaN(Number(form.salePrice)) || Number(form.salePrice) < 0) {
+      errors.salePrice = 'Enter a valid sale price of 0 or more.';
+    } else if (form.price.trim() && !Number.isNaN(Number(form.price)) && Number(form.salePrice) >= Number(form.price)) {
+      errors.salePrice = 'Sale price must be less than the regular price.';
+    }
+  }
+
+  if (form.sku.trim() && !/^[A-Za-z0-9._-]+$/.test(form.sku.trim())) {
+    errors.sku = 'SKU can only contain letters, numbers, dots, dashes, and underscores.';
+  }
+
+  return errors;
+}
+
 function productToForm(product: Product): ProductForm {
   return {
     name: product.name,
@@ -89,6 +119,7 @@ export default function AdminEditProductPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<ProductForm | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof ProductForm, string>>>({});
   const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,14 +153,9 @@ export default function AdminEditProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form) return;
-    if (!form.name.trim()) {
-      show('Name is required', 'error');
-      return;
-    }
-    if (!form.price || Number(form.price) < 0) {
-      show('Valid price is required', 'error');
-      return;
-    }
+    const validationErrors = validateProductForm(form);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
     setIsSubmitting(true);
     try {
       const payload = {
@@ -222,21 +248,23 @@ export default function AdminEditProductPage() {
         <div className="p-5 md:p-6">
           {activeTab === 'details' && (
             <form onSubmit={handleSubmit} className="space-y-5">
-              <FormField label="Name">
+              <FormField label="Name" error={errors.name} required>
                 <FormInput
                   value={form.name}
-                  onChange={(e) => setForm((f) => f && ({ ...f, name: e.target.value }))}
+                  onChange={(e) => { setForm((f) => f && ({ ...f, name: e.target.value })); setErrors((er) => ({ ...er, name: undefined })); }}
                   placeholder="Product name"
                   required
+                  error={!!errors.name}
                 />
               </FormField>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="SKU">
+                <FormField label="SKU" error={errors.sku}>
                   <FormInput
                     value={form.sku}
-                    onChange={(e) => setForm((f) => f && ({ ...f, sku: e.target.value }))}
+                    onChange={(e) => { setForm((f) => f && ({ ...f, sku: e.target.value })); setErrors((er) => ({ ...er, sku: undefined })); }}
                     placeholder="SKU-001"
+                    error={!!errors.sku}
                   />
                 </FormField>
                 <FormField label="Product Type">
@@ -269,26 +297,28 @@ export default function AdminEditProductPage() {
                     ))}
                   </FormSelect>
                 </FormField>
-                <FormField label="Price (AED)">
+                <FormField label="Price (AED)" error={errors.price} required>
                   <FormInput
                     type="number"
                     min={0}
                     step="0.01"
                     value={form.price}
-                    onChange={(e) => setForm((f) => f && ({ ...f, price: e.target.value }))}
+                    onChange={(e) => { setForm((f) => f && ({ ...f, price: e.target.value })); setErrors((er) => ({ ...er, price: undefined })); }}
                     required
+                    error={!!errors.price}
                   />
                 </FormField>
               </div>
 
-              <FormField label="Sale Price (AED)">
+              <FormField label="Sale Price (AED)" error={errors.salePrice}>
                 <FormInput
                   type="number"
                   min={0}
                   step="0.01"
                   value={form.salePrice}
-                  onChange={(e) => setForm((f) => f && ({ ...f, salePrice: e.target.value }))}
+                  onChange={(e) => { setForm((f) => f && ({ ...f, salePrice: e.target.value })); setErrors((er) => ({ ...er, salePrice: undefined })); }}
                   placeholder="Optional"
+                  error={!!errors.salePrice}
                 />
               </FormField>
 

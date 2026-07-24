@@ -231,13 +231,12 @@
   --font-sans: var(--font-inter);
   --font-heading: var(--font-rajdhani);
 
-  --spacing-xs: var(--space-xs);
-  --spacing-sm: var(--space-sm);
-  --spacing-md: var(--space-md);
-  --spacing-lg: var(--space-lg);
-  --spacing-xl: var(--space-xl);
-  --spacing-2xl: var(--space-2xl);
-  --spacing-3xl: var(--space-3xl);
+  /* Named --spacing entries are deliberately omitted: Tailwind v4 shares a
+     single spacing scale across w, h, max-w, min-w, gap, p, m and inset
+     utilities, so adding sm/md/lg/xl entries here would silently hijack
+     the built in max-w-sm through max-w-3xl utilities to resolve to our
+     small space tokens instead of their real widths. The space tokens
+     defined on :root above remain available directly in custom CSS. */
 
   --radius: var(--radius-md);
   --radius-sm: var(--radius-sm);

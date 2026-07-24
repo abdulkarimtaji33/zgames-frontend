@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Check, ChevronRight, Lock, CreditCard, MapPin, Package } from 'lucide-react';
@@ -136,8 +136,13 @@ export default function CheckoutPage() {
     router.push('/en/order-success');
   };
 
+  useEffect(() => {
+    if (items.length === 0) {
+      router.push('/en/cart');
+    }
+  }, [items.length, router]);
+
   if (items.length === 0) {
-    router.push('/en/cart');
     return null;
   }
 

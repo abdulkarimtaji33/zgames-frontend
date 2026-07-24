@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { User, Package, Heart, GitCompare, MapPin, Bell, Star, Wallet, LogOut, Gift } from 'lucide-react';
@@ -24,8 +25,13 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const { customer, clearAuth, isAuthenticated } = useAuthStore();
   const user = customer;
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    router.push('/login');
     return null;
   }
 

@@ -205,7 +205,12 @@ const FILTERS = [
     options: [
       { label: 'UAE', value: 'uae' },
       { label: 'KSA', value: 'ksa' },
+      { label: 'Qatar', value: 'qatar' },
+      { label: 'Kuwait', value: 'kuwait' },
+      { label: 'Oman', value: 'oman' },
+      { label: 'Bahrain', value: 'bahrain' },
       { label: 'International', value: 'international' },
+      { label: 'Global', value: 'global' },
     ],
   },
   {
@@ -265,11 +270,12 @@ export default function CategoryPage() {
         sortBy: sortField,
         sortOrder,
         ...(categoryId && { categoryId }),
-        ...(selectedFilters.platform?.length && { platform: selectedFilters.platform[0] }),
-        ...(selectedFilters.genre?.length && { genre: selectedFilters.genre[0] }),
-        ...(selectedFilters.region?.length && { region: selectedFilters.region[0] }),
+        ...(selectedFilters.platform?.length && { platform: selectedFilters.platform }),
+        ...(selectedFilters.genre?.length && { genre: selectedFilters.genre }),
+        ...(selectedFilters.region?.length && { region: selectedFilters.region }),
         ...(selectedFilters.availability?.includes('preorder') && { isPreorder: true }),
         ...(selectedFilters.availability?.includes('coming_soon') && { isComingSoon: true }),
+        ...(selectedFilters.availability?.includes('in_stock') && { inStock: true }),
       };
       const res = await productsApi.findAll(queryParams);
       const data = res.data.data as PaginatedResponse<Product>;
@@ -281,9 +287,13 @@ export default function CategoryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, sortBy, selectedFilters]);
+  }, [page, sortBy, selectedFilters, categoryId]);
 
-  useEffect(() => { if (categoryResolved) fetchProducts(); }, [fetchProducts, categoryResolved]);
+  const categoryNotFound = categoryResolved && !categoryId;
+
+  useEffect(() => {
+    if (categoryResolved && categoryId) fetchProducts();
+  }, [fetchProducts, categoryResolved, categoryId]);
 
   const handleFilterChange = (key: string, values: string[]) => {
     setSelectedFilters((prev) => ({ ...prev, [key]: values }));
@@ -312,6 +322,15 @@ export default function CategoryPage() {
         </div>
       </div>
 
+      {categoryNotFound ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="text-6xl mb-4">🔍</span>
+          <h3 className="font-heading text-xl font-bold text-foreground mb-2">Category not found</h3>
+          <p className="text-sm text-foreground-muted">
+            We couldn&apos;t find the category you&apos;re looking for. Please check the URL or browse our shop.
+          </p>
+        </div>
+      ) : (
       <div className="flex gap-6">
         {/* Filter sidebar - desktop */}
         <aside className="hidden lg:block w-60 flex-shrink-0">
@@ -404,6 +423,7 @@ export default function CategoryPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Mobile filter drawer */}
       {filterOpen && (

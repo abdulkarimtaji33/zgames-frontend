@@ -44,18 +44,29 @@ export default function BrandPage() {
       .finally(() => setBrandLoading(false));
   }, [slug]);
 
+  const brandId = brand?.id ?? null;
+
   const loadProducts = useCallback(async () => {
+    if (!brandId) return;
     setIsLoading(true);
     try {
-      const res = await productsApi.findAll({ brandSlug: slug, page, limit: 24 });
+      const res = await productsApi.findAll({ brandId, page, limit: 24 });
       const data = res.data.data as PaginatedResponse<Product>;
       setProducts(data.items ?? []);
       setTotalPages(data.meta?.totalPages ?? 1);
     } catch { setProducts([]); }
     finally { setIsLoading(false); }
-  }, [slug, page]);
+  }, [brandId, page]);
 
-  useEffect(() => { loadProducts(); }, [loadProducts]);
+  useEffect(() => {
+    if (brandLoading) return;
+    if (brandId) {
+      loadProducts();
+    } else {
+      setProducts([]);
+      setIsLoading(false);
+    }
+  }, [loadProducts, brandLoading, brandId]);
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-6">
@@ -88,13 +99,23 @@ export default function BrandPage() {
           <p className="text-foreground-muted mt-1 text-sm">Browse all {brandName} products</p>
         )}
       </div>
-      <div key={page} className="animate-fade-in">
-        <ProductGrid products={products} isLoading={isLoading} cols={4} />
-      </div>
-      {totalPages > 1 && (
-        <div className="mt-10 flex justify-center">
-          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+      {!brandLoading && !brandId ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="text-6xl mb-4">🎮</span>
+          <h3 className="font-heading text-xl font-bold text-foreground mb-2">Brand not found</h3>
+          <p className="text-sm text-foreground-muted">The brand you&apos;re looking for doesn&apos;t exist.</p>
         </div>
+      ) : (
+        <>
+          <div key={page} className="animate-fade-in">
+            <ProductGrid products={products} isLoading={isLoading} cols={4} />
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-10 flex justify-center">
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

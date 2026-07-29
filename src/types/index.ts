@@ -23,6 +23,8 @@
   avgRating: number;
   reviewCount: number;
   stockQuantity?: number;
+  /** True when at least one variant is fulfilled on demand via a live supplier API (e.g. LikeCard) rather than requiring local warehouse stock. */
+  hasSupplierFulfillment?: boolean;
   brandId?: string;
   categoryId?: string;
   brand?: Brand;
@@ -55,6 +57,8 @@ export interface ProductVariant {
   salePrice?: number;
   isActive: boolean;
   stockQuantity?: number;
+  /** True when this variant is fulfilled on demand via a live supplier API (e.g. LikeCard) rather than requiring local warehouse stock. */
+  hasSupplierFulfillment?: boolean;
   options?: Array<{ attributeId: string; optionId: string }>;
   sortOrder?: number;
   giftCardSupplierConfig?: {

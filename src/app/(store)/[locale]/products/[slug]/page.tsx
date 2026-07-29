@@ -108,10 +108,14 @@ export default function ProductDetailPage() {
 
   const selectedVariant = product?.variants?.find((v) => v.id === selectedVariantId) ?? null;
   // Conservative: a product/variant with no stock figure reported is treated as unavailable
-  // rather than assumed in stock.
+  // rather than assumed in stock — unless it's fulfilled on demand via a live supplier API
+  // (e.g. LikeCard), which never carries local warehouse stock by design.
   const stockQuantity = selectedVariant ? selectedVariant.stockQuantity ?? 0 : product?.stockQuantity ?? 0;
-  const isOutOfStock = stockQuantity <= 0;
-  const isLowStock = !isOutOfStock && stockQuantity <= LOW_STOCK_THRESHOLD;
+  const hasSupplierFulfillment = selectedVariant
+    ? Boolean(selectedVariant.hasSupplierFulfillment)
+    : Boolean(product?.hasSupplierFulfillment);
+  const isOutOfStock = stockQuantity <= 0 && !hasSupplierFulfillment;
+  const isLowStock = !isOutOfStock && !hasSupplierFulfillment && stockQuantity <= LOW_STOCK_THRESHOLD;
 
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;

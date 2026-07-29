@@ -359,8 +359,14 @@ export default function HomePage() {
         <ProductSection title="" href="/en/deals" params={{ isOnSale: true }} />
       </section>
 
-      {/* New Arrivals */}
-      <ProductSection title="New Arrivals" href="/en/new-arrivals" params={{ sortBy: 'createdAt', sortOrder: 'DESC' }} />
+      {/* New Arrivals — excludes digital/gift-card SKUs so a bulk supplier catalog sync (e.g.
+          the LikeCard PlayStation gift cards) can't flood this rail; it's meant to showcase new
+          game releases, not backend inventory imports. */}
+      <ProductSection
+        title="New Arrivals"
+        href="/en/new-arrivals"
+        params={{ sortBy: 'createdAt', sortOrder: 'DESC', type: ['simple', 'variable', 'bundle', 'preorder', 'limited'] }}
+      />
 
       {/* Platform sections */}
       {PLATFORMS.map((platform) => (

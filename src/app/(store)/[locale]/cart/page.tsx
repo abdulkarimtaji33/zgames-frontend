@@ -43,7 +43,7 @@ export default function CartPage() {
         uniqueProductIds.map(async (productId) => {
           try {
             const res = await productsApi.findOne(productId);
-            return { productId, product: res.data.data as Product & { stockQuantity?: number } };
+            return { productId, product: res.data.data as Product };
           } catch {
             return { productId, product: null };
           }

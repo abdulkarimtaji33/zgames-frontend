@@ -17,7 +17,15 @@ export default function ListingPage() {
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await productsApi.findAll({ ...{ sortBy: 'createdAt', sortOrder: 'DESC' }, page, limit: 24 });
+      // Excludes digital/gift-card SKUs so a bulk supplier catalog sync (e.g. LikeCard) can't
+      // flood this rail — it's meant to showcase new game releases, not backend inventory imports.
+      const res = await productsApi.findAll({
+        sortBy: 'createdAt',
+        sortOrder: 'DESC',
+        type: ['simple', 'variable', 'bundle', 'preorder', 'limited'],
+        page,
+        limit: 24,
+      });
       const data = res.data.data as PaginatedResponse<Product>;
       setProducts(data.items ?? []);
       setTotalPages(data.meta?.totalPages ?? 1);

@@ -119,6 +119,8 @@ export interface GiftCardCode {
   orderId: string | null;
   soldAt: string | null;
   createdAt: string;
+  likecardOrderId?: string | null;
+  likecardReferenceId?: string | null;
 }
 
 export interface GiftCardCodeStat {
@@ -149,6 +151,36 @@ export const adminGiftCardCodesApi = {
     adminClient.post<ApiData<GiftCardSupplierConfig>>(`/products/variants/${variantId}/gift-card-supplier`, config),
   lowStock: (threshold?: number) =>
     adminClient.get(`/gift-card-codes/low-stock`, { params: { threshold } }),
+  listByOrderItem: (orderId: string, itemId: string) =>
+    adminClient.get<ApiData<GiftCardCode[]>>(`/orders/${orderId}/items/${itemId}/gift-card-codes`),
+};
+
+export interface LikeCardBalance {
+  configured: boolean;
+  userId?: string;
+  balance?: number;
+  currency?: string;
+}
+
+export interface LikeCardSyncResult {
+  regionsFound: Array<{ categoryId: string; categoryName: string; region: string }>;
+  productsCreated: number;
+  productsUpdated: number;
+  skippedNoRegionMatch: string[];
+}
+
+export interface LikeCardSyncStatus {
+  linkedVariants: number;
+  totalVariants: number;
+  unlinkedProducts: Array<{ productId: string; name: string; variantId: string }>;
+}
+
+export const adminLikeCardApi = {
+  status: () => adminClient.get<ApiData<{ configured: boolean; circuitOpen: boolean }>>('/admin/integrations/likecard/status'),
+  balance: () => adminClient.get<ApiData<LikeCardBalance>>('/admin/integrations/likecard/balance'),
+  syncPlaystation: (markupPercent?: number) =>
+    adminClient.post<ApiData<LikeCardSyncResult>>('/admin/integrations/likecard/sync-playstation', { markupPercent }),
+  syncStatus: () => adminClient.get<ApiData<LikeCardSyncStatus>>('/admin/integrations/likecard/sync-status'),
 };
 
 export const adminLoyaltyApi = {

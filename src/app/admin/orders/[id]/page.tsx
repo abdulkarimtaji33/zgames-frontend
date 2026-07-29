@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { FormField, FormInput, FormSelect, FormTextarea } from '@/components/admin/FormField';
 import { useAdminToast } from '@/hooks/useAdminToast';
-import { adminOrdersApi } from '@/lib/api/adminApi';
+import { adminOrdersApi, adminGiftCardCodesApi, type GiftCardCode } from '@/lib/api/adminApi';
 import type { Order, OrderItem } from '@/types';
 
 interface OrderDetail extends Order {
@@ -71,6 +71,7 @@ export default function AdminOrderDetailPage() {
   const [isAddingShipment, setIsAddingShipment] = useState(false);
   const [fulfillCodeInputs, setFulfillCodeInputs] = useState<Record<string, string>>({});
   const [fulfillingItemId, setFulfillingItemId] = useState<string | null>(null);
+  const [codesByItem, setCodesByItem] = useState<Record<string, GiftCardCode[]>>({});
 
   const loadOrder = useCallback(async () => {
     if (!id) return;
@@ -85,6 +86,25 @@ export default function AdminOrderDetailPage() {
       setNewStatus(data.status);
       const tl = timelineRes.data?.data ?? timelineRes.data ?? [];
       setTimeline(Array.isArray(tl) ? tl : []);
+
+      const giftCardItems = (data.items ?? []).filter(
+        (item: OrderItem) => (item.productSnapshot as { type?: string } | undefined)?.type === 'gift_card',
+      );
+      if (giftCardItems.length && id) {
+        const entries = await Promise.all(
+          giftCardItems.map(async (item: OrderItem) => {
+            try {
+              const res = await adminGiftCardCodesApi.listByOrderItem(id, item.id);
+              return [item.id, res.data.data] as const;
+            } catch {
+              return [item.id, []] as const;
+            }
+          }),
+        );
+        setCodesByItem(Object.fromEntries(entries));
+      } else {
+        setCodesByItem({});
+      }
     } catch {
       toast('Failed to load order', 'error');
       setOrder(null);
@@ -250,10 +270,22 @@ export default function AdminOrderDetailPage() {
                     </div>
 
                     {isGiftCard && (item.deliveredCodes?.length ?? 0) > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {item.deliveredCodes!.map((code, i) => (
-                          <code key={i} className="text-xs font-mono px-2 py-1 rounded bg-background-tertiary border border-border">{code}</code>
-                        ))}
+                      <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                        {item.deliveredCodes!.map((code, i) => {
+                          const meta = codesByItem[item.id]?.find((c) => c.code === code);
+                          return (
+                            <span key={i} className="inline-flex items-center gap-1.5">
+                              <code className="text-xs font-mono px-2 py-1 rounded bg-background-tertiary border border-border">{code}</code>
+                              {meta?.source === 'api' && meta.likecardOrderId ? (
+                                <Badge variant="info" size="xs" title={`LikeCard order ${meta.likecardOrderId}`}>
+                                  LikeCard #{meta.likecardOrderId.slice(0, 8)}
+                                </Badge>
+                              ) : (
+                                <Badge variant="default" size="xs">Local stock</Badge>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
 

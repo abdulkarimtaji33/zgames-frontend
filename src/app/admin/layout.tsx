@@ -8,7 +8,7 @@ import {
   Warehouse, Truck, ClipboardList, Users, Star, MessageSquare,
   RotateCcw, Bell, BarChart2, LineChart, FileText, Settings,
   Menu, X, Zap, UserCog, ShieldCheck, Lock, DollarSign, PenTool,
-  Building2, Globe, BookOpen,
+  Building2, Globe, BookOpen, PlugZap,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { adminAuthApi } from '@/lib/api/adminApi';
@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
   { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
   { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
+  { label: 'Integrations', href: '/admin/integrations/likecard', icon: PlugZap },
   { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
   {
     label: 'Marketing', icon: Zap,

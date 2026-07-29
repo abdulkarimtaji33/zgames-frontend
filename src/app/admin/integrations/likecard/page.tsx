@@ -135,7 +135,7 @@ export default function AdminLikeCardIntegrationPage() {
           </div>
           {balance?.configured ? (
             <p className="text-3xl font-bold text-accent">
-              {balance.balance?.toFixed(2)} <span className="text-sm font-normal text-foreground-muted">{balance.currency ?? ''}</span>
+              {balance.balance !== undefined ? Number(balance.balance).toFixed(2) : '—'} <span className="text-sm font-normal text-foreground-muted">{balance.currency ?? ''}</span>
             </p>
           ) : (
             <p className="text-sm text-foreground-muted">Not available — credentials not configured.</p>

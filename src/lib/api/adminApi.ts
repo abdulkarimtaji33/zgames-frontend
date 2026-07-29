@@ -158,7 +158,7 @@ export const adminGiftCardCodesApi = {
 export interface LikeCardBalance {
   configured: boolean;
   userId?: string;
-  balance?: number;
+  balance?: number | string;
   currency?: string;
 }
 

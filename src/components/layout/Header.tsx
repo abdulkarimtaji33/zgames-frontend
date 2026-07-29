@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { cn } from '@/lib/utils/cn';
+import { authApi } from '@/lib/api';
 import { MegaMenu } from './MegaMenu';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from './ThemeToggle';
@@ -58,9 +59,14 @@ export function Header() {
 
   const cartCount = useCartStore((s) => s.getItemCount());
   const wishlistCount = useWishlistStore((s) => s.productIds.length);
-  const { customer: user, isAuthenticated, clearAuth } = useAuthStore();
+  const { customer: user, isAuthenticated, refreshToken, clearAuth } = useAuthStore();
   const { country, setCountry } = useUIStore();
   const { selected: currency, currencies, setCurrency } = useCurrencyStore();
+
+  const handleLogout = () => {
+    if (refreshToken) authApi.logout(refreshToken).catch(() => {});
+    clearAuth();
+  };
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 10);
@@ -324,7 +330,7 @@ export function Header() {
                   >
                     <Bell className="h-4 w-4" /> Orders
                   </Link>
-                  <DropdownItem onClick={clearAuth} className="text-error hover:bg-error/10 focus-visible:bg-error/10">
+                  <DropdownItem onClick={handleLogout} className="text-error hover:bg-error/10 focus-visible:bg-error/10">
                     <LogOut className="h-4 w-4" /> Logout
                   </DropdownItem>
                 </Dropdown>
@@ -450,7 +456,7 @@ export function Header() {
                     <Heart className="h-4 w-4" /> Wishlist
                   </Link>
                   <button
-                    onClick={() => { clearAuth(); setMobileOpen(false); }}
+                    onClick={() => { handleLogout(); setMobileOpen(false); }}
                     className={cn('flex w-full items-center gap-2 px-3 py-2.5 rounded-md text-sm text-error hover:bg-error/10 transition-colors', focusRing)}
                   >
                     <LogOut className="h-4 w-4" /> Logout

@@ -5,6 +5,7 @@ import { DollarSign, TrendingUp, CreditCard, RotateCcw } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { StatCard } from '@/components/admin/StatCard';
 import { Badge } from '@/components/ui/Badge';
@@ -39,6 +40,7 @@ export default function AdminFinancePage() {
   const { items: orders, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<Order>({ fetcher, limit: 20 });
 
   const [refundOpen, setRefundOpen] = useState(false);
+  const [refundConfirmOpen, setRefundConfirmOpen] = useState(false);
   const [refundForm, setRefundForm] = useState({ paymentId: '', amount: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -97,6 +99,7 @@ export default function AdminFinancePage() {
         reason: refundForm.reason || undefined,
       });
       toast('Refund processed', 'success');
+      setRefundConfirmOpen(false);
       setRefundOpen(false);
       reload();
     } catch {
@@ -148,13 +151,23 @@ export default function AdminFinancePage() {
         <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       </div>
 
-      <AdminModal open={refundOpen} title="Process Refund" onClose={() => setRefundOpen(false)} onSubmit={handleRefund} isSubmitting={submitting} submitLabel="Refund">
+      <AdminModal open={refundOpen} title="Process Refund" onClose={() => setRefundOpen(false)} onSubmit={() => setRefundConfirmOpen(true)} submitLabel="Refund">
         <div className="space-y-4">
           <FormField label="Payment ID"><FormInput value={refundForm.paymentId} disabled /></FormField>
           <FormField label="Amount"><FormInput type="number" min="0" step="0.01" value={refundForm.amount} onChange={(e) => setRefundForm({ ...refundForm, amount: e.target.value })} /></FormField>
           <FormField label="Reason"><FormTextarea value={refundForm.reason} onChange={(e) => setRefundForm({ ...refundForm, reason: e.target.value })} rows={3} /></FormField>
         </div>
       </AdminModal>
+
+      <ConfirmDialog
+        open={refundConfirmOpen}
+        title="Confirm Refund"
+        message={`Are you sure you want to refund AED ${Number(refundForm.amount || 0).toFixed(2)}? This action may not be reversible.`}
+        destructive
+        isLoading={submitting}
+        onCancel={() => setRefundConfirmOpen(false)}
+        onConfirm={handleRefund}
+      />
     </div>
   );
 }

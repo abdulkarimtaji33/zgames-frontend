@@ -37,10 +37,14 @@ export const useCartStore = create<CartState>()(
             (i) => i.productId === item.productId && i.variantId === item.variantId,
           );
           if (existing) {
+            // Spread the incoming item over the existing one (not the other way around) so a
+            // price/salePrice change since the first add-to-cart (flash sale starting/ending, an
+            // admin price edit) is picked up for the whole merged quantity, not silently kept at
+            // whatever price was current the first time this product was added.
             return {
               items: state.items.map((i) =>
                 i.productId === item.productId && i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + item.quantity }
+                  ? { ...i, ...item, quantity: i.quantity + item.quantity }
                   : i,
               ),
             };

@@ -216,6 +216,10 @@ const FILTERS = [
   {
     key: 'availability',
     label: 'Availability',
+    // Single-select: these three map to separate ANDed backend flags (isPreorder/isComingSoon/
+    // inStock), so allowing more than one at once as a checkbox group could silently produce an
+    // impossible combination (e.g. "in stock" AND "pre-order") and always return zero results.
+    type: 'radio' as const,
     options: [
       { label: 'In Stock', value: 'in_stock' },
       { label: 'Pre-Order', value: 'preorder' },

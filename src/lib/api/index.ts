@@ -17,8 +17,10 @@ export const authApi = {
     apiClient.post('/auth/verify-email', { token }),
   refresh: (refreshToken: string) =>
     apiClient.post<{ data: { accessToken: string } }>('/auth/refresh', { refreshToken }),
-  logout: () => apiClient.post('/auth/logout'),
+  logout: (refreshToken: string) => apiClient.post('/auth/logout', { refreshToken }),
   me: () => apiClient.get<{ data: Customer }>('/customers/me'),
+  exchangeOAuthCode: (code: string) =>
+    apiClient.post<{ data: AuthResponse }>('/auth/oauth/exchange', { code }),
 };
 
 /* Products */

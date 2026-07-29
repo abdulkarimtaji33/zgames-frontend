@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { authApi, customerApi } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-export default function OAuthCallbackPage() {
+function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
@@ -41,23 +41,38 @@ export default function OAuthCallbackPage() {
   }, [searchParams, setAuth, router]);
 
   return (
+    <div className="rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-2xl text-center">
+      {error ? (
+        <>
+          <AlertCircle className="h-8 w-8 text-error mx-auto mb-3" />
+          <p className="text-sm text-foreground-muted mb-4">{error}</p>
+          <Link href="/en/login" className="text-sm font-medium text-accent hover:underline">
+            Back to sign in
+          </Link>
+        </>
+      ) : (
+        <>
+          <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-foreground-muted">Signing you in…</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
     <div className="w-full max-w-md">
-      <div className="rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-2xl text-center">
-        {error ? (
-          <>
-            <AlertCircle className="h-8 w-8 text-error mx-auto mb-3" />
-            <p className="text-sm text-foreground-muted mb-4">{error}</p>
-            <Link href="/en/login" className="text-sm font-medium text-accent hover:underline">
-              Back to sign in
-            </Link>
-          </>
-        ) : (
-          <>
+      <Suspense
+        fallback={
+          <div className="rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-2xl text-center">
             <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-foreground-muted">Signing you in…</p>
-          </>
-        )}
-      </div>
+          </div>
+        }
+      >
+        <OAuthCallbackContent />
+      </Suspense>
     </div>
   );
 }

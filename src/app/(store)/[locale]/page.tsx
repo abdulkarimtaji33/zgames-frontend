@@ -6,6 +6,7 @@ import { ArrowRight, Zap, Package, Star, ChevronRight, ChevronLeft, Clock } from
 import Image from 'next/image';
 import { ProductCard } from '@/components/store/ProductCard';
 import { ProductGrid } from '@/components/store/ProductGrid';
+import { LikeCardTestPanel } from '@/components/store/LikeCardTestPanel';
 import { Button } from '@/components/ui/Button';
 import { productsApi, categoriesApi } from '@/lib/api';
 import type { Product, PaginatedResponse, Category } from '@/types';
@@ -318,6 +319,9 @@ export default function HomePage() {
 
       {/* Hero */}
       <HeroSlider />
+
+      {/* Dev-only: manual LikeCard sandbox test card */}
+      <LikeCardTestPanel />
 
       {/* Category grid */}
       <section className="mb-14 reveal">

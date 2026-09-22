@@ -181,6 +181,9 @@ export const adminLikeCardApi = {
   syncPlaystation: (markupPercent?: number) =>
     adminClient.post<ApiData<LikeCardSyncResult>>('/admin/integrations/likecard/sync-playstation', { markupPercent }),
   syncStatus: () => adminClient.get<ApiData<LikeCardSyncStatus>>('/admin/integrations/likecard/sync-status'),
+  testProductIds: () => adminClient.get<ApiData<{ productIds: string[] }>>('/admin/integrations/likecard/test-product-ids'),
+  testPurchase: (productId: string, referenceId?: string) =>
+    adminClient.post<ApiData<{ code: string; likecardOrderId: string; product: unknown }>>('/admin/integrations/likecard/test-purchase', { productId, referenceId }),
 };
 
 export const adminLoyaltyApi = {

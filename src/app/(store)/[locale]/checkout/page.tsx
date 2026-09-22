@@ -71,6 +71,7 @@ export default function CheckoutPage() {
   const [addressData, setAddressData] = useState<AddressForm | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
+  const [paymentConfirmState, setPaymentConfirmState] = useState<'idle' | 'confirming' | 'confirmed' | 'failed'>('idle');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
@@ -219,14 +220,19 @@ export default function CheckoutPage() {
   };
 
   const handleCardPaymentSuccess = async () => {
+    setPaymentConfirmState('confirming');
     // The Stripe webhook is a no-op on this environment (no STRIPE_WEBHOOK_SECRET configured),
     // so nothing else marks the order paid or triggers gift-card fulfillment/email. Confirm
     // directly from the client once Stripe itself has reported success.
+    let confirmed = false;
     if (pendingPaymentId) {
-      await paymentsApi.confirm({ paymentId: pendingPaymentId }).catch(() => {});
+      confirmed = await paymentsApi.confirm({ paymentId: pendingPaymentId }).then(() => true).catch(() => false);
     }
+    setPaymentConfirmState(confirmed ? 'confirmed' : 'failed');
     clearCart();
-    router.push(`/en/order-success${createdOrder?.id ? `?orderId=${createdOrder.id}` : ''}`);
+    setTimeout(() => {
+      router.push(`/en/order-success${createdOrder?.id ? `?orderId=${createdOrder.id}` : ''}`);
+    }, confirmed ? 1400 : 2200);
   };
 
   useEffect(() => {
@@ -505,7 +511,29 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {clientSecret ? (
+              {paymentConfirmState !== 'idle' ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                  {paymentConfirmState === 'confirming' && (
+                    <>
+                      <span className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                      <p className="font-medium">Confirming your payment…</p>
+                    </>
+                  )}
+                  {paymentConfirmState === 'confirmed' && (
+                    <>
+                      <Check className="h-10 w-10 text-success" />
+                      <p className="font-heading text-lg font-bold text-success">Payment Successful</p>
+                      <p className="text-sm text-foreground-muted">Redirecting to your order…</p>
+                    </>
+                  )}
+                  {paymentConfirmState === 'failed' && (
+                    <>
+                      <p className="font-heading text-lg font-bold text-error">Payment went through, but we couldn&apos;t confirm the order</p>
+                      <p className="text-sm text-foreground-muted">Your card was charged by Stripe, but confirming it with us failed. Contact support with your order number — redirecting you now.</p>
+                    </>
+                  )}
+                </div>
+              ) : clientSecret ? (
                 <div className="space-y-4">
                   <h3 className="font-heading text-sm font-bold flex items-center gap-2">
                     <Lock className="h-4 w-4 text-accent" /> Secure card payment

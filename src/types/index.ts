@@ -158,6 +158,15 @@ export interface Order {
     email?: string;
     phone?: string;
   } | null;
+  statusHistory?: OrderStatusHistoryEntry[];
+}
+
+export interface OrderStatusHistoryEntry {
+  id: string;
+  status: string;
+  note: string | null;
+  isCustomerVisible: boolean;
+  createdAt: string;
 }
 
 export interface OrderItem {

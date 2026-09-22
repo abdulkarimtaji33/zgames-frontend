@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle2, Package, ArrowRight, MapPin, CreditCard, Receipt } from 'lucide-react';
+import { CheckCircle2, Package, ArrowRight, MapPin, CreditCard, Receipt, Mail, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useCurrencyStore } from '@/store/currencyStore';
+import { ordersApi } from '@/lib/api';
 import { ORDER_SUCCESS_STORAGE_KEY, type OrderSuccessSummary } from '@/lib/orderSuccess';
+import type { Order } from '@/types';
 
 function readStoredSummary(orderId: string | null): OrderSuccessSummary | null {
   if (typeof window === 'undefined') return null;
@@ -30,6 +32,55 @@ export default function OrderSuccessPage() {
   const { isAuthenticated } = useAuthStore();
   const { format } = useCurrencyStore();
   const [summary] = useState<OrderSuccessSummary | null>(() => readStoredSummary(orderId));
+  const [order, setOrder] = useState<Order | null>(null);
+  const [deliveryStatus, setDeliveryStatus] = useState<'checking' | 'known' | 'unknown'>('checking');
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fulfillment and email delivery happen asynchronously right after payment confirms, so the
+  // order may not have its status-history notes yet the instant this page loads. Poll briefly
+  // instead of asserting anything happened before we've actually verified it did.
+  useEffect(() => {
+    if (!isAuthenticated || !orderId) {
+      setDeliveryStatus('unknown');
+      return;
+    }
+    let cancelled = false;
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const res = await ordersApi.findByCustomer(1);
+        const found = res.data.data.items.find((o) => o.id === orderId) ?? null;
+        if (cancelled) return;
+        if (found) {
+          setOrder(found);
+          const hasEmailNote = (found.statusHistory ?? []).some((h) => h.isCustomerVisible && /email/i.test(h.note ?? ''));
+          if (hasEmailNote || found.paymentStatus !== 'pending' && attempts >= 4) {
+            setDeliveryStatus(hasEmailNote ? 'known' : 'unknown');
+            return;
+          }
+        }
+        if (attempts < 8) {
+          pollTimer.current = setTimeout(poll, 2500);
+        } else {
+          setDeliveryStatus('unknown');
+        }
+      } catch {
+        if (!cancelled) setDeliveryStatus('unknown');
+      }
+    };
+    poll();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
+  }, [isAuthenticated, orderId]);
+
+  const emailNotes = (order?.statusHistory ?? [])
+    .filter((h) => h.isCustomerVisible && /email/i.test(h.note ?? ''))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
   // Guests get redirected to /login by the (customer) layout if we send them to /orders,
   // so point unauthenticated shoppers to the public guest tracking page instead.
@@ -46,7 +97,34 @@ export default function OrderSuccessPage() {
         {summary?.orderNumber && (
           <p className="text-sm font-medium text-accent mb-2 animate-slide-up">Order #{summary.orderNumber}</p>
         )}
-        <p className="text-sm text-foreground-muted mb-8 animate-slide-up">A confirmation email has been sent to you. You can track your order below.</p>
+        {isAuthenticated ? (
+          <div className="mb-8 animate-slide-up">
+            {deliveryStatus === 'checking' && (
+              <p className="flex items-center justify-center gap-2 text-sm text-foreground-muted">
+                <Loader2 className="h-4 w-4 animate-spin" /> Confirming payment and checking email delivery…
+              </p>
+            )}
+            {deliveryStatus === 'known' && emailNotes.length > 0 && (
+              <div className="space-y-1.5">
+                {emailNotes.map((n) => (
+                  <p key={n.id} className="flex items-center justify-center gap-2 text-sm text-success font-medium">
+                    <Mail className="h-4 w-4" /> {n.note}
+                  </p>
+                ))}
+              </div>
+            )}
+            {deliveryStatus === 'unknown' && (
+              <p className="flex items-center justify-center gap-2 text-sm text-warning font-medium">
+                <AlertTriangle className="h-4 w-4" /> We couldn&apos;t yet confirm your email was sent — check{' '}
+                <Link href={trackOrderHref} className="underline">Track My Order</Link> shortly for the latest status.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-foreground-muted mb-8 animate-slide-up">
+            You checked out as a guest — email delivery can&apos;t be confirmed here. Contact support with your order number if you don&apos;t receive anything.
+          </p>
+        )}
 
         {summary && (
           <div className="text-left rounded-2xl bg-card border border-border p-6 mb-8 animate-slide-up">

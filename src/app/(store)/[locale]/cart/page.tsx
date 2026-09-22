@@ -23,11 +23,13 @@ export default function CartPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [supplierFulfilledMap, setSupplierFulfilledMap] = useState<Record<string, boolean>>({});
   const [undoToast, setUndoToast] = useState<CartItem | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const subtotal = getSubtotal();
-  const shipping = getShippingCost(subtotal);
+  const isDigitalOnly = items.length > 0 && items.every((i) => i.type === 'gift_card' || i.type === 'digital');
+  const shipping = isDigitalOnly ? 0 : getShippingCost(subtotal);
   const discount = couponDiscount;
   const total = subtotal + shipping - discount;
   const itemCount = getItemCount();
@@ -50,6 +52,24 @@ export default function CartPage() {
         }),
       );
       if (cancelled) return;
+      setSupplierFulfilledMap((prev) => {
+        const next = { ...prev };
+        for (const { productId, product } of entries) {
+          if (!product) continue;
+          const cartItemsForProduct = items.filter((i) => i.productId === productId);
+          for (const ci of cartItemsForProduct) {
+            let hasSupplierFulfillment: boolean | undefined;
+            if (ci.variantId && product.variants) {
+              const variant = product.variants.find((v: ProductVariant) => v.id === ci.variantId);
+              hasSupplierFulfillment = variant?.hasSupplierFulfillment;
+            } else {
+              hasSupplierFulfillment = product.hasSupplierFulfillment;
+            }
+            next[stockKey(productId, ci.variantId)] = Boolean(hasSupplierFulfillment);
+          }
+        }
+        return next;
+      });
       setStockMap((prev) => {
         const next = { ...prev };
         for (const { productId, product } of entries) {
@@ -163,8 +183,9 @@ export default function CartPage() {
                       </button>
                       <span className="px-3 text-sm font-semibold min-w-[2rem] text-center tabular-nums">{item.quantity}</span>
                       {(() => {
+                        const isSupplierFulfilled = supplierFulfilledMap[stockKey(item.productId, item.variantId)];
                         const maxStock = stockMap[stockKey(item.productId, item.variantId)];
-                        const atLimit = typeof maxStock === 'number' && item.quantity >= maxStock;
+                        const atLimit = !isSupplierFulfilled && typeof maxStock === 'number' && item.quantity >= maxStock;
                         return (
                           <button
                             onClick={() => !atLimit && updateQuantity(item.productId, item.variantId, item.quantity + 1)}
@@ -178,6 +199,8 @@ export default function CartPage() {
                       })()}
                     </div>
                     {(() => {
+                      const isSupplierFulfilled = supplierFulfilledMap[stockKey(item.productId, item.variantId)];
+                      if (isSupplierFulfilled) return null;
                       const maxStock = stockMap[stockKey(item.productId, item.variantId)];
                       if (typeof maxStock !== 'number') return null;
                       if (maxStock <= 0) {

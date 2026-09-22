@@ -70,6 +70,7 @@ export default function CheckoutPage() {
   const [isPlacing, setIsPlacing] = useState(false);
   const [addressData, setAddressData] = useState<AddressForm | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
@@ -195,9 +196,11 @@ export default function CheckoutPage() {
 
       if (paymentMethod === 'card' && order?.id) {
         const intentRes = await paymentsApi.createIntent({ orderId: order.id, method: 'stripe', currency: 'AED' });
-        const secret = (intentRes.data as { data?: { metadata?: { clientSecret?: string } } }).data?.metadata?.clientSecret;
+        const intentData = (intentRes.data as { data?: { id?: string; metadata?: { clientSecret?: string } } }).data;
+        const secret = intentData?.metadata?.clientSecret;
         if (secret) {
           setClientSecret(secret);
+          setPendingPaymentId(intentData?.id ?? null);
           setIsPlacing(false);
           return;
         }
@@ -215,7 +218,13 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleCardPaymentSuccess = () => {
+  const handleCardPaymentSuccess = async () => {
+    // The Stripe webhook is a no-op on this environment (no STRIPE_WEBHOOK_SECRET configured),
+    // so nothing else marks the order paid or triggers gift-card fulfillment/email. Confirm
+    // directly from the client once Stripe itself has reported success.
+    if (pendingPaymentId) {
+      await paymentsApi.confirm({ paymentId: pendingPaymentId }).catch(() => {});
+    }
     clearCart();
     router.push(`/en/order-success${createdOrder?.id ? `?orderId=${createdOrder.id}` : ''}`);
   };

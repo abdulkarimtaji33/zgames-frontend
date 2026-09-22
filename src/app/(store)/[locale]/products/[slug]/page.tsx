@@ -122,6 +122,7 @@ export default function ProductDetailPage() {
     const featuredImage = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];
     addItem({
       productId: product.id,
+      variantId: selectedVariant?.id,
       quantity,
       name: product.name,
       price: selectedVariant?.price ?? product.price,

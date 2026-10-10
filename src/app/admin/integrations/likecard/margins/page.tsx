@@ -27,6 +27,8 @@ function money(n: number) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+type MarginRow = GiftCardMarginRow & { id: string };
+
 export default function LikeCardMarginsPage() {
   const toast = useAdminToast((s) => s.show);
   const [rows, setRows] = useState<GiftCardMarginRow[]>([]);
@@ -58,7 +60,11 @@ export default function LikeCardMarginsPage() {
   }, [rows]);
 
   const filtered = useMemo(
-    () => (platformFilter === 'all' ? rows : rows.filter((r) => platformOf(r.name) === platformFilter)),
+    () =>
+      (platformFilter === 'all' ? rows : rows.filter((r) => platformOf(r.name) === platformFilter)).map((r) => ({
+        ...r,
+        id: r.productId,
+      })),
     [rows, platformFilter],
   );
 
@@ -70,7 +76,7 @@ export default function LikeCardMarginsPage() {
     return { count: filtered.length, activeCount: active.length, totalMargin, avgMarginPercent };
   }, [filtered]);
 
-  const startEdit = (row: GiftCardMarginRow) => {
+  const startEdit = (row: MarginRow) => {
     setEditingId(row.productId);
     setEditValue(String(row.price));
   };
@@ -80,7 +86,7 @@ export default function LikeCardMarginsPage() {
     setEditValue('');
   };
 
-  const saveEdit = async (row: GiftCardMarginRow) => {
+  const saveEdit = async (row: MarginRow) => {
     const price = Number(editValue);
     if (!Number.isFinite(price) || price <= 0) {
       toast('Enter a valid price greater than 0', 'error');
@@ -99,7 +105,7 @@ export default function LikeCardMarginsPage() {
     }
   };
 
-  const columns: Column<GiftCardMarginRow>[] = [
+  const columns: Column<MarginRow>[] = [
     {
       key: 'name',
       label: 'Gift Card',

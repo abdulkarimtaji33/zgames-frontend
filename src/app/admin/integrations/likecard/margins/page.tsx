@@ -34,6 +34,9 @@ export default function LikeCardMarginsPage() {
   const [rows, setRows] = useState<GiftCardMarginRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [platformFilter, setPlatformFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [marginFilter, setMarginFilter] = useState<'all' | 'positive' | 'zero' | 'negative'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -59,13 +62,28 @@ export default function LikeCardMarginsPage() {
     return ['all', ...Array.from(set).sort()];
   }, [rows]);
 
+  const regions = useMemo(() => {
+    const set = new Set(rows.map((r) => r.region));
+    return ['all', ...Array.from(set).sort()];
+  }, [rows]);
+
   const filtered = useMemo(
     () =>
-      (platformFilter === 'all' ? rows : rows.filter((r) => platformOf(r.name) === platformFilter)).map((r) => ({
-        ...r,
-        id: r.productId,
-      })),
-    [rows, platformFilter],
+      rows
+        .filter((r) => platformFilter === 'all' || platformOf(r.name) === platformFilter)
+        .filter((r) => regionFilter === 'all' || r.region === regionFilter)
+        .filter((r) => {
+          if (statusFilter === 'all') return true;
+          return statusFilter === 'active' ? r.isActive : !r.isActive;
+        })
+        .filter((r) => {
+          if (marginFilter === 'all') return true;
+          if (marginFilter === 'positive') return r.marginAmount > 0;
+          if (marginFilter === 'negative') return r.marginAmount < 0;
+          return r.marginAmount === 0;
+        })
+        .map((r) => ({ ...r, id: r.productId })),
+    [rows, platformFilter, regionFilter, statusFilter, marginFilter],
   );
 
   const totals = useMemo(() => {
@@ -279,17 +297,62 @@ export default function LikeCardMarginsPage() {
         searchPlaceholder="Search gift cards..."
         emptyMessage="No LikeCard gift cards synced yet."
         filters={
-          <select
-            value={platformFilter}
-            onChange={(e) => setPlatformFilter(e.target.value)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {platforms.map((p) => (
-              <option key={p} value={p}>
-                {p === 'all' ? 'All platforms' : p}
-              </option>
-            ))}
-          </select>
+          <>
+            <select
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {platforms.map((p) => (
+                <option key={p} value={p}>
+                  {p === 'all' ? 'All platforms' : p}
+                </option>
+              ))}
+            </select>
+            <select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {regions.map((r) => (
+                <option key={r} value={r}>
+                  {r === 'all' ? 'All regions' : (REGION_LABELS[r] ?? r)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Sellable only</option>
+              <option value="inactive">Unavailable only</option>
+            </select>
+            <select
+              value={marginFilter}
+              onChange={(e) => setMarginFilter(e.target.value as typeof marginFilter)}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">Any margin</option>
+              <option value="positive">Has margin</option>
+              <option value="zero">No margin (break-even)</option>
+              <option value="negative">Below cost</option>
+            </select>
+            {(platformFilter !== 'all' || regionFilter !== 'all' || statusFilter !== 'all' || marginFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setPlatformFilter('all');
+                  setRegionFilter('all');
+                  setStatusFilter('all');
+                  setMarginFilter('all');
+                }}
+                className="text-sm text-accent hover:underline px-1"
+              >
+                Clear filters
+              </button>
+            )}
+          </>
         }
       />
     </div>

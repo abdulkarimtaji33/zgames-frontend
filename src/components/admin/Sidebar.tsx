@@ -13,6 +13,11 @@ export type NavItem = {
   children?: { label: string; href: string }[];
 };
 
+export type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(
@@ -98,11 +103,11 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  navItems: NavItem[];
+  sections: NavSection[];
   onLogout: () => void;
 }
 
-export function Sidebar({ collapsed, onToggleCollapse, navItems, onLogout }: SidebarProps) {
+export function Sidebar({ collapsed, onToggleCollapse, sections, onLogout }: SidebarProps) {
   return (
     <aside
       className={cn(
@@ -133,9 +138,16 @@ export function Sidebar({ collapsed, onToggleCollapse, navItems, onLogout }: Sid
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {navItems.map((item) => (
-          <NavLink key={item.label} item={item} collapsed={collapsed} />
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
+        {sections.map((section) => (
+          <div key={section.label} className="mb-1">
+            {!collapsed && <p className="admin-nav-section-label">{section.label}</p>}
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavLink key={item.label} item={item} collapsed={collapsed} />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

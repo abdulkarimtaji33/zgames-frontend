@@ -6,6 +6,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { FormField, FormInput, FormSelect } from '@/components/admin/FormField';
+import { EntityPicker } from '@/components/admin/EntityPicker';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -47,6 +48,7 @@ interface SelectOption {
 
 interface CreateItemRow {
   productId: string;
+  productName: string;
   quantity: string;
   unitCost: string;
 }
@@ -85,7 +87,7 @@ export default function AdminPurchaseOrdersPage() {
     notes: '',
   });
   const [createItems, setCreateItems] = useState<CreateItemRow[]>([
-    { productId: '', quantity: '1', unitCost: '0' },
+    { productId: '', productName: '', quantity: '1', unitCost: '0' },
   ]);
   const [receiveQty, setReceiveQty] = useState<Record<string, string>>({});
 
@@ -161,7 +163,7 @@ export default function AdminPurchaseOrdersPage() {
       toast('Purchase order created', 'success');
       setCreateOpen(false);
       setCreateForm({ supplierId: '', warehouseId: '', notes: '' });
-      setCreateItems([{ productId: '', quantity: '1', unitCost: '0' }]);
+      setCreateItems([{ productId: '', productName: '', quantity: '1', unitCost: '0' }]);
       reload();
     } catch {
       toast('Failed to create purchase order', 'error');
@@ -282,7 +284,7 @@ export default function AdminPurchaseOrdersPage() {
         onClose={() => {
           setCreateOpen(false);
           setCreateForm({ supplierId: '', warehouseId: '', notes: '' });
-          setCreateItems([{ productId: '', quantity: '1', unitCost: '0' }]);
+          setCreateItems([{ productId: '', productName: '', quantity: '1', unitCost: '0' }]);
         }}
         onSubmit={handleCreate}
       >
@@ -327,23 +329,23 @@ export default function AdminPurchaseOrdersPage() {
                 variant="ghost"
                 size="xs"
                 onClick={() =>
-                  setCreateItems([...createItems, { productId: '', quantity: '1', unitCost: '0' }])
+                  setCreateItems([...createItems, { productId: '', productName: '', quantity: '1', unitCost: '0' }])
                 }
               >
                 + Add Item
               </Button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {createItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-3 gap-2">
-                  <FormInput
-                    value={item.productId}
-                    onChange={(e) => {
+                <div key={idx} className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-2">
+                  <EntityPicker
+                    type="product"
+                    value={item.productId ? { id: item.productId, label: item.productName } : null}
+                    onChange={(opt) => {
                       const next = [...createItems];
-                      next[idx] = { ...next[idx], productId: e.target.value };
+                      next[idx] = { ...next[idx], productId: opt?.id ?? '', productName: opt?.label ?? '' };
                       setCreateItems(next);
                     }}
-                    placeholder="Product ID"
                   />
                   <FormInput
                     type="number"

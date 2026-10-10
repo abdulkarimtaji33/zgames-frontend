@@ -1,0 +1,74 @@
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN SHELL TOKENS
+   Scoped under .admin-shell — the storefront's red/orange gaming
+   accent is replaced with a calmer, dashboard-appropriate indigo for
+   everything inside the admin panel. Same OKLCH primitive/semantic
+   architecture as globals.css, just a different semantic re-point.
+   ══════════════════════════════════════════════════════════════════ */
+
+.admin-shell {
+  /* ── Primitive: admin accent ramp (calm indigo, not brand red) ── */
+  --admin-accent-400: oklch(68% 0.14 275);
+  --admin-accent-500: oklch(58% 0.16 275);
+  --admin-accent-600: oklch(49% 0.16 275);
+  --admin-accent-700: oklch(41% 0.14 275);
+
+  /* ── Re-point the semantic accent tokens the whole admin tree reads ── */
+  --color-accent: var(--admin-accent-500);
+  --color-accent-hover: var(--admin-accent-600);
+  --color-accent-active: var(--admin-accent-700);
+  --accent: var(--admin-accent-500);
+  --accent-hover: var(--admin-accent-600);
+  --ring: var(--admin-accent-500);
+  --accent-glow: oklch(58% 0.16 275 / 16%);
+
+  /* ── Slightly denser rhythm for data-heavy screens ───────────── */
+  --admin-row-py: 0.625rem;
+  --admin-card-p: 1.25rem;
+}
+
+.dark .admin-shell {
+  --admin-accent-400: oklch(74% 0.13 275);
+  --admin-accent-500: oklch(66% 0.15 275);
+  --admin-accent-600: oklch(72% 0.14 275);
+  --admin-accent-700: oklch(58% 0.16 275);
+
+  --color-accent: var(--admin-accent-500);
+  --color-accent-hover: var(--admin-accent-600);
+  --color-accent-active: var(--admin-accent-700);
+  --accent: var(--admin-accent-500);
+  --accent-hover: var(--admin-accent-600);
+  --ring: var(--admin-accent-500);
+  --accent-glow: oklch(66% 0.15 275 / 22%);
+}
+
+/* ── Nav section headers ─────────────────────────────────────── */
+.admin-nav-section-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  padding: 0.75rem 0.75rem 0.25rem;
+}
+
+/* ── Breadcrumb trail ────────────────────────────────────────── */
+.admin-breadcrumbs {
+  font-size: 0.8125rem;
+  color: var(--foreground-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+.admin-breadcrumbs a {
+  color: var(--foreground-muted);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.admin-breadcrumbs a:hover {
+  color: var(--accent);
+}
+.admin-breadcrumbs .current {
+  color: var(--foreground);
+  font-weight: 500;
+}

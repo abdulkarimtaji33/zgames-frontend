@@ -13,63 +13,115 @@ import {
 import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { adminAuthApi } from '@/lib/api/adminApi';
 import { AdminToastContainer } from '@/components/admin/AdminToast';
-import { Sidebar, type NavItem } from '@/components/admin/Sidebar';
+import { Sidebar, type NavItem, type NavSection } from '@/components/admin/Sidebar';
+import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import '@/styles/admin.css';
 
 const SIDEBAR_COLLAPSED_KEY = 'cgagames-admin-sidebar-collapsed';
 
-const NAV: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-  { label: 'Products', href: '/admin/products', icon: Package },
-  { label: 'Categories', href: '/admin/categories', icon: Tags },
-  { label: 'Brands', href: '/admin/brands', icon: Bookmark },
-  { label: 'Attributes', href: '/admin/attributes', icon: Sliders },
-  { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
-  { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
-  { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
+const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Integrations', icon: PlugZap,
-    children: [
-      { label: 'LikeCard', href: '/admin/integrations/likecard' },
-      { label: 'Gift Card Margins', href: '/admin/integrations/likecard/margins' },
+    label: 'Overview',
+    items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
+  },
+  {
+    label: 'Catalog',
+    items: [
+      { label: 'Products', href: '/admin/products', icon: Package },
+      { label: 'Categories', href: '/admin/categories', icon: Tags },
+      { label: 'Brands', href: '/admin/brands', icon: Bookmark },
+      { label: 'Attributes', href: '/admin/attributes', icon: Sliders },
     ],
   },
-  { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
   {
-    label: 'Marketing', icon: Zap,
-    children: [
-      { label: 'Coupons', href: '/admin/marketing/coupons' },
-      { label: 'Flash Sales', href: '/admin/marketing/flash-sales' },
-      { label: 'Loyalty', href: '/admin/marketing/loyalty' },
-      { label: 'Gift Cards', href: '/admin/marketing/gift-cards' },
-      { label: 'Affiliates', href: '/admin/marketing/affiliates' },
+    label: 'Supply Chain',
+    items: [
+      { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
+      { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
+      { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
+      { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
+      {
+        label: 'Integrations', icon: PlugZap,
+        children: [
+          { label: 'LikeCard', href: '/admin/integrations/likecard' },
+          { label: 'Gift Card Margins', href: '/admin/integrations/likecard/margins' },
+        ],
+      },
     ],
   },
-  { label: 'Customers', href: '/admin/customers', icon: Users },
-  { label: 'Reviews', href: '/admin/reviews', icon: Star },
-  { label: 'Support', href: '/admin/support', icon: MessageSquare },
-  { label: 'Returns', href: '/admin/returns', icon: RotateCcw },
-  { label: 'Blog', href: '/admin/blog', icon: PenTool },
-  { label: 'CMS Pages', href: '/admin/cms-pages', icon: FileText },
-  { label: 'Finance', href: '/admin/finance', icon: DollarSign },
-  { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
-  { label: 'Analytics', href: '/admin/analytics', icon: LineChart },
-  { label: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { label: 'Users', href: '/admin/users', icon: UserCog },
-  { label: 'Roles', href: '/admin/roles', icon: ShieldCheck },
-  { label: 'Permissions', href: '/admin/permissions', icon: Lock },
   {
-    label: 'Localization', icon: Globe,
-    children: [
-      { label: 'Countries', href: '/admin/localization/countries' },
-      { label: 'Currencies', href: '/admin/localization/currencies' },
-      { label: 'Languages', href: '/admin/localization/languages' },
-      { label: 'Stores', href: '/admin/localization/stores' },
+    label: 'Orders & Fulfillment',
+    items: [
+      { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+      { label: 'Returns', href: '/admin/returns', icon: RotateCcw },
+      { label: 'Finance', href: '/admin/finance', icon: DollarSign },
     ],
   },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
+  {
+    label: 'Marketing',
+    items: [
+      {
+        label: 'Marketing', icon: Zap,
+        children: [
+          { label: 'Coupons', href: '/admin/marketing/coupons' },
+          { label: 'Flash Sales', href: '/admin/marketing/flash-sales' },
+          { label: 'Loyalty', href: '/admin/marketing/loyalty' },
+          { label: 'Gift Cards', href: '/admin/marketing/gift-cards' },
+          { label: 'Affiliates', href: '/admin/marketing/affiliates' },
+        ],
+      },
+      { label: 'Reviews', href: '/admin/reviews', icon: Star },
+    ],
+  },
+  {
+    label: 'Customers & Support',
+    items: [
+      { label: 'Customers', href: '/admin/customers', icon: Users },
+      { label: 'Support', href: '/admin/support', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { label: 'Blog', href: '/admin/blog', icon: PenTool },
+      { label: 'CMS Pages', href: '/admin/cms-pages', icon: FileText },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
+      { label: 'Analytics', href: '/admin/analytics', icon: LineChart },
+      { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+    ],
+  },
+  {
+    label: 'People & Access',
+    items: [
+      { label: 'Users', href: '/admin/users', icon: UserCog },
+      { label: 'Roles', href: '/admin/roles', icon: ShieldCheck },
+      { label: 'Permissions', href: '/admin/permissions', icon: Lock },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      {
+        label: 'Localization', icon: Globe,
+        children: [
+          { label: 'Countries', href: '/admin/localization/countries' },
+          { label: 'Currencies', href: '/admin/localization/currencies' },
+          { label: 'Languages', href: '/admin/localization/languages' },
+          { label: 'Stores', href: '/admin/localization/stores' },
+        ],
+      },
+      { label: 'Settings', href: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
+
+const NAV: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 
 const ROLE_NAV: Record<string, string[]> = {
   super_admin: ['*'],
@@ -81,12 +133,15 @@ const ROLE_NAV: Record<string, string[]> = {
   content_editor: ['Dashboard', 'Products', 'Blog', 'CMS Pages', 'Categories'],
 };
 
-function filterNav(roles: string[] | undefined): NavItem[] {
-  if (!roles?.length) return NAV;
-  if (roles.some((r) => ROLE_NAV[r]?.includes('*'))) return NAV;
+function filterNav(roles: string[] | undefined): NavSection[] {
+  if (!roles?.length) return NAV_SECTIONS;
+  if (roles.some((r) => ROLE_NAV[r]?.includes('*'))) return NAV_SECTIONS;
   const allowed = new Set(roles.flatMap((r) => ROLE_NAV[r] ?? []));
-  if (allowed.size === 0) return NAV;
-  return NAV.filter((item) => allowed.has(item.label));
+  if (allowed.size === 0) return NAV_SECTIONS;
+  return NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => allowed.has(item.label)),
+  })).filter((section) => section.items.length > 0);
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -165,15 +220,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const displayName = user ? `${user.firstName} ${user.lastName}` : 'Admin';
   const roleName = user?.roles?.[0]?.name?.replace(/_/g, ' ') ?? 'Staff';
-  const filteredNav = filterNav(user?.roles?.map((r) => r.name));
+  const filteredSections = filterNav(user?.roles?.map((r) => r.name));
+  const flatNavForBreadcrumbs = filteredSections.flatMap((s) => s.items);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="admin-shell flex h-screen overflow-hidden bg-background">
       <div className="hidden lg:flex">
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapsed}
-          navItems={filteredNav}
+          sections={filteredSections}
           onLogout={handleLogout}
         />
       </div>
@@ -188,7 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Sidebar
               collapsed={false}
               onToggleCollapse={() => setMobileSidebarOpen(false)}
-              navItems={filteredNav}
+              sections={filteredSections}
               onLogout={handleLogout}
             />
             <button
@@ -234,6 +290,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           </div>
         </header>
+
+        <div className="px-4 md:px-6 pt-3 flex-shrink-0">
+          <AdminBreadcrumbs navItems={flatNavForBreadcrumbs} />
+        </div>
 
         <main className="flex-1 overflow-y-auto">
           {children}

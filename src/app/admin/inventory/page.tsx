@@ -7,6 +7,7 @@ import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { FormField, FormInput, FormSelect, FormTextarea } from '@/components/admin/FormField';
 import { StatCard } from '@/components/admin/StatCard';
+import { EntityPicker } from '@/components/admin/EntityPicker';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
@@ -40,6 +41,8 @@ export default function AdminInventoryPage() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [adjustForm, setAdjustForm] = useState(emptyAdjust);
   const [transferForm, setTransferForm] = useState(emptyTransfer);
+  const [adjustProduct, setAdjustProduct] = useState<{ id: string; label: string; sublabel?: string } | null>(null);
+  const [transferProduct, setTransferProduct] = useState<{ id: string; label: string; sublabel?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetcher = useCallback(
@@ -93,6 +96,7 @@ export default function AdminInventoryPage() {
       toast('Stock adjusted successfully', 'success');
       setAdjustOpen(false);
       setAdjustForm(emptyAdjust);
+      setAdjustProduct(null);
       reload();
       loadLowStock();
     } catch {
@@ -131,6 +135,7 @@ export default function AdminInventoryPage() {
       toast('Stock transferred successfully', 'success');
       setTransferOpen(false);
       setTransferForm(emptyTransfer);
+      setTransferProduct(null);
       reload();
       loadLowStock();
     } catch {
@@ -254,17 +259,17 @@ export default function AdminInventoryPage() {
         onClose={() => {
           setAdjustOpen(false);
           setAdjustForm(emptyAdjust);
+          setAdjustProduct(null);
         }}
         onSubmit={handleAdjust}
       >
         <div className="space-y-4">
-          <FormField label="Product ID">
-            <FormInput
-              value={adjustForm.productId}
-              onChange={(e) => setAdjustForm({ ...adjustForm, productId: e.target.value })}
-              placeholder="UUID"
-            />
-          </FormField>
+          <EntityPicker
+            type="product"
+            label="Product"
+            value={adjustProduct}
+            onChange={(opt) => { setAdjustProduct(opt); setAdjustForm({ ...adjustForm, productId: opt?.id ?? '' }); }}
+          />
           <FormField label="Warehouse">
             <FormSelect
               value={adjustForm.warehouseId}
@@ -304,17 +309,17 @@ export default function AdminInventoryPage() {
         onClose={() => {
           setTransferOpen(false);
           setTransferForm(emptyTransfer);
+          setTransferProduct(null);
         }}
         onSubmit={handleTransfer}
       >
         <div className="space-y-4">
-          <FormField label="Product ID">
-            <FormInput
-              value={transferForm.productId}
-              onChange={(e) => setTransferForm({ ...transferForm, productId: e.target.value })}
-              placeholder="UUID"
-            />
-          </FormField>
+          <EntityPicker
+            type="product"
+            label="Product"
+            value={transferProduct}
+            onChange={(opt) => { setTransferProduct(opt); setTransferForm({ ...transferForm, productId: opt?.id ?? '' }); }}
+          />
           <FormField label="From Warehouse">
             <FormSelect
               value={transferForm.fromWarehouseId}

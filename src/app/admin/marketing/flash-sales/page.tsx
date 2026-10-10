@@ -7,6 +7,7 @@ import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { FormField, FormInput } from '@/components/admin/FormField';
+import { EntityPicker } from '@/components/admin/EntityPicker';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -53,6 +54,7 @@ export default function AdminFlashSalesPage() {
   const [selectedSale, setSelectedSale] = useState<FlashSaleRow | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [productForm, setProductForm] = useState({ productId: '', salePrice: '' });
+  const [productOption, setProductOption] = useState<{ id: string; label: string; sublabel?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const openCreate = () => {
@@ -115,6 +117,7 @@ export default function AdminFlashSalesPage() {
   const openAddProduct = (row: FlashSaleRow) => {
     setSelectedSale(row);
     setProductForm({ productId: '', salePrice: '' });
+    setProductOption(null);
     setProductModalOpen(true);
   };
 
@@ -128,6 +131,7 @@ export default function AdminFlashSalesPage() {
       });
       toast('Product added to flash sale', 'success');
       setProductModalOpen(false);
+      setProductOption(null);
       reload();
     } catch {
       toast('Failed to add product', 'error');
@@ -176,9 +180,14 @@ export default function AdminFlashSalesPage() {
         </div>
       </AdminModal>
 
-      <AdminModal open={productModalOpen} title={`Add Product — ${selectedSale?.name ?? ''}`} onClose={() => setProductModalOpen(false)} onSubmit={handleAddProduct} isSubmitting={submitting} submitLabel="Add Product">
+      <AdminModal open={productModalOpen} title={`Add Product — ${selectedSale?.name ?? ''}`} onClose={() => { setProductModalOpen(false); setProductOption(null); }} onSubmit={handleAddProduct} isSubmitting={submitting} submitLabel="Add Product">
         <div className="space-y-4">
-          <FormField label="Product ID" hint="UUID of the product"><FormInput value={productForm.productId} onChange={(e) => setProductForm({ ...productForm, productId: e.target.value })} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" /></FormField>
+          <EntityPicker
+            type="product"
+            label="Product"
+            value={productOption}
+            onChange={(opt) => { setProductOption(opt); setProductForm({ ...productForm, productId: opt?.id ?? '' }); }}
+          />
           <FormField label="Sale Price"><FormInput type="number" min="0" step="0.01" value={productForm.salePrice} onChange={(e) => setProductForm({ ...productForm, salePrice: e.target.value })} /></FormField>
         </div>
       </AdminModal>

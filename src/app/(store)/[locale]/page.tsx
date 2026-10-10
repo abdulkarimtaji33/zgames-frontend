@@ -8,9 +8,9 @@ import { ArcadeHomepage } from '@/components/skins/arcade/ArcadeHomepage';
  * The homepage is a thin dispatcher — each skin owns a genuinely different
  * layout/structure (not just a restyle of a shared one), built as its own
  * component under src/components/skins/<skin>/. SSR/first paint renders
- * Vault (the default skin); it swaps to Arcade after mount if that's what
+ * Arcade (the default skin); it swaps to Vault after mount if that's what
  * localStorage says, same tradeoff as the no-flash CSS script but for
- * markup — a one-time swap for returning Arcade users, not a persistent
+ * markup — a one-time swap for returning Vault users, not a persistent
  * flash.
  */
 export default function HomePage() {

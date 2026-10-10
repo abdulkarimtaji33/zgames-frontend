@@ -7,7 +7,7 @@ import { ArcadeFooter } from '@/components/skins/arcade/ArcadeFooter';
 /**
  * Thin dispatcher — each skin owns a genuinely different footer
  * structure, built under src/components/skins/<skin>/. SSR/first paint
- * renders Vault; it swaps to Arcade after mount if that's what
+ * renders Arcade; it swaps to Vault after mount if that's what
  * localStorage says.
  */
 export function Footer() {

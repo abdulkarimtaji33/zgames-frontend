@@ -19,11 +19,11 @@ const SkinContext = createContext<SkinContextValue | null>(null);
  * so switching skins (or reloading) never flashes the wrong theme.
  * Mirrors the pattern next-themes uses for the dark/light class.
  */
-export const SKIN_NO_FLASH_SCRIPT = `(function(){try{var s=localStorage.getItem('${SKIN_STORAGE_KEY}');if(s!=='vault'&&s!=='arcade'){s='vault';}document.documentElement.setAttribute('data-skin',s);}catch(e){document.documentElement.setAttribute('data-skin','vault');}})();`;
+export const SKIN_NO_FLASH_SCRIPT = `(function(){try{var s=localStorage.getItem('${SKIN_STORAGE_KEY}');if(s!=='vault'&&s!=='arcade'){s='arcade';}document.documentElement.setAttribute('data-skin',s);}catch(e){document.documentElement.setAttribute('data-skin','arcade');}})();`;
 
 export function SkinProvider({
   children,
-  defaultSkin = 'vault',
+  defaultSkin = 'arcade',
 }: {
   children: ReactNode;
   defaultSkin?: Skin;

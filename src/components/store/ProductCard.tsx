@@ -53,7 +53,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   return (
     <Link href={`/en/products/${product.slug}`} className={cn('group block h-full', className)}>
-      <div className="rounded-xl bg-card border border-border overflow-hidden card-hover h-full flex flex-col">
+      <div className="skin-card-frame rounded-xl bg-card border border-border overflow-hidden card-hover h-full flex flex-col">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-background-tertiary overflow-hidden flex-shrink-0">
           {imageUrl ? (
@@ -86,7 +86,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <button
               onClick={handleWishlist}
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors',
+                'skin-avatar-ring flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors',
                 isWishlisted
                   ? 'bg-accent text-white'
                   : 'bg-card/90 text-foreground-muted hover:bg-accent hover:text-white',
@@ -138,7 +138,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {!product.isComingSoon && (
               <button
                 onClick={handleAddToCart}
-                className="h-10 w-10 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
+                className="skin-avatar-ring h-10 w-10 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-hover transition-colors flex-shrink-0"
                 aria-label="Add to cart"
               >
                 <ShoppingCart className="h-3.5 w-3.5" />

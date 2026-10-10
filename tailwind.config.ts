@@ -14,7 +14,7 @@ const config: Config = {
       // no color palette is duplicated here to avoid drift.
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        heading: ['var(--font-rajdhani)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-heading)', 'var(--font-rajdhani)', 'system-ui', 'sans-serif'],
       },
       screens: {
         xs: '320px',

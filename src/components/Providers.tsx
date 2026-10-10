@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
+import { SkinProvider } from '@/lib/theme/skin';
 
 export function Providers({
   children,
@@ -36,7 +37,7 @@ export function Providers({
         enableSystem={false}
         storageKey="cgagames-theme"
       >
-        {children}
+        <SkinProvider>{children}</SkinProvider>
       </ThemeProvider>
       {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />

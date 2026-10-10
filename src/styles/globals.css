@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./skins/vault.css";
+@import "./skins/arcade.css";
 
 /* ══════════════════════════════════════════════════════════════════
    TOKEN ARCHITECTURE — Primitive → Semantic → Component
@@ -278,10 +280,10 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--foreground-subtle); }
 
 /* ── Typography ──────────────────────────────────────────────── */
-.font-heading { font-family: var(--font-rajdhani), system-ui, sans-serif; }
+.font-heading { font-family: var(--font-heading), var(--font-rajdhani), system-ui, sans-serif; }
 
 h1, h2, h3 {
-  font-family: var(--font-rajdhani), system-ui, sans-serif;
+  font-family: var(--font-heading), var(--font-rajdhani), system-ui, sans-serif;
   letter-spacing: 0.01em;
   line-height: 1.2;
 }

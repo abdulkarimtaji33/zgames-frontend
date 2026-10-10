@@ -1,0 +1,336 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Trash2, Plus, Minus, ShoppingBag, Tag, Gift, Undo2, X, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useCartStore } from '@/store/cartStore';
+import { useCurrencyStore } from '@/store/currencyStore';
+import { couponsApi, productsApi } from '@/lib/api';
+import { FREE_SHIPPING_THRESHOLD, getShippingCost } from '@/lib/shipping';
+import type { CartItem, Product, ProductVariant } from '@/types';
+
+function stockKey(productId: string, variantId?: string) {
+  return `${productId}:${variantId ?? ''}`;
+}
+
+/**
+ * VaultCartPage — restyled as a "vault ledger": a single running list of
+ * line items (avatar-ringed thumbnails, no boxed per-item cards) next to a
+ * sticky glowing ledger-total panel, instead of a grid of bordered item
+ * cards. All cart logic below (quantity/coupon/stock/undo) is copied
+ * verbatim from the previous implementation — only the surrounding JSX/
+ * classes changed.
+ */
+export function VaultCartPage() {
+  const { items, updateQuantity, removeItem, addItem, couponCode, couponDiscount, applyCoupon, removeCoupon, getSubtotal, getItemCount } = useCartStore();
+  const { format } = useCurrencyStore();
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [supplierFulfilledMap, setSupplierFulfilledMap] = useState<Record<string, boolean>>({});
+  const [undoToast, setUndoToast] = useState<CartItem | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const subtotal = getSubtotal();
+  const isDigitalOnly = items.length > 0 && items.every((i) => i.type === 'gift_card' || i.type === 'digital');
+  const shipping = isDigitalOnly ? 0 : getShippingCost(subtotal);
+  const discount = couponDiscount;
+  const total = subtotal + shipping - discount;
+  const itemCount = getItemCount();
+
+  // Fetch current stock levels for items in the cart so the quantity stepper
+  // can be clamped to what's actually available.
+  useEffect(() => {
+    const uniqueProductIds = Array.from(new Set(items.map((i) => i.productId)));
+    if (uniqueProductIds.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        uniqueProductIds.map(async (productId) => {
+          try {
+            const res = await productsApi.findOne(productId);
+            return { productId, product: res.data.data as Product };
+          } catch {
+            return { productId, product: null };
+          }
+        }),
+      );
+      if (cancelled) return;
+      setSupplierFulfilledMap((prev) => {
+        const next = { ...prev };
+        for (const { productId, product } of entries) {
+          if (!product) continue;
+          const cartItemsForProduct = items.filter((i) => i.productId === productId);
+          for (const ci of cartItemsForProduct) {
+            let hasSupplierFulfillment: boolean | undefined;
+            if (ci.variantId && product.variants) {
+              const variant = product.variants.find((v: ProductVariant) => v.id === ci.variantId);
+              hasSupplierFulfillment = variant?.hasSupplierFulfillment;
+            } else {
+              hasSupplierFulfillment = product.hasSupplierFulfillment;
+            }
+            next[stockKey(productId, ci.variantId)] = Boolean(hasSupplierFulfillment);
+          }
+        }
+        return next;
+      });
+      setStockMap((prev) => {
+        const next = { ...prev };
+        for (const { productId, product } of entries) {
+          if (!product) continue;
+          const cartItemsForProduct = items.filter((i) => i.productId === productId);
+          for (const ci of cartItemsForProduct) {
+            let qty: number | undefined;
+            if (ci.variantId && product.variants) {
+              const variant = product.variants.find((v: ProductVariant) => v.id === ci.variantId);
+              qty = variant?.stockQuantity;
+            } else {
+              qty = product.stockQuantity;
+            }
+            if (typeof qty === 'number') {
+              next[stockKey(productId, ci.variantId)] = qty;
+            }
+          }
+        }
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map((i) => `${i.productId}:${i.variantId ?? ''}`).join(',')]);
+
+  const handleDecrement = (item: CartItem) => {
+    if (item.quantity <= 1) {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      updateQuantity(item.productId, item.variantId, 0);
+      setUndoToast(item);
+      undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
+      return;
+    }
+    updateQuantity(item.productId, item.variantId, item.quantity - 1);
+  };
+
+  const handleUndo = () => {
+    if (!undoToast) return;
+    addItem(undoToast);
+    setUndoToast(null);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await couponsApi.validate(couponInput.trim().toUpperCase(), subtotal);
+      applyCoupon(couponInput.trim().toUpperCase(), res.data.data.discount);
+    } catch {
+      setCouponError('Invalid or expired coupon code.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-24 text-center animate-fade-in">
+        <div className="skin-icon-well h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ShoppingBag className="h-11 w-11 text-foreground-subtle" />
+        </div>
+        <h1 className="font-heading text-3xl font-bold mb-3 text-foreground">The Vault is Empty</h1>
+        <p className="text-foreground-muted mb-8">Looks like you haven&apos;t added anything yet — browse our catalog to find your next favorite game.</p>
+        <Link href="/en">
+          <Button variant="primary" size="lg">Continue Shopping</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-10">
+      <div className="flex items-baseline justify-between mb-8 flex-wrap gap-2">
+        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-foreground">Your Ledger</h1>
+        <span className="text-foreground-muted text-sm">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_380px] gap-10 lg:gap-14">
+        {/* Line items — a flowing list, not boxed cards */}
+        <div className="divide-y divide-border">
+          {items.map((item) => (
+            <div key={`${item.productId}-${item.variantId ?? ''}`} className="flex gap-4 py-5">
+              <div className="skin-avatar-ring relative w-20 h-20 md:w-24 md:h-24 rounded-md bg-surface-2 overflow-hidden flex-shrink-0">
+                {item.imageUrl ? (
+                  <Image src={item.imageUrl} alt={item.name} width={96} height={96} className="object-cover w-full h-full" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-3xl">🎮</div>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <Link href={`/en/products/${item.slug}`} className="font-medium text-foreground hover:text-[color:var(--color-action)] transition-colors line-clamp-2 text-sm md:text-base">
+                  {item.name}
+                </Link>
+                {item.platform && <p className="text-xs text-foreground-muted mt-0.5">{item.platform}</p>}
+                <div className="flex flex-wrap items-center justify-between mt-3 gap-2 sm:gap-4">
+                  <div>
+                    <div className="flex items-center border border-border rounded-full overflow-hidden w-fit">
+                      <button
+                        onClick={() => handleDecrement(item)}
+                        aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                        className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-2 active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="px-3 text-sm font-semibold min-w-[2rem] text-center tabular-nums">{item.quantity}</span>
+                      {(() => {
+                        const isSupplierFulfilled = supplierFulfilledMap[stockKey(item.productId, item.variantId)];
+                        const maxStock = stockMap[stockKey(item.productId, item.variantId)];
+                        const atLimit = !isSupplierFulfilled && typeof maxStock === 'number' && item.quantity >= maxStock;
+                        return (
+                          <button
+                            onClick={() => !atLimit && updateQuantity(item.productId, item.variantId, item.quantity + 1)}
+                            aria-label="Increase quantity"
+                            disabled={atLimit}
+                            className="px-3 py-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-2 active:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        );
+                      })()}
+                    </div>
+                    {(() => {
+                      const isSupplierFulfilled = supplierFulfilledMap[stockKey(item.productId, item.variantId)];
+                      if (isSupplierFulfilled) return null;
+                      const maxStock = stockMap[stockKey(item.productId, item.variantId)];
+                      if (typeof maxStock !== 'number') return null;
+                      if (maxStock <= 0) return <p className="mt-1 text-xs text-error font-medium">Out of stock</p>;
+                      if (item.quantity >= maxStock) return <p className="mt-1 text-xs text-warning font-medium">Only {maxStock} left in stock</p>;
+                      if (maxStock - item.quantity <= 3) return <p className="mt-1 text-xs text-foreground-muted">Only {maxStock} left in stock</p>;
+                      return null;
+                    })()}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold skin-glow-text">{format((item.salePrice ?? item.price) * item.quantity)}</span>
+                    {item.salePrice && (
+                      <span className="text-sm text-foreground-subtle line-through hidden sm:inline">{format(item.price * item.quantity)}</span>
+                    )}
+                    <button
+                      onClick={() => removeItem(item.productId, item.variantId)}
+                      aria-label="Remove from cart"
+                      className="text-foreground-subtle hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Ledger total — sticky glowing summary panel */}
+        <div className="space-y-4 lg:sticky lg:top-24 self-start">
+          <div className="skin-card-frame rounded-xl bg-surface-1 p-6 shadow-[var(--shadow-lg)]">
+            <h2 className="font-heading text-xl font-bold mb-4 text-foreground">Order Summary</h2>
+
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-muted">Subtotal ({itemCount} items)</span>
+                <span className="font-medium text-foreground">{format(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-muted">Shipping</span>
+                <span className={shipping === 0 ? 'text-success font-medium' : 'font-medium text-foreground'}>
+                  {shipping === 0 ? 'Free' : format(shipping)}
+                </span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-foreground-muted flex items-center gap-1">
+                    <Tag className="h-3.5 w-3.5 text-[color:var(--color-action)]" />
+                    Coupon ({couponCode})
+                    <button onClick={removeCoupon} aria-label="Remove coupon" className="text-foreground-subtle hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded transition-colors ml-1 text-xs">✕</button>
+                  </span>
+                  <span className="text-success font-medium">-{format(discount)}</span>
+                </div>
+              )}
+              <div className="skin-divider" />
+              <div className="flex justify-between pt-1">
+                <span className="font-bold text-foreground">Total</span>
+                <span className="font-bold text-xl skin-glow-text">{format(total)}</span>
+              </div>
+            </div>
+
+            {shipping > 0 && (
+              <div className="text-xs text-info mb-4 p-2.5 rounded-md bg-info/10 border border-info/30">
+                💡 Add <strong>{format(FREE_SHIPPING_THRESHOLD - subtotal)}</strong> more for free shipping
+              </div>
+            )}
+
+            <Link href="/en/checkout">
+              <Button variant="primary" size="lg" className="w-full">
+                Proceed to Checkout <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+
+            <div className="mt-4">
+              <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1.5">
+                <Tag className="h-4 w-4 text-[color:var(--color-action)]" /> Have a coupon?
+              </p>
+              {!couponCode && (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="flex-1"
+                    error={couponError}
+                  />
+                  <Button variant="secondary" size="md" onClick={handleApplyCoupon} isLoading={couponLoading}>
+                    Apply
+                  </Button>
+                </div>
+              )}
+              {couponCode && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-success/10 border border-success/30 text-sm text-success">
+                  <Gift className="h-4 w-4" />
+                  <span>{couponCode} applied!</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="skin-plate p-4">
+            <p className="text-xs text-foreground-muted mb-2">Secure checkout with:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {['VISA', 'MC', 'Tabby', 'Tamara', 'COD'].map((m) => (
+                <span key={m} className="px-2 py-0.5 rounded bg-surface-3 border border-border text-xs text-foreground-muted">{m}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Undo toast for accidental removals via the quantity stepper */}
+      {undoToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-[100] flex items-center gap-3 px-4 py-3 rounded-md bg-surface-2 border border-border text-foreground shadow-[var(--shadow-lg)] animate-slide-up max-w-sm">
+          <span className="text-sm">Removed <strong>{undoToast.name}</strong></span>
+          <button
+            onClick={handleUndo}
+            className="flex items-center gap-1 text-sm font-semibold text-[color:var(--color-action)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded shrink-0"
+          >
+            <Undo2 className="h-3.5 w-3.5" /> Undo
+          </button>
+          <button onClick={() => setUndoToast(null)} aria-label="Dismiss" className="text-foreground-subtle hover:text-foreground shrink-0">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

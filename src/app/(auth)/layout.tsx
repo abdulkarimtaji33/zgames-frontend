@@ -1,8 +1,11 @@
 ﻿import Link from 'next/link';
+import { VaultAmbientBackdrop } from '@/components/skins/vault/VaultAmbientBackdrop';
+import { ArcadeConfettiBurst } from '@/components/skins/arcade/ArcadeConfettiBurst';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div data-shop className="min-h-screen flex flex-col bg-background text-foreground">
+      <VaultAmbientBackdrop />
       {/* Header */}
       <header className="flex items-center justify-between gap-2 px-4 sm:px-6 py-4 border-b border-border">
         <Link href="/en" className="flex items-center gap-2 min-w-0">
@@ -20,7 +23,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </header>
 
       {/* Content */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+      <main className="relative flex-1 flex items-center justify-center p-4 sm:p-6">
+        <ArcadeConfettiBurst />
         {children}
       </main>
 

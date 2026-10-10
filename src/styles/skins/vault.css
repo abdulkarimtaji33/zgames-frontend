@@ -1,0 +1,232 @@
+/* ══════════════════════════════════════════════════════════════════
+   SKIN: VAULT — dark, cinematic, premium.
+   Scoped to html[data-skin="vault"] [data-shop] so it never leaks into
+   the admin panel, which keeps the original token set untouched.
+   One saturated accent (electric violet), near-black surfaces, tight
+   radii, deep layered shadows with a colored glow, restrained motion.
+   ══════════════════════════════════════════════════════════════════ */
+
+html[data-skin='vault'] [data-shop] {
+  /* ── Surfaces (elevation via progressively lighter near-black) ──── */
+  --surface-0: oklch(9% 0.006 270);
+  --surface-1: oklch(13% 0.008 270);
+  --surface-2: oklch(17.5% 0.01 270);
+  --surface-3: oklch(22% 0.011 270);
+
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --text-primary: oklch(96% 0.004 270);
+  --text-muted: oklch(72% 0.012 270);
+  --text-subtle: oklch(50% 0.014 270);
+  --text-on-accent: oklch(99% 0 0);
+
+  /* ── Borders ──────────────────────────────────────────────────── */
+  --border: oklch(100% 0 0 / 9%);
+  --border-hover: oklch(100% 0 0 / 18%);
+  --ring: oklch(70% 0.22 295);
+
+  /* ── Accent: electric violet, used sparingly ─────────────────── */
+  --color-action: oklch(66% 0.23 295);
+  --color-action-hover: oklch(72% 0.21 295);
+  --color-action-active: oklch(58% 0.24 295);
+  --color-accent-orange: oklch(74% 0.13 205);
+  --color-accent-orange-hover: oklch(80% 0.12 205);
+  --accent-glow: oklch(66% 0.23 295 / 32%);
+
+  /* ── Status ───────────────────────────────────────────────────── */
+  --success: oklch(70% 0.15 150);
+  --warning: oklch(80% 0.14 85);
+  --error: oklch(68% 0.2 25);
+  --info: oklch(74% 0.13 205);
+
+  /* ── Data viz ─────────────────────────────────────────────────── */
+  /* viz-4 is deliberately NOT identical to --color-action: the "preorder"
+     Badge variant and the category-tile gradients both key off viz-4, and
+     if it exactly matched the accent, a preorder tile would read as just
+     another sale/CTA. Shifted slightly warmer/pinker (hue 315 vs 295) so
+     it's legible as "related to the vault's violet family" without being
+     mistaken for the primary action color. */
+  --viz-1: oklch(74% 0.13 205);
+  --viz-2: oklch(70% 0.15 150);
+  --viz-3: oklch(80% 0.14 85);
+  --viz-4: oklch(68% 0.2 315);
+  --viz-5: oklch(72% 0.1 220);
+  --viz-6: oklch(68% 0.19 340);
+
+  /* ── Radius: tighter, sharper — premium not playful ──────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius: var(--radius-md);
+
+  /* ── Shadows: deep, layered, with a violet glow ──────────────────
+     --shadow-lg gets a third, very-low-opacity violet layer on top of the
+     usual black falloff — it's what every Dialog, the mobile drawer, and
+     any hovered .card-hover surface uses, so that ambient violet bloom is
+     the thing that makes raised surfaces feel lit from the accent rather
+     than just "dark mode with a drop shadow". Kept at 6% so it never
+     tints neutral content, just rims it. ───────────────────────────── */
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 40%);
+  --shadow-md: 0 8px 24px oklch(0% 0 0 / 50%), 0 2px 8px oklch(0% 0 0 / 35%);
+  --shadow-lg: 0 24px 56px oklch(0% 0 0 / 55%), 0 6px 16px oklch(0% 0 0 / 40%), 0 0 48px oklch(66% 0.23 295 / 6%);
+  --shadow-glow: 0 0 32px var(--accent-glow);
+
+  /* ── Motion: slightly slower, cinematic ease ─────────────────── */
+  --duration-fast: 150ms;
+  --duration-base: 280ms;
+  --duration-slow: 500ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Back-compat aliases ──────────────────────────────────────── */
+  --background: var(--surface-0);
+  --background-secondary: var(--surface-1);
+  --background-tertiary: var(--surface-2);
+  --foreground: var(--text-primary);
+  --foreground-muted: var(--text-muted);
+  --foreground-subtle: var(--text-subtle);
+  --card: var(--surface-1);
+  --card-hover: var(--surface-2);
+  --accent: var(--color-action);
+  --accent-hover: var(--color-action-hover);
+  --accent-orange: var(--color-accent-orange);
+  --accent-orange-hover: var(--color-accent-orange-hover);
+
+  /* ── Typography: Rajdhani leans techy/cinematic already — keep it,
+     widen tracking slightly for a key-art title feel ─────────────── */
+  --font-heading: var(--font-rajdhani);
+
+  color-scheme: dark;
+}
+
+html[data-skin='vault'] [data-shop] h1,
+html[data-skin='vault'] [data-shop] h2,
+html[data-skin='vault'] [data-shop] h3 {
+  letter-spacing: 0.015em;
+}
+
+/* Key-art title treatment: h1s read as the "cinematic poster title" of a
+   page (hero headline, page-level H1 like "My Account"). Slightly wider
+   tracking + a touch of extra weight than h2/h3 so the hierarchy reads as
+   title-card > section-card rather than uniformly techy. */
+html[data-skin='vault'] [data-shop] h1 {
+  letter-spacing: 0.02em;
+}
+
+/* Selection color — a small but constant tell that this is a branded
+   surface, not a browser default, every time text is selected. */
+html[data-skin='vault'] [data-shop] ::selection {
+  background: oklch(66% 0.23 295 / 35%);
+  color: var(--text-primary);
+}
+
+/* ── Vault decorative language: restrained glow + vignette framing ──
+   Hook classes that both the foundation chrome and the Vault agent's
+   page-level work can opt into without forking component logic. ──── */
+html[data-skin='vault'] [data-shop] .skin-hero {
+  position: relative;
+  isolation: isolate;
+}
+/* `::before` is a generic ambient-glow slot for `.skin-hero` usages that
+   DON'T have a fully opaque image filling the box (e.g. a plain gradient
+   panel) — it sits at z-index: -1, below the box's own children, so an
+   opaque photo (as on the homepage slider) completely covers it. Kept
+   here for that future/alternate case; the homepage slider's actual glow
+   lives in `::after` below, where it's guaranteed to be visible on top of
+   whatever image is in the box. */
+html[data-skin='vault'] [data-shop] .skin-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 50% at 50% 0%, var(--accent-glow), transparent 70%),
+    radial-gradient(40% 40% at 100% 100%, oklch(74% 0.13 205 / 14%), transparent 70%);
+}
+/* Cinematic vignette + glow, composited together in one top-layer pass so
+   it reads correctly regardless of what's beneath it (opaque photo or
+   not): two soft violet/cyan glows (painted first, so they sit under the
+   darkening pass) plus the corner-darkening vignette on top. Sits at
+   z-index: 1 — above the slide image/gradients — with pointer-events
+   disabled so it never blocks the arrows/dots/CTA beneath it. The radial
+   vignette is transparent through its center, so it only ever dims the
+   extreme corners (where decorative chrome lives), not the title/CTA. */
+html[data-skin='vault'] [data-shop] .skin-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 46% at 6% 8%, oklch(66% 0.23 295 / 18%), transparent 70%),
+    radial-gradient(34% 40% at 96% 94%, oklch(74% 0.13 205 / 15%), transparent 70%),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, oklch(0% 0 0 / 45%) 100%);
+  box-shadow: inset 0 0 0 1px oklch(100% 0 0 / 7%);
+  border-radius: inherit;
+}
+
+/* Avatars / circular action buttons get a hairline violet ring + a touch
+   of glow so they read as deliberately "lit" pieces rather than a flat
+   filled circle — the same display-case language as `.skin-card-frame`,
+   scaled down for small chips. Mirrors Arcade's `.skin-avatar-ring` hook
+   so both skins opt the same elements into a per-skin avatar treatment. */
+html[data-skin='vault'] [data-shop] .skin-avatar-ring {
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3px oklch(66% 0.23 295 / 22%), 0 0 12px oklch(66% 0.23 295 / 20%);
+}
+
+/* Empty-state icon wells: an inset beveled plate (see `.skin-plate` below)
+   instead of a flat fill, so the "nothing here yet" icon reads as a
+   display-case slot rather than a plain gray circle. */
+html[data-skin='vault'] [data-shop] .skin-icon-well {
+  background: linear-gradient(180deg, oklch(100% 0 0 / 4%), transparent 40%), var(--surface-2);
+  box-shadow: inset 0 1px 0 0 oklch(100% 0 0 / 8%), inset 0 -1px 0 0 oklch(0% 0 0 / 30%);
+}
+
+html[data-skin='vault'] [data-shop] .skin-card-frame {
+  position: relative;
+}
+/* Museum-case framing: a hairline inner highlight along the top edge
+   (as if lit from above) plus the existing all-round inset ring — gives
+   flat stat tiles / cards a sense of depth and premium "display case"
+   lighting instead of a plain border. */
+html[data-skin='vault'] [data-shop] .skin-card-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px oklch(100% 0 0 / 6%),
+    inset 0 1px 0 0 oklch(100% 0 0 / 10%);
+  pointer-events: none;
+}
+
+/* ── Bonus hook classes (not yet applied anywhere — available for pages/
+   components to opt into) ───────────────────────────────────────────── */
+
+/* .skin-glow-text — a tighter, punchier alternative to the shared
+   .text-gradient for a single key word in a headline (e.g. the "Vault"
+   wordmark or a hero's product name) — solid violet with a soft glow
+   behind the glyphs rather than a two-color gradient fill. */
+html[data-skin='vault'] [data-shop] .skin-glow-text {
+  color: var(--color-action);
+  text-shadow: 0 0 24px var(--accent-glow);
+}
+
+/* .skin-plate — a dark beveled "display plate" background, meant for
+   small inline chips/icons that should look inset into the surface
+   (e.g. a platform icon chip) rather than floating on top of it. */
+html[data-skin='vault'] [data-shop] .skin-plate {
+  background: linear-gradient(180deg, oklch(100% 0 0 / 4%), transparent 40%),
+    var(--surface-2);
+  box-shadow: inset 0 1px 0 0 oklch(100% 0 0 / 8%), inset 0 -1px 0 0 oklch(0% 0 0 / 30%);
+  border-radius: var(--radius-md);
+}
+
+/* .skin-divider — a thin violet-to-transparent rule, for breaking up long
+   content sections (blog/FAQ/about) with something more deliberate than
+   a flat border-colored <hr>. */
+html[data-skin='vault'] [data-shop] .skin-divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-action) 0%, transparent 70%);
+  opacity: 0.4;
+  border: none;
+}

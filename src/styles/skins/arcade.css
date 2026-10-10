@@ -1,0 +1,292 @@
+/* ══════════════════════════════════════════════════════════════════
+   SKIN: ARCADE POP — bright, energetic, playful.
+   Scoped to html[data-skin="arcade"] [data-shop] so it never leaks
+   into the admin panel, which keeps the original token set untouched.
+   Light-first, punchy magenta/cyan gradient accents, chunky rounded
+   shapes, bouncy motion.
+   ══════════════════════════════════════════════════════════════════ */
+
+html[data-skin='arcade'] [data-shop] {
+  /* ── Surfaces: light, slightly warm ──────────────────────────── */
+  --surface-0: oklch(98.5% 0.004 90);
+  --surface-1: oklch(100% 0 0);
+  --surface-2: oklch(96% 0.01 310);
+  --surface-3: oklch(100% 0 0);
+
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --text-primary: oklch(20% 0.02 310);
+  --text-muted: oklch(42% 0.03 310);
+  --text-subtle: oklch(58% 0.025 310);
+  --text-on-accent: oklch(99% 0 0);
+
+  /* ── Borders ──────────────────────────────────────────────────── */
+  --border: oklch(20% 0.02 310 / 10%);
+  --border-hover: oklch(20% 0.02 310 / 20%);
+  --ring: oklch(62% 0.25 350);
+
+  /* ── Accent: hot magenta + cyan secondary, used for gradients ──── */
+  --color-action: oklch(62% 0.25 350);
+  --color-action-hover: oklch(57% 0.25 350);
+  --color-action-active: oklch(52% 0.24 350);
+  --color-accent-orange: oklch(75% 0.16 195);
+  --color-accent-orange-hover: oklch(70% 0.15 195);
+  --accent-glow: oklch(62% 0.25 350 / 24%);
+
+  /* ── Status ───────────────────────────────────────────────────── */
+  --success: oklch(70% 0.19 145);
+  --warning: oklch(80% 0.17 85);
+  --error: oklch(62% 0.24 25);
+  --info: oklch(65% 0.17 230);
+
+  /* ── Data viz: full candy palette ────────────────────────────── */
+  --viz-1: oklch(65% 0.17 230);
+  --viz-2: oklch(70% 0.19 145);
+  --viz-3: oklch(80% 0.17 85);
+  --viz-4: oklch(60% 0.23 300);
+  --viz-5: oklch(75% 0.16 195);
+  --viz-6: oklch(62% 0.25 350);
+
+  /* ── Radius: big, chunky, huggable ───────────────────────────── */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius: var(--radius-md);
+
+  /* ── Shadows: soft, candy-tinted, a little floaty ────────────── */
+  --shadow-sm: 0 2px 6px oklch(62% 0.25 350 / 10%);
+  --shadow-md: 0 8px 20px oklch(62% 0.25 350 / 14%), 0 2px 6px oklch(20% 0.02 310 / 6%);
+  --shadow-lg: 0 20px 44px oklch(62% 0.25 350 / 18%), 0 6px 14px oklch(20% 0.02 310 / 8%);
+  --shadow-glow: 0 0 28px var(--accent-glow);
+
+  /* ── Motion: snappy, bouncy ───────────────────────────────────── */
+  --duration-fast: 130ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+  --ease-standard: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Back-compat aliases ──────────────────────────────────────── */
+  --background: var(--surface-0);
+  --background-secondary: var(--surface-1);
+  --background-tertiary: var(--surface-2);
+  --foreground: var(--text-primary);
+  --foreground-muted: var(--text-muted);
+  --foreground-subtle: var(--text-subtle);
+  --card: var(--surface-1);
+  --card-hover: var(--surface-2);
+  --accent: var(--color-action);
+  --accent-hover: var(--color-action-hover);
+  --accent-orange: var(--color-accent-orange);
+  --accent-orange-hover: var(--color-accent-orange-hover);
+
+  /* ── Typography: chunky rounded display font ─────────────────── */
+  --font-heading: var(--font-fredoka);
+
+  color-scheme: light;
+}
+
+html[data-skin='arcade'] [data-shop] h1,
+html[data-skin='arcade'] [data-shop] h2,
+html[data-skin='arcade'] [data-shop] h3 {
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+/* ── Arcade decorative language: sticker badges + gradient blobs ──
+   Hook classes that both the foundation chrome and the Arcade agent's
+   page-level work can opt into without forking component logic. ──── */
+html[data-skin='arcade'] [data-shop] .skin-hero {
+  position: relative;
+  isolation: isolate;
+}
+/* `::before` sits at z-index: -1, below the box's own children — it only
+   shows through on a `.skin-hero` with no fully opaque fill (e.g. a plain
+   gradient panel). The homepage slider's image is opaque and covers it
+   completely, so the blobs that actually need to be visible there live in
+   `::after` below, which paints on top of the slide image/gradients. */
+html[data-skin='arcade'] [data-shop] .skin-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(45% 55% at 12% 15%, oklch(62% 0.25 350 / 18%), transparent 70%),
+    radial-gradient(45% 55% at 90% 85%, oklch(75% 0.16 195 / 18%), transparent 70%);
+}
+/* Top-layer twin — same blobs, guaranteed visible over an opaque photo.
+   Slightly higher alpha than `::before` since it's blending against a
+   busier backdrop (the slide's own dark gradient overlay + photo) rather
+   than a flat surface color. Pointer-events disabled so it never blocks
+   the arrows/dots/CTA beneath it. */
+html[data-skin='arcade'] [data-shop] .skin-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(42% 52% at 10% 14%, oklch(62% 0.25 350 / 24%), transparent 70%),
+    radial-gradient(42% 52% at 92% 88%, oklch(75% 0.16 195 / 22%), transparent 70%);
+}
+
+html[data-skin='arcade'] [data-shop] .skin-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transform: rotate(-4deg);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-skin='arcade'] [data-shop] .card-hover:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+
+/* ── Stat / cartridge card frame ──────────────────────────────────
+   StatTile and similar "chip" surfaces get a little cartridge-label
+   notch in the top-right corner, in the secondary (cyan) hue, plus a
+   thicker left rail in the accent hue — reads like a game cartridge
+   label strip rather than a generic dashboard tile. ─────────────── */
+html[data-skin='arcade'] [data-shop] .skin-card-frame {
+  position: relative;
+  isolation: isolate;
+  border-left: 3px solid var(--accent);
+  overflow: hidden;
+}
+html[data-skin='arcade'] [data-shop] .skin-card-frame::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-orange);
+  opacity: 0.35;
+  z-index: -1;
+}
+html[data-skin='arcade'] [data-shop] .skin-card-frame:hover::before {
+  opacity: 0.55;
+  transform: scale(1.15);
+  transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
+}
+
+/* ── Sticker: a little idle wiggle on hover, in addition to the base
+   rotated badge look, so promo/deal stickers feel alive. ─────────── */
+html[data-skin='arcade'] [data-shop] .skin-sticker {
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+html[data-skin='arcade'] [data-shop] .skin-sticker:hover {
+  transform: rotate(2deg) scale(1.06);
+}
+
+/* ── Buttons: extra squash-and-stretch on press, snappier than the
+   shared active:scale-95 — arcade buttons feel like physical buttons
+   being mashed, not just dimmed. Scoped to `<button>` only (not `a`):
+   an anchor-level `:active` would also fire on every plain text nav
+   link (header/footer/"View All") since `:active` matches ancestors of
+   whatever was actually pressed, and squashing link text on every tap
+   reads as a glitch, not a button-press. ──────────────────────────── */
+html[data-skin='arcade'] [data-shop] button:active {
+  transform: scale(0.94);
+}
+
+/* ── Gradient underline on active tabs — the two accent hues meeting
+   instead of a flat single-color bar. ────────────────────────────── */
+html[data-skin='arcade'] [data-shop] [role='tab'][aria-selected='true'] > span:last-child {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--color-accent-orange) 100%) !important;
+  height: 3px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Inputs: focus ring glows rather than just outlining — picks up
+   the same candy-glow language as buttons. ───────────────────────── */
+html[data-skin='arcade'] [data-shop] input:focus,
+html[data-skin='arcade'] [data-shop] textarea:focus,
+html[data-skin='arcade'] [data-shop] select:focus {
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+/* ── Avatars / circular icon buttons get a thin halo so they pop off
+   bright surfaces like a sticker or pin badge — including when sitting
+   over a product photo. Opt-in via `.skin-avatar-ring` rather than
+   matching `.rounded-full.bg-accent` directly: that combination is also
+   used by thin progress-bar fills, the tab underline, and small pulse
+   dots, which would otherwise get a 2-3px halo wildly out of proportion
+   to their size. ──────────────────────────────────────────────────── */
+html[data-skin='arcade'] [data-shop] .skin-avatar-ring {
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3px oklch(62% 0.25 350 / 30%);
+}
+
+/* ── Progress / countdown chips: nudge the monospace timer blocks to
+   the chunky radius scale instead of the sharp default `rounded`. ─── */
+html[data-skin='arcade'] [data-shop] .font-mono.bg-accent\/10 {
+  border-radius: var(--radius-sm);
+}
+
+/* ── Secondary sticker variant for "new" / "hot" callouts — cyan base
+   instead of magenta, for use alongside a magenta sticker so two
+   stickers on the same card don't compete for the same hue. ───────── */
+html[data-skin='arcade'] [data-shop] .skin-sticker-cyan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transform: rotate(3deg);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  background: var(--color-accent-orange);
+  color: var(--text-on-accent);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+html[data-skin='arcade'] [data-shop] .skin-sticker-cyan:hover {
+  transform: rotate(-2deg) scale(1.06);
+}
+
+/* ── Empty states: give the icon circle a dashed "token slot" ring
+   instead of a flat fill — echoes the dashed outer frame EmptyState
+   already uses, but picks up the accent hue instead of neutral gray.
+   Opt-in via `.skin-icon-well` rather than matching
+   `.rounded-full.bg-background-tertiary` directly: that combination is
+   also used by the loyalty-page progress track and other thin fills,
+   which would look broken with a 2px dashed ring stamped on them. ──── */
+html[data-skin='arcade'] [data-shop] .skin-icon-well {
+  border: 2px dashed var(--border-hover);
+  background: var(--surface-2);
+}
+
+/* ── Marquee: continuously auto-scrolling brand showcase strip ────────
+   Two duplicated tracks placed edge-to-edge inside a overflow-hidden
+   viewport, animated left together so the loop reads as seamless. ──── */
+@keyframes skin-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+html[data-skin='arcade'] [data-shop] .skin-marquee-track {
+  animation: skin-marquee-scroll 28s linear infinite;
+}
+html[data-skin='arcade'] [data-shop] .skin-marquee-viewport:hover .skin-marquee-track {
+  animation-play-state: paused;
+}
+
+/* ── Wiggle keyframe used by the sticker-wall category grid on hover ── */
+@keyframes skin-wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-3deg) scale(1.04); }
+  75% { transform: rotate(3deg) scale(1.04); }
+}
+html[data-skin='arcade'] [data-shop] .skin-wiggle:hover {
+  animation: skin-wiggle 420ms var(--ease-standard);
+}
+
+/* ── Ticket strip: dashed perforation edge for flash-deal cards ──────── */
+html[data-skin='arcade'] [data-shop] .skin-ticket::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -1px;
+  width: 0;
+  border-right: 2px dashed var(--border-hover);
+}

@@ -6,6 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { User, Package, Heart, GitCompare, MapPin, Bell, Star, Wallet, LogOut, Gift } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils/cn';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { VaultAmbientBackdrop } from '@/components/skins/vault/VaultAmbientBackdrop';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: User },
@@ -36,14 +39,23 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-8">
+    <div data-shop className="flex flex-col min-h-screen bg-background text-foreground">
+      <VaultAmbientBackdrop />
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Skip to content
+      </a>
+      <Header />
+      <main id="main-content" className="flex-1 mx-auto max-w-[1440px] w-full px-4 md:px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="lg:w-64 flex-shrink-0">
           {/* User info */}
-          <div className="rounded-xl bg-card border border-border p-5 mb-4 shadow-sm">
+          <div className="skin-card-frame rounded-xl bg-card border border-border p-5 mb-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+              <div className="skin-avatar-ring h-12 w-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
                 {user?.firstName?.[0]?.toUpperCase() ?? 'U'}
               </div>
               <div className="min-w-0">
@@ -93,10 +105,12 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         </aside>
 
         {/* Main */}
-        <main className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           {children}
-        </main>
+        </div>
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }

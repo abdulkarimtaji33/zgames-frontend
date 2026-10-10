@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Rajdhani } from 'next/font/google';
+import { Inter, Rajdhani, Fredoka } from 'next/font/google';
 import { Providers } from '@/components/Providers';
+import { SKIN_NO_FLASH_SCRIPT } from '@/lib/theme/skin';
 import '@/styles/globals.css';
 
 const inter = Inter({
@@ -12,6 +13,12 @@ const rajdhani = Rajdhani({
   variable: '--font-rajdhani',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
+});
+
+const fredoka = Fredoka({
+  variable: '--font-fredoka',
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -46,8 +53,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SKIN_NO_FLASH_SCRIPT }} />
+      </head>
       <body
-        className={`${inter.variable} ${rajdhani.variable} min-h-full flex flex-col bg-background text-foreground antialiased`}
+        className={`${inter.variable} ${rajdhani.variable} ${fredoka.variable} min-h-full flex flex-col bg-background text-foreground antialiased`}
       >
         <Providers defaultTheme={defaultTheme}>{children}</Providers>
       </body>

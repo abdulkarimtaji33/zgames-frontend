@@ -1,15 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCheck, Bell } from 'lucide-react';
+import { CheckCheck, Bell, Download, CheckCircle2 } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { StatCard } from '@/components/admin/StatCard';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminNotificationsApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface NotificationRow {
@@ -40,6 +42,31 @@ export default function AdminNotificationsPage() {
     [],
   );
   const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<NotificationRow>({ fetcher });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((n) => [n.title, n.type, n.channel ?? 'in_app', n.isRead ? 'read' : 'unread', n.createdAt]);
+    downloadCsv(datedCsvFilename('notifications'), ['Title', 'Type', 'Channel', 'Status', 'Date'], rows);
+    toast(`Exported ${items.length} notifications`, 'success');
+  };
+
+  const handleBulkMarkRead = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminNotificationsApi.markRead(id)));
+      toast(`Marked ${selectedIds.size} notifications as read`, 'success');
+      setSelectedIds(new Set());
+      reload();
+      loadMeta();
+    } catch {
+      toast('Some notifications could not be marked as read', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const loadMeta = () => {
     adminNotificationsApi.getUnreadCount()
@@ -78,9 +105,14 @@ export default function AdminNotificationsPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Notifications</h1>
-        {unreadCount > 0 && (
-          <Button variant="secondary" size="sm" onClick={handleMarkAllRead}><CheckCheck className="h-4 w-4" /> Mark All Read</Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          {unreadCount > 0 && (
+            <Button variant="secondary" size="sm" onClick={handleMarkAllRead}><CheckCheck className="h-4 w-4" /> Mark All Read</Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -88,9 +120,17 @@ export default function AdminNotificationsPage() {
         <StatCard title="Total" value={String(total)} icon={<Bell className="h-4 w-4" />} color="text-info" />
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="secondary" size="xs" onClick={handleBulkMarkRead} disabled={bulkBusy}>
+          <CheckCircle2 className="h-3.5 w-3.5" /> Mark as Read
+        </Button>
+      </BulkActionBar>
       <DataTable
         data={items}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         searchable
         columns={[
           { key: 'title', label: 'Title', sortable: true, render: (v, row) => (

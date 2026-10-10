@@ -1,17 +1,19 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus, Star } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Star, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminLanguagesApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface LanguageRow {
@@ -40,6 +42,58 @@ export default function AdminLanguagesPage() {
   const [editing, setEditing] = useState<LanguageRow | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((l) => [l.code, l.name, l.nativeName ?? '', l.isRTL ? 'yes' : 'no', l.isDefault ? 'yes' : 'no', l.isActive !== false ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('languages'), ['Code', 'Name', 'Native Name', 'RTL', 'Default', 'Status'], rows);
+    toast(`Exported ${items.length} languages`, 'success');
+  };
+
+  /** Excludes the default language from a bulk id set and warns if it had to. */
+  const excludingDefault = (ids: Set<string>): string[] => {
+    const defaultId = items.find((i) => i.isDefault)?.id;
+    const filtered = [...ids].filter((id) => id !== defaultId);
+    if (filtered.length < ids.size) toast('The default language was skipped — unset it as default first', 'info');
+    return filtered;
+  };
+
+  const handleBulkDelete = async () => {
+    const targets = excludingDefault(selectedIds);
+    if (targets.length === 0) { setBulkDeleteOpen(false); return; }
+    setBulkBusy(true);
+    try {
+      await Promise.all(targets.map((id) => adminLanguagesApi.remove(id)));
+      toast(`Deleted ${targets.length} languages`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some languages could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    const targets = isActive ? [...selectedIds] : excludingDefault(selectedIds);
+    if (targets.length === 0) return;
+    setBulkBusy(true);
+    try {
+      await Promise.all(targets.map((id) => adminLanguagesApi.update(id, { isActive })));
+      toast(`Updated ${targets.length} languages`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some languages could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit = (row: LanguageRow) => {
@@ -103,12 +157,31 @@ export default function AdminLanguagesPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Languages</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Add Language</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Add Language</Button>
+        </div>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+          <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+        </Button>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+          <XCircle className="h-3.5 w-3.5" /> Deactivate
+        </Button>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
       <DataTable
         data={items}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         searchable
         columns={[
           { key: 'code', label: 'Code', render: (v) => <Badge variant="default" size="xs">{String(v)}</Badge> },
@@ -125,7 +198,7 @@ export default function AdminLanguagesPage() {
                 <Star className="h-3.5 w-3.5" />
               </button>
             )}
-            <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />
+            <CrudActions onEdit={() => openEdit(row)} onDelete={row.isDefault ? undefined : () => setDeleteId(row.id)} />
           </>
         )}
         emptyMessage="No languages found."
@@ -142,6 +215,15 @@ export default function AdminLanguagesPage() {
       </AdminModal>
 
       <ConfirmDialog open={!!deleteId} title="Delete Language" message="Are you sure you want to delete this language?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} isLoading={submitting} destructive />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Languages"
+        message={`Are you sure you want to delete ${selectedIds.size} selected language(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

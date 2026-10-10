@@ -1,12 +1,17 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Download, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { adminReturnsApi } from '@/lib/api/adminApi';
 import { usePaginatedList } from '@/hooks';
+import { useAdminToast } from '@/hooks/useAdminToast';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface ReturnRow {
@@ -24,20 +29,67 @@ const STATUS_VARIANT: Record<string, 'success' | 'error' | 'warning' | 'info'> =
 };
 
 export default function AdminReturnsPage() {
+  const { show } = useAdminToast();
   const fetcher = useCallback(
     (params: Record<string, unknown>) =>
       adminReturnsApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<ReturnRow> } }>,
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading } = usePaginatedList<ReturnRow>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<ReturnRow>({ fetcher });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((r) => [
+      r.returnNumber ?? r.id,
+      r.order?.orderNumber ?? r.orderId ?? '',
+      r.reason ?? '',
+      r.status,
+      new Date(r.createdAt).toISOString(),
+    ]);
+    downloadCsv(datedCsvFilename('returns'), ['Return #', 'Order', 'Reason', 'Status', 'Date'], rows);
+    show(`Exported ${items.length} returns`, 'success');
+  };
+
+  const handleBulkSetStatus = async (status: string) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminReturnsApi.update(id, { status })));
+      show(`Updated ${selectedIds.size} returns`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      show('Some returns could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <h1 className="font-heading text-2xl font-bold">Returns</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-2xl font-bold">Returns</h1>
+        <Button variant="secondary" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4" /> Export
+        </Button>
+      </div>
       <div className="space-y-0">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetStatus('approved')} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetStatus('rejected')} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Reject
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search returns..."
           columns={[
@@ -63,7 +115,14 @@ export default function AdminReturnsPage() {
           emptyMessage="No returns found."
         />
         <div className="-mt-px rounded-b-xl bg-card border border-t-0 border-border">
-          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            onPageChange={setPage}
+            pageSize={limit}
+            onPageSizeChange={setLimit}
+          />
         </div>
       </div>
     </div>

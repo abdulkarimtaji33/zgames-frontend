@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus, PackagePlus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, PackagePlus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput } from '@/components/admin/FormField';
 import { EntityPicker } from '@/components/admin/EntityPicker';
 import { Badge } from '@/components/ui/Badge';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminFlashSalesApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface FlashSaleProduct {
@@ -56,6 +58,11 @@ export default function AdminFlashSalesPage() {
   const [productForm, setProductForm] = useState({ productId: '', salePrice: '' });
   const [productOption, setProductOption] = useState<{ id: string; label: string; sublabel?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   const openCreate = () => {
     setEditing(null);
@@ -114,6 +121,47 @@ export default function AdminFlashSalesPage() {
     }
   };
 
+  const handleExport = () => {
+    const rows = items.map((s) => [
+      s.name,
+      new Date(s.startsAt).toISOString(),
+      new Date(s.endsAt).toISOString(),
+      String(s.products?.length ?? 0),
+      s.isActive ? 'active' : 'inactive',
+    ]);
+    downloadCsv(datedCsvFilename('flash-sales'), ['Name', 'Starts', 'Ends', 'Products', 'Status'], rows);
+    toast(`Exported ${items.length} flash sales`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminFlashSalesApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} flash sales`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some flash sales could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminFlashSalesApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} flash sales`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some flash sales could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const openAddProduct = (row: FlashSaleRow) => {
     setSelectedSale(row);
     setProductForm({ productId: '', salePrice: '' });
@@ -144,13 +192,32 @@ export default function AdminFlashSalesPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Flash Sales</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Create Flash Sale</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Create Flash Sale</Button>
+        </div>
       </div>
 
       <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           columns={[
             { key: 'name', label: 'Name', sortable: true },
@@ -193,6 +260,15 @@ export default function AdminFlashSalesPage() {
       </AdminModal>
 
       <ConfirmDialog open={!!deleteId} title="Delete Flash Sale" message="Are you sure you want to delete this flash sale?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} isLoading={submitting} destructive />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Flash Sales"
+        message={`Are you sure you want to delete ${selectedIds.size} selected flash sale(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

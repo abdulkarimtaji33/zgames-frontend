@@ -1,18 +1,20 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminBrandsApi } from '@/lib/api/adminApi';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { Brand } from '@/types';
 
 interface BrandRow extends Brand {
@@ -44,7 +46,7 @@ const emptyForm: BrandForm = {
 export default function AdminBrandsPage() {
   const { show } = useAdminToast();
   const fetcher = useCallback((params: Record<string, unknown>) => adminBrandsApi.findAll(params), []);
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<BrandRow>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<BrandRow>({ fetcher });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -53,6 +55,11 @@ export default function AdminBrandsPage() {
   const [form, setForm] = useState<BrandForm>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   const openCreate = () => {
     setEditing(null);
@@ -76,6 +83,41 @@ export default function AdminBrandsPage() {
   const openDelete = (brand: BrandRow) => {
     setDeleting(brand);
     setConfirmOpen(true);
+  };
+
+  const handleExport = () => {
+    const rows = items.map((b) => [b.name, b.slug ?? '', b.isFeatured ? 'yes' : 'no', b.isActive !== false ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('brands'), ['Name', 'Slug', 'Featured', 'Status'], rows);
+    show(`Exported ${items.length} brands`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminBrandsApi.remove(id)));
+      show(`Deleted ${selectedIds.size} brands`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      show('Some brands could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminBrandsApi.update(id, { isActive })));
+      show(`Updated ${selectedIds.size} brands`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      show('Some brands could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -129,15 +171,36 @@ export default function AdminBrandsPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Brands</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add Brand
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Add Brand
+          </Button>
+        </div>
       </div>
 
       <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search brands..."
           columns={[
@@ -188,7 +251,14 @@ export default function AdminBrandsPage() {
           )}
           emptyMessage="No brands yet. Add your first brand to get started."
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <AdminModal
@@ -258,6 +328,15 @@ export default function AdminBrandsPage() {
         onConfirm={handleDelete}
         onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
         isLoading={isDeleting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Brands"
+        message={`Are you sure you want to delete ${selectedIds.size} selected brand(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

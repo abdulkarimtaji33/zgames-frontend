@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Badge } from '@/components/ui/Badge';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminCmsApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface CmsRow {
@@ -54,6 +56,46 @@ export default function AdminCmsPagesPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [slugError, setSlugError] = useState<string | undefined>(undefined);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((p) => [p.title, p.slug, isPublished(p) ? 'published' : 'draft', p.updatedAt ?? '']);
+    downloadCsv(datedCsvFilename('cms-pages'), ['Title', 'Slug', 'Status', 'Updated'], rows);
+    toast(`Exported ${items.length} pages`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminCmsApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} pages`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some pages could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetPublished = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminCmsApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} pages`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some pages could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -126,12 +168,31 @@ export default function AdminCmsPagesPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">CMS Pages</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> New Page</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> New Page</Button>
+        </div>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetPublished(true)} disabled={bulkBusy}>
+          <CheckCircle2 className="h-3.5 w-3.5" /> Publish
+        </Button>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetPublished(false)} disabled={bulkBusy}>
+          <XCircle className="h-3.5 w-3.5" /> Unpublish
+        </Button>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
       <DataTable
         data={items}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         searchable
         columns={[
           { key: 'title', label: 'Title', sortable: true, render: (v, row) => (
@@ -171,6 +232,15 @@ export default function AdminCmsPagesPage() {
       </AdminModal>
 
       <ConfirmDialog open={!!deleteId} title="Delete Page" message="Are you sure you want to delete this CMS page?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} isLoading={submitting} destructive />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Pages"
+        message={`Are you sure you want to delete ${selectedIds.size} selected page(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

@@ -14,7 +14,7 @@ export type Column<T> = {
   align?: 'left' | 'right';
 };
 
-interface DataTableProps<T> {
+interface DataTableProps<T extends { id: string | number }> {
   data: T[];
   columns: Column<T>[];
   isLoading?: boolean;
@@ -39,6 +39,10 @@ interface DataTableProps<T> {
   total?: number;
   /** Hide the built-in "Showing X of Y" footer — set this when the page also renders AdminPagination, which already shows the total. */
   hideFooter?: boolean;
+  /** Enables a leading checkbox column for row selection. Pair with `selectedIds`/`onSelectionChange`. */
+  selectable?: boolean;
+  selectedIds?: Set<T['id']>;
+  onSelectionChange?: (ids: Set<T['id']>) => void;
 }
 
 function getValue<T>(row: T, key: string): unknown {
@@ -72,6 +76,9 @@ export function DataTable<T extends { id: string | number }>({
   filters,
   total,
   hideFooter,
+  selectable,
+  selectedIds,
+  onSelectionChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -101,6 +108,28 @@ export function DataTable<T extends { id: string | number }>({
         return sortDir === 'asc' ? cmp : -cmp;
       })
     : filtered;
+
+  const allOnPageSelected = selectable && sorted.length > 0 && sorted.every((row) => selectedIds?.has(row.id));
+  const someOnPageSelected = selectable && sorted.some((row) => selectedIds?.has(row.id));
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds);
+    if (allOnPageSelected) {
+      sorted.forEach((row) => next.delete(row.id));
+    } else {
+      sorted.forEach((row) => next.add(row.id));
+    }
+    onSelectionChange(next);
+  };
+
+  const toggleRow = (id: T['id']) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  };
 
   const handleSort = (key: string) => {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -138,6 +167,18 @@ export function DataTable<T extends { id: string | number }>({
         <table className="w-full text-sm">
           <thead className="bg-background-tertiary border-b border-border sticky top-0 z-[2]">
             <tr>
+              {selectable && (
+                <th scope="col" className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={!!allOnPageSelected}
+                    ref={(el) => { if (el) el.indeterminate = !allOnPageSelected && !!someOnPageSelected; }}
+                    onChange={toggleAll}
+                    aria-label="Select all rows on this page"
+                    className="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                  />
+                </th>
+              )}
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
@@ -180,6 +221,7 @@ export function DataTable<T extends { id: string | number }>({
             {isLoading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i}>
+                  {selectable && <td className="px-4 py-3"><div className="h-4 w-4 skeleton rounded" /></td>}
                   {columns.map((col) => (
                     <td key={String(col.key)} className="px-4 py-3">
                       <div className="h-4 skeleton rounded w-3/4" />
@@ -190,13 +232,30 @@ export function DataTable<T extends { id: string | number }>({
               ))
             ) : sorted.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-12 text-center text-foreground-muted text-sm">
+                <td colSpan={columns.length + (actions ? 1 : 0) + (selectable ? 1 : 0)} className="px-4 py-12 text-center text-foreground-muted text-sm">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               sorted.map((row) => (
-                <tr key={row.id} className="hover:bg-background-tertiary/50 transition-colors duration-[var(--duration-fast)]">
+                <tr
+                  key={row.id}
+                  className={cn(
+                    'hover:bg-background-tertiary/50 transition-colors duration-[var(--duration-fast)]',
+                    selectable && selectedIds?.has(row.id) && 'bg-accent/5',
+                  )}
+                >
+                  {selectable && (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={!!selectedIds?.has(row.id)}
+                        onChange={() => toggleRow(row.id)}
+                        aria-label="Select row"
+                        className="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                      />
+                    </td>
+                  )}
                   {columns.map((col) => {
                     const val = getValue(row, String(col.key));
                     return (

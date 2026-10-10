@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, TrendingDown, SlidersHorizontal, Boxes, Hash } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, TrendingDown, SlidersHorizontal, Boxes, Hash, Download } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminInventoryApi, adminWarehousesApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface InventoryRow {
@@ -51,7 +52,7 @@ export default function AdminInventoryPage() {
     [],
   );
 
-  const { items, page, setPage, total, totalPages, isLoading, reload } =
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } =
     usePaginatedList<InventoryRow>({ fetcher, limit: 20 });
 
   const loadLowStock = useCallback(async () => {
@@ -77,6 +78,19 @@ export default function AdminInventoryPage() {
 
   const outOfStock = items.filter((i) => i.quantity === 0).length;
   const totalUnits = items.reduce((s, i) => s + i.quantity, 0);
+
+  const handleExport = () => {
+    const rows = items.map((i) => [
+      i.product?.name ?? i.productId,
+      i.product?.sku ?? '',
+      i.warehouse?.name ?? '',
+      String(i.quantity),
+      String(i.reservedQuantity ?? 0),
+      String(i.reorderPoint ?? 10),
+    ]);
+    downloadCsv(datedCsvFilename('inventory'), ['Product', 'SKU', 'Warehouse', 'In Stock', 'Reserved', 'Threshold'], rows);
+    toast(`Exported ${items.length} inventory records`, 'success');
+  };
 
   const handleAdjust = async () => {
     const qty = Number(adjustForm.quantity);
@@ -150,6 +164,9 @@ export default function AdminInventoryPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-heading text-2xl font-bold">Inventory</h1>
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setAdjustOpen(true)}>
             <SlidersHorizontal className="h-4 w-4" /> Adjust Stock
           </Button>
@@ -248,7 +265,14 @@ export default function AdminInventoryPage() {
           ]}
           emptyMessage="No inventory records found."
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <AdminModal

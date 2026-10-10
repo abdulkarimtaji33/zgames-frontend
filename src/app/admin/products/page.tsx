@@ -3,17 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormSelect } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminProductsApi, adminCategoriesApi, adminBrandsApi } from '@/lib/api/adminApi';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { Category, Brand, Product } from '@/types';
 
 function flattenCategories(cats: Category[], depth = 0): { id: string; label: string }[] {
@@ -50,12 +52,52 @@ export default function AdminProductsPage() {
     ...(brandId ? { brandId } : {}),
     ...(status ? { isActive: status === 'active' } : {}),
   }), [search, categoryId, brandId, status]);
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<Product>({ fetcher, extraParams });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<Product>({ fetcher, extraParams });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((p) => [p.sku ?? '', p.name, String(p.price), p.platform ?? '', p.isActive ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('products'), ['SKU', 'Name', 'Price', 'Platform', 'Status'], rows);
+    show(`Exported ${items.length} products`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminProductsApi.remove(id)));
+      show(`Deleted ${selectedIds.size} products`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      show('Some products could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminProductsApi.update(id, { isActive })));
+      show(`Updated ${selectedIds.size} products`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      show('Some products could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const handleToggleFeatured = async (product: Product) => {
     setTogglingFeaturedId(product.id);
@@ -95,19 +137,38 @@ export default function AdminProductsPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Products</h1>
-        <Link href="/admin/products/new">
-          <Button variant="primary" size="sm">
-            <Plus className="h-4 w-4" /> Add Product
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
           </Button>
-        </Link>
+          <Link href="/admin/products/new">
+            <Button variant="primary" size="sm">
+              <Plus className="h-4 w-4" /> Add Product
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           total={total}
           hideFooter
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search all products..."
           onSearch={setSearch}
@@ -205,7 +266,14 @@ export default function AdminProductsPage() {
               : 'No products yet. Add your first product to get started.'
           }
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <ConfirmDialog
@@ -215,6 +283,15 @@ export default function AdminProductsPage() {
         onConfirm={handleDelete}
         onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
         isLoading={isDeleting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Products"
+        message={`Are you sure you want to delete ${selectedIds.size} selected product(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

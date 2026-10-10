@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Plus, Download, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormSelect, FormTextarea } from '@/components/admin/FormField';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Badge } from '@/components/ui/Badge';
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminBlogApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface PostRow {
@@ -46,7 +48,7 @@ export default function AdminBlogPage() {
       adminBlogApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<PostRow> | PostRow[] } }>,
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<PostRow>({ fetcher, extraParams });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<PostRow>({ fetcher, extraParams });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -54,6 +56,32 @@ export default function AdminBlogPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [slugError, setSlugError] = useState<string | undefined>(undefined);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((p) => [p.title, p.slug, p.author ? `${p.author.firstName} ${p.author.lastName}` : '', p.status, p.publishedAt ?? '']);
+    downloadCsv(datedCsvFilename('blog-posts'), ['Title', 'Slug', 'Author', 'Status', 'Published'], rows);
+    toast(`Exported ${items.length} posts`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminBlogApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} posts`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some posts could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -147,13 +175,24 @@ export default function AdminBlogPage() {
             <option value="draft">Draft</option>
             <option value="archived">Archived</option>
           </FormSelect>
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
           <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> New Post</Button>
         </div>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
       <DataTable
         data={items}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         searchable
         columns={[
           { key: 'title', label: 'Title', sortable: true, render: (v, row) => (
@@ -169,7 +208,7 @@ export default function AdminBlogPage() {
         actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteId(row.id)} />}
         emptyMessage="No blog posts found."
       />
-      <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} pageSize={limit} onPageSizeChange={setLimit} />
 
       <AdminModal open={modalOpen} title={editing ? 'Edit Post' : 'New Post'} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} isSubmitting={submitting} wide>
         <div className="space-y-4">
@@ -205,6 +244,15 @@ export default function AdminBlogPage() {
       </AdminModal>
 
       <ConfirmDialog open={!!deleteId} title="Delete Post" message="Are you sure you want to delete this blog post?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} isLoading={submitting} destructive />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Posts"
+        message={`Are you sure you want to delete ${selectedIds.size} selected post(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

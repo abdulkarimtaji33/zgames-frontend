@@ -1,15 +1,18 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Check, MessageSquare, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Check, Download, MessageSquare, Trash2, X } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { adminReviewsApi } from '@/lib/api/adminApi';
 import { usePaginatedList, useAdminToast } from '@/hooks';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { Review } from '@/types';
 
 export default function AdminReviewsPage() {
@@ -18,7 +21,7 @@ export default function AdminReviewsPage() {
     (params: Record<string, unknown>) => adminReviewsApi.findAll(params),
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<Review>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<Review>({ fetcher });
 
   const [replyTarget, setReplyTarget] = useState<Review | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -26,6 +29,66 @@ export default function AdminReviewsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((r) => [
+      String(r.rating),
+      r.title ?? '',
+      r.customer ? `${r.customer.firstName} ${r.customer.lastName}` : '',
+      r.status,
+      new Date(r.createdAt).toLocaleDateString(),
+    ]);
+    downloadCsv(datedCsvFilename('reviews'), ['Rating', 'Title', 'Customer', 'Status', 'Date'], rows);
+    toast(`Exported ${items.length} reviews`, 'success');
+  };
+
+  const handleBulkApprove = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminReviewsApi.approve(id)));
+      toast(`Approved ${selectedIds.size} reviews`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some reviews could not be approved', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminReviewsApi.reject(id)));
+      toast(`Rejected ${selectedIds.size} reviews`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some reviews could not be rejected', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminReviewsApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} reviews`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some reviews could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const handleApprove = async (review: Review) => {
     try {
@@ -89,11 +152,31 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <h1 className="font-heading text-2xl font-bold">Reviews</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-2xl font-bold">Reviews</h1>
+        <Button variant="secondary" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4" /> Export
+        </Button>
+      </div>
       <div className="space-y-0">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={handleBulkApprove} disabled={bulkBusy}>
+            <Check className="h-3.5 w-3.5" /> Approve
+          </Button>
+          <Button variant="secondary" size="xs" onClick={handleBulkReject} disabled={bulkBusy}>
+            <X className="h-3.5 w-3.5" /> Reject
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search reviews..."
           columns={[
@@ -155,7 +238,7 @@ export default function AdminReviewsPage() {
           emptyMessage="No reviews found."
         />
         <div className="-mt-px rounded-b-xl bg-card border border-t-0 border-border">
-          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} pageSize={limit} onPageSizeChange={setLimit} />
         </div>
       </div>
 
@@ -192,6 +275,15 @@ export default function AdminReviewsPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         isLoading={isSubmitting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Reviews"
+        message={`Are you sure you want to delete ${selectedIds.size} selected review(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

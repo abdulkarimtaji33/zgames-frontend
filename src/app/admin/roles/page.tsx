@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Key } from 'lucide-react';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Button } from '@/components/ui/Button';
 import { adminRolesApi, adminPermissionsApi } from '@/lib/api/adminApi';
@@ -44,6 +45,35 @@ export default function AdminRolesPage() {
   const [deleteTarget, setDeleteTarget] = useState<RoleRow | null>(null);
   const [form, setForm] = useState<RoleForm>(emptyForm());
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [roles]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminRolesApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} roles`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      load();
+    } catch {
+      toast('Some roles could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -166,12 +196,29 @@ export default function AdminRolesPage() {
         </Button>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
+
       <div className="rounded-xl bg-card border border-border overflow-hidden">
         {roles.length === 0 ? (
           <p className="text-sm text-foreground-muted text-center py-12">No roles found.</p>
         ) : roles.map((role, i) => (
           <div key={role.id} className={`flex items-center justify-between px-5 py-4 hover:bg-background-tertiary/50 transition-colors ${i > 0 ? 'border-t border-border' : ''}`}>
             <div className="flex items-center gap-4">
+              {role.isSystem ? (
+                <div className="h-4 w-4 flex-shrink-0" />
+              ) : (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(role.id)}
+                  onChange={() => toggleSelect(role.id)}
+                  aria-label={`Select ${role.name}`}
+                  className="h-4 w-4 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                />
+              )}
               <div className={`h-10 w-10 rounded-full bg-background-tertiary flex items-center justify-center text-sm font-bold ${colors[i % colors.length]}`}>
                 {role.name[0].toUpperCase()}
               </div>
@@ -259,6 +306,15 @@ export default function AdminRolesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         isLoading={isSubmitting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Roles"
+        message={`Are you sure you want to delete ${selectedIds.size} selected role(s)? Users with these roles may lose access. This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

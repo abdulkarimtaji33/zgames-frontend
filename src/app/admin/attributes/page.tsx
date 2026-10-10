@@ -1,18 +1,20 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2, Check, X, Download } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormSelect } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminAttributesApi } from '@/lib/api/adminApi';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface AttributeOption {
@@ -62,7 +64,7 @@ export default function AdminAttributesPage() {
       adminAttributesApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<AttributeRow> } }>,
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<AttributeRow>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<AttributeRow>({ fetcher });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -71,6 +73,11 @@ export default function AdminAttributesPage() {
   const [form, setForm] = useState<AttributeForm>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   // Options manager state (only active once the attribute has an id)
   const [options, setOptions] = useState<AttributeOption[]>([]);
@@ -101,6 +108,27 @@ export default function AdminAttributesPage() {
   const openDelete = (attr: AttributeRow) => {
     setDeleting(attr);
     setConfirmOpen(true);
+  };
+
+  const handleExport = () => {
+    const rows = items.map((a) => [a.name, a.type ?? 'text', a.isFilterable ? 'yes' : 'no', String(a.options?.length ?? 0)]);
+    downloadCsv(datedCsvFilename('attributes'), ['Name', 'Type', 'Filterable', 'Options'], rows);
+    show(`Exported ${items.length} attributes`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminAttributesApi.remove(id)));
+      show(`Deleted ${selectedIds.size} attributes`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      show('Some attributes could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -221,15 +249,30 @@ export default function AdminAttributesPage() {
           <h1 className="font-heading text-2xl font-bold">Attributes</h1>
           <p className="text-sm text-foreground-muted mt-0.5">Define reusable product attributes like Size or Color, and their selectable options.</p>
         </div>
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add Attribute
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Add Attribute
+          </Button>
+        </div>
       </div>
 
       <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           columns={[
             { key: 'name', label: 'Name', sortable: true },
@@ -271,7 +314,14 @@ export default function AdminAttributesPage() {
           )}
           emptyMessage="No attributes yet. Add one like Size or Color to build product variants."
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <AdminModal
@@ -408,6 +458,16 @@ export default function AdminAttributesPage() {
         message={`Remove "${deletingOption?.label}" from this attribute?`}
         onConfirm={confirmDeleteOption}
         onCancel={() => setDeletingOption(null)}
+        destructive
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Attributes"
+        message={`Are you sure you want to delete ${selectedIds.size} selected attribute(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

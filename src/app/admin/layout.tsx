@@ -8,13 +8,14 @@ import {
   Warehouse, Truck, ClipboardList, Users, Star, MessageSquare,
   RotateCcw, Bell, BarChart2, LineChart, FileText, Settings,
   Menu, X, Zap, UserCog, ShieldCheck, Lock, DollarSign, PenTool,
-  Building2, Globe, BookOpen, PlugZap,
+  Building2, Globe, BookOpen, PlugZap, Search,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/store/adminAuthStore';
 import { adminAuthApi } from '@/lib/api/adminApi';
 import { AdminToastContainer } from '@/components/admin/AdminToast';
 import { Sidebar, type NavItem, type NavSection } from '@/components/admin/Sidebar';
 import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs';
+import { CommandPalette } from '@/components/admin/CommandPalette';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import '@/styles/admin.css';
 
@@ -268,6 +269,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('admin:open-command-palette'))}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-foreground-muted border border-border hover:text-foreground hover:border-border-hover transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Open quick navigation"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span>Quick jump</span>
+              <kbd className="text-[10px] border border-border rounded px-1 py-0.5 ml-1">Ctrl K</kbd>
+            </button>
             <ThemeToggle />
             <Link
               href="/admin/guide"
@@ -300,6 +310,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
       <AdminToastContainer />
+      <CommandPalette sections={filteredSections} />
     </div>
   );
 }

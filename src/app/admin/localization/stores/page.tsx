@@ -1,17 +1,19 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormCheckbox } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminStoresApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface StoreRow {
@@ -40,6 +42,46 @@ export default function AdminStoresPage() {
   const [editing, setEditing] = useState<StoreRow | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((s) => [s.name, s.address, s.phone ?? '', s.latitude != null ? `${s.latitude}, ${s.longitude}` : '', s.isActive !== false ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('stores'), ['Name', 'Address', 'Phone', 'Coordinates', 'Status'], rows);
+    toast(`Exported ${items.length} stores`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminStoresApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} stores`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some stores could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminStoresApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} stores`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some stores could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit = (row: StoreRow) => {
@@ -101,12 +143,31 @@ export default function AdminStoresPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Store Locations</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Add Store</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> Add Store</Button>
+        </div>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+          <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+        </Button>
+        <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+          <XCircle className="h-3.5 w-3.5" /> Deactivate
+        </Button>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
       <DataTable
         data={items}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         searchable
         columns={[
           { key: 'name', label: 'Name', sortable: true },
@@ -133,6 +194,15 @@ export default function AdminStoresPage() {
       </AdminModal>
 
       <ConfirmDialog open={!!deleteId} title="Delete Store" message="Are you sure you want to delete this store?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} isLoading={submitting} destructive />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Stores"
+        message={`Are you sure you want to delete ${selectedIds.size} selected store(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

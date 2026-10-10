@@ -1,16 +1,18 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus, Layers } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Layers, Download } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminGiftCardsApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface GiftCardRow {
@@ -36,13 +38,44 @@ export default function AdminGiftCardsPage() {
       adminGiftCardsApi.findAll(params) as Promise<{ data: { data: PaginatedResponse<GiftCardRow> | GiftCardRow[] } }>,
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<GiftCardRow>({ fetcher, limit: 20 });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<GiftCardRow>({ fetcher, limit: 20 });
 
   const [issueOpen, setIssueOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
   const [issueForm, setIssueForm] = useState({ amount: '', expiresAt: '' });
   const [batchForm, setBatchForm] = useState({ count: '', amount: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const giftCardRows = (rows: GiftCardRow[]) => rows.map((g) => [
+    g.code,
+    String(g.initialBalance),
+    String(g.currentBalance),
+    g.isActive ? 'active' : 'inactive',
+    g.expiresAt ?? '',
+    g.sentToEmail ?? '',
+  ]);
+
+  const handleExport = () => {
+    downloadCsv(
+      datedCsvFilename('gift-cards'),
+      ['Code', 'Initial Balance', 'Current Balance', 'Status', 'Expires', 'Sent To'],
+      giftCardRows(items),
+    );
+    toast(`Exported ${items.length} gift cards`, 'success');
+  };
+
+  const handleExportSelected = () => {
+    const selected = items.filter((g) => selectedIds.has(g.id));
+    downloadCsv(
+      datedCsvFilename('gift-cards-selected'),
+      ['Code', 'Initial Balance', 'Current Balance', 'Status', 'Expires', 'Sent To'],
+      giftCardRows(selected),
+    );
+    toast(`Exported ${selected.length} gift cards`, 'success');
+  };
 
   const handleIssue = async () => {
     setSubmitting(true);
@@ -85,15 +118,26 @@ export default function AdminGiftCardsPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Gift Cards</h1>
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setBatchOpen(true)}><Layers className="h-4 w-4" /> Batch Issue</Button>
           <Button variant="primary" size="sm" onClick={() => setIssueOpen(true)}><Plus className="h-4 w-4" /> Issue Gift Card</Button>
         </div>
       </div>
 
       <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+          <Button variant="secondary" size="xs" onClick={handleExportSelected}>
+            <Download className="h-3.5 w-3.5" /> Export Selected
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           columns={[
             { key: 'code', label: 'Code', render: (v) => <code className="font-mono text-sm text-accent">{String(v)}</code> },
@@ -111,7 +155,14 @@ export default function AdminGiftCardsPage() {
           ]}
           emptyMessage="No gift cards found."
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <AdminModal open={issueOpen} title="Issue Gift Card" onClose={() => setIssueOpen(false)} onSubmit={handleIssue} isSubmitting={submitting} submitLabel="Issue">

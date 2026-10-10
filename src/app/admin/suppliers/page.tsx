@@ -1,18 +1,20 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Plus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminSuppliersApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface SupplierRow {
@@ -41,8 +43,13 @@ export default function AdminSuppliersPage() {
     [],
   );
 
-  const { items, page, setPage, total, totalPages, isLoading, reload } =
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } =
     usePaginatedList<SupplierRow>({ fetcher, limit: 20 });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   const openCreate = () => {
     setEditing(null);
@@ -110,51 +117,116 @@ export default function AdminSuppliersPage() {
     }
   };
 
+  const handleExport = () => {
+    const rows = items.map((s) => [s.name, s.email ?? '', s.phone ?? '', s.address ?? '', s.isActive !== false ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('suppliers'), ['Name', 'Email', 'Phone', 'Address', 'Status'], rows);
+    toast(`Exported ${items.length} suppliers`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminSuppliersApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} suppliers`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some suppliers could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminSuppliersApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} suppliers`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some suppliers could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Suppliers</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add Supplier
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Add Supplier
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-        <DataTable
-          data={items}
-          isLoading={isLoading}
-          searchable
-          columns={[
-            { key: 'name', label: 'Name', sortable: true },
-            { key: 'email', label: 'Email', render: (v) => String(v ?? '—') },
-            { key: 'phone', label: 'Phone', render: (v) => String(v ?? '—') },
-            {
-              key: 'address',
-              label: 'Address',
-              render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
-            },
-            {
-              key: 'isActive',
-              label: 'Status',
-              render: (v) => (
-                <Badge variant={v !== false ? 'success' : 'error'} size="xs">
-                  {v !== false ? 'Active' : 'Inactive'}
-                </Badge>
-              ),
-            },
-          ]}
-          actions={(row) => (
-            <CrudActions
-              onEdit={() => openEdit(row)}
-              onDelete={() => {
-                setDeleting(row);
-                setDeleteOpen(true);
-              }}
-            />
-          )}
-          emptyMessage="No suppliers found."
-        />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
+        <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+          <DataTable
+            data={items}
+            total={total}
+            hideFooter
+            isLoading={isLoading}
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            searchable
+            columns={[
+              { key: 'name', label: 'Name', sortable: true },
+              { key: 'email', label: 'Email', render: (v) => String(v ?? '—') },
+              { key: 'phone', label: 'Phone', render: (v) => String(v ?? '—') },
+              {
+                key: 'address',
+                label: 'Address',
+                render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
+              },
+              {
+                key: 'isActive',
+                label: 'Status',
+                render: (v) => (
+                  <Badge variant={v !== false ? 'success' : 'error'} size="xs">
+                    {v !== false ? 'Active' : 'Inactive'}
+                  </Badge>
+                ),
+              },
+            ]}
+            actions={(row) => (
+              <CrudActions
+                onEdit={() => openEdit(row)}
+                onDelete={() => {
+                  setDeleting(row);
+                  setDeleteOpen(true);
+                }}
+              />
+            )}
+            emptyMessage="No suppliers found."
+          />
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            onPageChange={setPage}
+            pageSize={limit}
+            onPageSizeChange={setLimit}
+          />
+        </div>
       </div>
 
       <AdminModal
@@ -209,6 +281,16 @@ export default function AdminSuppliersPage() {
           </label>
         </div>
       </AdminModal>
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Suppliers"
+        message={`Are you sure you want to delete ${selectedIds.size} selected supplier(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
 
       <ConfirmDialog
         open={deleteOpen}

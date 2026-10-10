@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Users, Star, Pencil } from 'lucide-react';
+import { Plus, Users, Star, Pencil, Download } from 'lucide-react';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { DataTable, type Column } from '@/components/admin/DataTable';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { EntityPicker } from '@/components/admin/EntityPicker';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { StatCard } from '@/components/admin/StatCard';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminCustomersApi, adminLoyaltyApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface CustomerRow {
@@ -28,6 +30,7 @@ export default function AdminLoyaltyPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
   const [form, setForm] = useState({ customerId: '', points: '', reason: '' });
   const [customerOption, setCustomerOption] = useState<{ id: string; label: string; sublabel?: string } | null>(null);
   const [search, setSearch] = useState('');
@@ -38,8 +41,12 @@ export default function AdminLoyaltyPage() {
     [],
   );
   const extraParams = useMemo(() => ({ search: search || undefined }), [search]);
-  const { items, page, setPage, total, totalPages, isLoading, reload } =
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } =
     usePaginatedList<CustomerRow>({ fetcher, limit: 20, extraParams });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   const loadStats = useCallback(() => {
     setStatsLoading(true);
@@ -55,6 +62,7 @@ export default function AdminLoyaltyPage() {
   useEffect(() => { loadStats(); }, [loadStats]);
 
   const openAdjust = (customer?: CustomerRow) => {
+    setBulkMode(false);
     if (customer) {
       setCustomerOption({
         id: customer.id,
@@ -69,7 +77,40 @@ export default function AdminLoyaltyPage() {
     setModalOpen(true);
   };
 
+  const openBulkAdjust = () => {
+    setBulkMode(true);
+    setCustomerOption(null);
+    setForm({ customerId: '', points: '', reason: '' });
+    setModalOpen(true);
+  };
+
   const handleAdjust = async () => {
+    if (bulkMode) {
+      if (selectedIds.size === 0) return;
+      setSubmitting(true);
+      setBulkBusy(true);
+      try {
+        await Promise.all([...selectedIds].map((customerId) => adminLoyaltyApi.adjust({
+          customerId,
+          points: Number(form.points),
+          type: 'adjusted',
+          notes: form.reason || undefined,
+        })));
+        toast(`Points adjusted for ${selectedIds.size} customers`, 'success');
+        setModalOpen(false);
+        setForm({ customerId: '', points: '', reason: '' });
+        setSelectedIds(new Set());
+        reload();
+        loadStats();
+      } catch {
+        toast('Failed to adjust points for some customers', 'error');
+      } finally {
+        setSubmitting(false);
+        setBulkBusy(false);
+      }
+      return;
+    }
+
     if (!form.customerId) {
       toast('Select a customer first', 'error');
       return;
@@ -93,6 +134,16 @@ export default function AdminLoyaltyPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleExport = () => {
+    const rows = items.map((c) => [
+      [c.firstName, c.lastName].filter(Boolean).join(' '),
+      c.email,
+      String(c.pointsBalance ?? 0),
+    ]);
+    downloadCsv(datedCsvFilename('loyalty-customers'), ['Name', 'Email', 'Points Balance'], rows);
+    toast(`Exported ${items.length} customers`, 'success');
   };
 
   const columns: Column<CustomerRow>[] = [
@@ -119,7 +170,12 @@ export default function AdminLoyaltyPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-heading text-2xl font-bold">Loyalty Program</h1>
-        <Button variant="primary" size="sm" onClick={() => openAdjust()}><Plus className="h-4 w-4" /> Adjust Points</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => openAdjust()}><Plus className="h-4 w-4" /> Adjust Points</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -130,10 +186,18 @@ export default function AdminLoyaltyPage() {
       </div>
 
       <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={openBulkAdjust} disabled={bulkBusy}>
+            <Pencil className="h-3.5 w-3.5" /> Adjust Points
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           columns={columns}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search customers by name or email..."
           onSearch={setSearch}
@@ -150,24 +214,37 @@ export default function AdminLoyaltyPage() {
             </button>
           )}
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
 
       <AdminModal
         open={modalOpen}
-        title="Adjust Loyalty Points"
+        title={bulkMode ? `Adjust Points for ${selectedIds.size} Customers` : 'Adjust Loyalty Points'}
         onClose={() => { setModalOpen(false); setCustomerOption(null); }}
         onSubmit={handleAdjust}
         isSubmitting={submitting}
         submitLabel="Adjust"
       >
         <div className="space-y-4">
-          <EntityPicker
-            type="customer"
-            label="Customer"
-            value={customerOption}
-            onChange={(opt) => { setCustomerOption(opt); setForm({ ...form, customerId: opt?.id ?? '' }); }}
-          />
+          {bulkMode ? (
+            <p className="text-sm text-foreground-muted">
+              This adjustment will be applied to all {selectedIds.size} selected customers.
+            </p>
+          ) : (
+            <EntityPicker
+              type="customer"
+              label="Customer"
+              value={customerOption}
+              onChange={(opt) => { setCustomerOption(opt); setForm({ ...form, customerId: opt?.id ?? '' }); }}
+            />
+          )}
           <FormField label="Points" hint="Use negative values to deduct">
             <FormInput type="number" value={form.points} onChange={(e) => setForm({ ...form, points: e.target.value })} />
           </FormField>

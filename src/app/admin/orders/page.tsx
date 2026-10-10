@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Download } from 'lucide-react';
+import { Download, Package, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -69,7 +71,7 @@ export default function AdminOrdersPage() {
     [],
   );
 
-  const { items, page, setPage, total, totalPages, isLoading } = usePaginatedList<OrderRow>({
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<OrderRow>({
     fetcher,
     extraParams,
   });
@@ -78,6 +80,11 @@ export default function AdminOrdersPage() {
     setPage(1);
   }, [activeTab, setPage]);
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
   const handleExport = () => {
     if (items.length === 0) {
       toast('No orders to export', 'info');
@@ -85,6 +92,35 @@ export default function AdminOrdersPage() {
     }
     exportOrdersCsv(items);
     toast(`Exported ${items.length} orders`, 'success');
+  };
+
+  const handleBulkSetStatus = async (status: string) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminOrdersApi.updateStatus(id, { status })));
+      toast(`Updated ${selectedIds.size} orders`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some orders could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminOrdersApi.cancel(id)));
+      toast(`Cancelled ${selectedIds.size} orders`, 'success');
+      setSelectedIds(new Set());
+      setBulkCancelOpen(false);
+      reload();
+    } catch {
+      toast('Some orders could not be cancelled', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   return (
@@ -113,9 +149,23 @@ export default function AdminOrdersPage() {
       </div>
 
       <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetStatus('shipped')} disabled={bulkBusy}>
+            <Package className="h-3.5 w-3.5" /> Mark Shipped
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetStatus('delivered')} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Mark Delivered
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkCancelOpen(true)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Cancel
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search orders..."
           columns={[
@@ -185,8 +235,25 @@ export default function AdminOrdersPage() {
               : `No ${activeTab.toLowerCase()} orders found. Try a different status filter.`
           }
         />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          pageSize={limit}
+          onPageSizeChange={setLimit}
+        />
       </div>
+
+      <ConfirmDialog
+        open={bulkCancelOpen}
+        title="Cancel Orders"
+        message={`Are you sure you want to cancel ${selectedIds.size} selected order(s)? This action cannot be undone.`}
+        onConfirm={handleBulkCancel}
+        onCancel={() => setBulkCancelOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

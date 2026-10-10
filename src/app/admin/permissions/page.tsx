@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Button } from '@/components/ui/Button';
 import { adminPermissionsApi } from '@/lib/api/adminApi';
@@ -32,6 +33,35 @@ export default function AdminPermissionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
   const [form, setForm] = useState<PermissionForm>(emptyForm());
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [permissions]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminPermissionsApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} permissions`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      load();
+    } catch {
+      toast('Some permissions could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -108,6 +138,12 @@ export default function AdminPermissionsPage() {
         </Button>
       </div>
 
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+        <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkActionBar>
+
       <div className="rounded-xl bg-card border border-border overflow-hidden">
         {Object.keys(grouped).length === 0 ? (
           <p className="text-sm text-foreground-muted text-center py-12">No permissions found.</p>
@@ -121,9 +157,18 @@ export default function AdminPermissionsPage() {
                 key={perm.id}
                 className={`flex items-center justify-between px-5 py-3 hover:bg-background-tertiary/50 transition-colors ${pi > 0 ? 'border-t border-border/50' : ''}`}
               >
-                <div>
-                  <p className="text-sm font-medium">{perm.action}</p>
-                  {perm.description && <p className="text-xs text-foreground-muted">{perm.description}</p>}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(perm.id)}
+                    onChange={() => toggleSelect(perm.id)}
+                    aria-label={`Select ${perm.resource}:${perm.action}`}
+                    className="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{perm.action}</p>
+                    {perm.description && <p className="text-xs text-foreground-muted">{perm.description}</p>}
+                  </div>
                 </div>
                 <button
                   onClick={() => setDeleteTarget(perm)}
@@ -166,6 +211,15 @@ export default function AdminPermissionsPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         isLoading={isSubmitting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Permissions"
+        message={`Are you sure you want to delete ${selectedIds.size} selected permission(s)? This may affect role assignments. This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

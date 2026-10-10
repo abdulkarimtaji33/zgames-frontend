@@ -1,16 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Download, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useAdminToast } from '@/hooks/useAdminToast';
 import { adminWarehousesApi } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 
 interface WarehouseRow {
   id: string;
@@ -33,6 +35,11 @@ export default function AdminWarehousesPage() {
   const [deleting, setDeleting] = useState<WarehouseRow | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [warehouses]);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -125,55 +132,111 @@ export default function AdminWarehousesPage() {
     }
   };
 
+  const handleExport = () => {
+    const rows = warehouses.map((w) => [w.name, w.code ?? '', w.address ?? '', w.isActive !== false ? 'active' : 'inactive']);
+    downloadCsv(datedCsvFilename('warehouses'), ['Name', 'Code', 'Address', 'Status'], rows);
+    toast(`Exported ${warehouses.length} warehouses`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminWarehousesApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} warehouses`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      load();
+    } catch {
+      toast('Some warehouses could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminWarehousesApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} warehouses`, 'success');
+      setSelectedIds(new Set());
+      load();
+    } catch {
+      toast('Some warehouses could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Warehouses</h1>
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add Warehouse
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Add Warehouse
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-        <DataTable
-          data={warehouses}
-          isLoading={isLoading}
-          searchable
-          columns={[
-            { key: 'name', label: 'Name', sortable: true },
-            { key: 'code', label: 'Code', render: (v) => String(v ?? '—') },
-            {
-              key: 'address',
-              label: 'Address',
-              render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
-            },
-            {
-              key: 'isDefault',
-              label: 'Default',
-              render: (v) => (v ? <Badge variant="success" size="xs">Default</Badge> : null),
-            },
-            {
-              key: 'isActive',
-              label: 'Status',
-              render: (v) => (
-                <Badge variant={v !== false ? 'success' : 'error'} size="xs">
-                  {v !== false ? 'Active' : 'Inactive'}
-                </Badge>
-              ),
-            },
-          ]}
-          actions={(row) => (
-            <>
-              {!row.isDefault && (
-                <Button variant="ghost" size="xs" onClick={() => handleSetDefault(row)}>
-                  Set Default
-                </Button>
-              )}
-              <CrudActions onEdit={() => openEdit(row)} onDelete={() => { setDeleting(row); setDeleteOpen(true); }} />
-            </>
-          )}
-          emptyMessage="No warehouses found."
-        />
+      <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
+        <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+          <DataTable
+            data={warehouses}
+            isLoading={isLoading}
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            searchable
+            columns={[
+              { key: 'name', label: 'Name', sortable: true },
+              { key: 'code', label: 'Code', render: (v) => String(v ?? '—') },
+              {
+                key: 'address',
+                label: 'Address',
+                render: (v) => <span className="text-sm line-clamp-1">{String(v ?? '—')}</span>,
+              },
+              {
+                key: 'isDefault',
+                label: 'Default',
+                render: (v) => (v ? <Badge variant="success" size="xs">Default</Badge> : null),
+              },
+              {
+                key: 'isActive',
+                label: 'Status',
+                render: (v) => (
+                  <Badge variant={v !== false ? 'success' : 'error'} size="xs">
+                    {v !== false ? 'Active' : 'Inactive'}
+                  </Badge>
+                ),
+              },
+            ]}
+            actions={(row) => (
+              <>
+                {!row.isDefault && (
+                  <Button variant="ghost" size="xs" onClick={() => handleSetDefault(row)}>
+                    Set Default
+                  </Button>
+                )}
+                <CrudActions onEdit={() => openEdit(row)} onDelete={() => { setDeleting(row); setDeleteOpen(true); }} />
+              </>
+            )}
+            emptyMessage="No warehouses found."
+          />
+        </div>
       </div>
 
       <AdminModal
@@ -233,6 +296,16 @@ export default function AdminWarehousesPage() {
           setDeleting(null);
         }}
         onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Warehouses"
+        message={`Are you sure you want to delete ${selectedIds.size} selected warehouse(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
       />
     </div>
   );

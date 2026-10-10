@@ -1,12 +1,16 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { CheckCircle2, Download, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { adminSupportApi } from '@/lib/api/adminApi';
-import { usePaginatedList } from '@/hooks';
+import { usePaginatedList, useAdminToast } from '@/hooks';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface TicketRow {
@@ -32,15 +36,78 @@ export default function AdminSupportPage() {
       adminSupportApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<TicketRow> } }>,
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading } = usePaginatedList<TicketRow>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<TicketRow>({ fetcher });
+  const toast = useAdminToast((s) => s.show);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((t) => [
+      t.ticketNumber ?? t.id.slice(0, 8).toUpperCase(),
+      t.subject,
+      t.customer ? `${t.customer.firstName} ${t.customer.lastName}` : '',
+      t.priority,
+      t.status,
+      new Date(t.createdAt).toLocaleDateString(),
+    ]);
+    downloadCsv(datedCsvFilename('support-tickets'), ['Ticket ID', 'Subject', 'Customer', 'Priority', 'Status', 'Date'], rows);
+    toast(`Exported ${items.length} tickets`, 'success');
+  };
+
+  const handleBulkResolve = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminSupportApi.update(id, { status: 'resolved' })));
+      toast(`Resolved ${selectedIds.size} tickets`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some tickets could not be resolved', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkClose = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminSupportApi.close(id)));
+      toast(`Closed ${selectedIds.size} tickets`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some tickets could not be closed', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <h1 className="font-heading text-2xl font-bold">Support Tickets</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-2xl font-bold">Support Tickets</h1>
+        <Button variant="secondary" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4" /> Export
+        </Button>
+      </div>
       <div className="space-y-0">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={handleBulkResolve} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Mark Resolved
+          </Button>
+          <Button variant="secondary" size="xs" onClick={handleBulkClose} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Mark Closed
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search tickets..."
           columns={[
@@ -74,7 +141,7 @@ export default function AdminSupportPage() {
           emptyMessage="No support tickets found."
         />
         <div className="-mt-px rounded-b-xl bg-card border border-t-0 border-border">
-          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} pageSize={limit} onPageSizeChange={setLimit} />
         </div>
       </div>
     </div>

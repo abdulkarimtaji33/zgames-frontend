@@ -1,17 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { CheckCircle2, Download, Plus, Trash2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminUsersApi, adminRolesApi } from '@/lib/api/adminApi';
 import { usePaginatedList, useAdminToast } from '@/hooks';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
+import { useAdminAuthStore } from '@/store/adminAuthStore';
 import type { StaffUser } from '@/types';
 
 interface RoleOption {
@@ -39,11 +42,12 @@ const emptyForm = (): UserForm => ({
 
 export default function AdminUsersPage() {
   const toast = useAdminToast((s) => s.show);
+  const currentUserId = useAdminAuthStore((s) => s.user?.id);
   const fetcher = useCallback(
     (params: Record<string, unknown>) => adminUsersApi.findAll(params),
     [],
   );
-  const { items, page, setPage, total, totalPages, isLoading, reload } = usePaginatedList<StaffUser>({ fetcher });
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<StaffUser>({ fetcher });
 
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,6 +55,55 @@ export default function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<StaffUser | null>(null);
   const [form, setForm] = useState<UserForm>(emptyForm());
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
+
+  const handleExport = () => {
+    const rows = items.map((u) => [
+      u.firstName,
+      u.lastName,
+      u.email,
+      (u.roles ?? []).map((r) => r.name).join('; '),
+      u.isActive ? 'active' : 'disabled',
+    ]);
+    downloadCsv(datedCsvFilename('admin-users'), ['First Name', 'Last Name', 'Email', 'Roles', 'Status'], rows);
+    toast(`Exported ${items.length} users`, 'success');
+  };
+
+  const handleBulkSetActive = async (isActive: boolean) => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminUsersApi.update(id, { isActive })));
+      toast(`Updated ${selectedIds.size} users`, 'success');
+      setSelectedIds(new Set());
+      reload();
+    } catch {
+      toast('Some users could not be updated', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const targets = [...selectedIds].filter((id) => id !== currentUserId);
+    if (targets.length < selectedIds.size) toast('Your own account was skipped — you cannot delete yourself', 'info');
+    if (targets.length === 0) { setBulkDeleteOpen(false); return; }
+    setBulkBusy(true);
+    try {
+      await Promise.all(targets.map((id) => adminUsersApi.remove(id)));
+      toast(`Deleted ${targets.length} users`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some users could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   useEffect(() => {
     adminRolesApi.findAll()
@@ -139,15 +192,35 @@ export default function AdminUsersPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Admin Users</h1>
-        <Button variant="primary" size="sm" onClick={openInvite}>
-          <Plus className="h-4 w-4" /> Invite User
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={openInvite}>
+            <Plus className="h-4 w-4" /> Invite User
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-0">
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(true)} disabled={bulkBusy}>
+            <CheckCircle2 className="h-3.5 w-3.5" /> Activate
+          </Button>
+          <Button variant="secondary" size="xs" onClick={() => handleBulkSetActive(false)} disabled={bulkBusy}>
+            <XCircle className="h-3.5 w-3.5" /> Deactivate
+          </Button>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
           isLoading={isLoading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search users..."
           columns={[
@@ -191,11 +264,16 @@ export default function AdminUsersPage() {
               render: (v) => <Badge variant={v ? 'success' : 'error'} size="xs">{v ? 'Active' : 'Disabled'}</Badge>,
             },
           ]}
-          actions={(row) => <CrudActions onEdit={() => openEdit(row)} onDelete={() => setDeleteTarget(row)} />}
+          actions={(row) => (
+            <CrudActions
+              onEdit={() => openEdit(row)}
+              onDelete={row.id === currentUserId ? undefined : () => setDeleteTarget(row)}
+            />
+          )}
           emptyMessage="No admin users found."
         />
         <div className="-mt-px rounded-b-xl bg-card border border-t-0 border-border">
-          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+          <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} pageSize={limit} onPageSizeChange={setLimit} />
         </div>
       </div>
 
@@ -251,6 +329,15 @@ export default function AdminUsersPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         isLoading={isSubmitting}
+        destructive
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Users"
+        message={`Are you sure you want to delete ${selectedIds.size} selected user(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
         destructive
       />
     </div>

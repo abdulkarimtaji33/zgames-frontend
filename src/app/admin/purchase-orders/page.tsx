@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, PackageCheck, Eye } from 'lucide-react';
+import { Plus, PackageCheck, Eye, Download, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { AdminPagination } from '@/components/admin/AdminPagination';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { BulkActionBar } from '@/components/admin/BulkActionBar';
 import { FormField, FormInput, FormSelect } from '@/components/admin/FormField';
 import { EntityPicker } from '@/components/admin/EntityPicker';
 import { Badge } from '@/components/ui/Badge';
@@ -16,6 +18,7 @@ import {
   adminSuppliersApi,
   adminWarehousesApi,
 } from '@/lib/api/adminApi';
+import { downloadCsv, datedCsvFilename } from '@/lib/utils/csv';
 import type { PaginatedResponse } from '@/types';
 
 interface PORow {
@@ -97,8 +100,13 @@ export default function AdminPurchaseOrdersPage() {
     [],
   );
 
-  const { items, page, setPage, total, totalPages, isLoading, reload } =
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } =
     usePaginatedList<PORow>({ fetcher, limit: 20 });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  useEffect(() => { setSelectedIds(new Set()); }, [items]);
 
   useEffect(() => {
     adminSuppliersApi
@@ -134,6 +142,33 @@ export default function AdminPurchaseOrdersPage() {
   const openView = async (row: PORow) => {
     const detail = await loadDetail(row.id);
     if (detail) setViewOpen(true);
+  };
+
+  const handleExport = () => {
+    const rows = items.map((po) => [
+      po.orderNumber ?? po.id.slice(0, 8),
+      po.supplier?.name ?? '',
+      po.total != null ? String(po.total) : '',
+      po.status,
+      new Date(po.createdAt).toLocaleDateString(),
+    ]);
+    downloadCsv(datedCsvFilename('purchase-orders'), ['PO #', 'Supplier', 'Total', 'Status', 'Date'], rows);
+    toast(`Exported ${items.length} purchase orders`, 'success');
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => adminPurchaseOrdersApi.remove(id)));
+      toast(`Deleted ${selectedIds.size} purchase orders`, 'success');
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      reload();
+    } catch {
+      toast('Some purchase orders could not be deleted', 'error');
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -219,60 +254,84 @@ export default function AdminPurchaseOrdersPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Purchase Orders</h1>
-        <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" /> Create PO
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" /> Create PO
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-        <DataTable
-          data={items}
-          isLoading={isLoading}
-          searchable
-          columns={[
-            {
-              key: 'orderNumber',
-              label: 'PO #',
-              render: (v, row) => String(v ?? row.id.slice(0, 8)),
-            },
-            {
-              key: 'supplier',
-              label: 'Supplier',
-              render: (v) => (v as PORow['supplier'])?.name ?? '—',
-            },
-            {
-              key: 'total',
-              label: 'Total',
-              align: 'right',
-              render: (v) => (v ? `AED ${Number(v).toFixed(2)}` : '—'),
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              render: (v) => (
-                <Badge variant={STATUS_VARIANT[String(v)] ?? 'default'} size="xs">
-                  {String(v)}
-                </Badge>
-              ),
-            },
-            {
-              key: 'createdAt',
-              label: 'Date',
-              render: (v) => new Date(String(v)).toLocaleDateString(),
-            },
-          ]}
-          actions={(row) => (
-            <button
-              onClick={() => openView(row)}
-              className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors"
-              title="View"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </button>
-          )}
-          emptyMessage="No purchase orders found."
-        />
-        <AdminPagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <div>
+        <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())} isBusy={bulkBusy}>
+          <Button variant="danger" size="xs" onClick={() => setBulkDeleteOpen(true)} disabled={bulkBusy}>
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </BulkActionBar>
+        <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+          <DataTable
+            data={items}
+            total={total}
+            hideFooter
+            isLoading={isLoading}
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            searchable
+            columns={[
+              {
+                key: 'orderNumber',
+                label: 'PO #',
+                render: (v, row) => String(v ?? row.id.slice(0, 8)),
+              },
+              {
+                key: 'supplier',
+                label: 'Supplier',
+                render: (v) => (v as PORow['supplier'])?.name ?? '—',
+              },
+              {
+                key: 'total',
+                label: 'Total',
+                align: 'right',
+                render: (v) => (v ? `AED ${Number(v).toFixed(2)}` : '—'),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (v) => (
+                  <Badge variant={STATUS_VARIANT[String(v)] ?? 'default'} size="xs">
+                    {String(v)}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'createdAt',
+                label: 'Date',
+                render: (v) => new Date(String(v)).toLocaleDateString(),
+              },
+            ]}
+            actions={(row) => (
+              <button
+                onClick={() => openView(row)}
+                className="p-1.5 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors"
+                title="View"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+            )}
+            emptyMessage="No purchase orders found."
+          />
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            onPageChange={setPage}
+            pageSize={limit}
+            onPageSizeChange={setLimit}
+          />
+        </div>
       </div>
 
       <AdminModal
@@ -490,6 +549,16 @@ export default function AdminPurchaseOrdersPage() {
           ))}
         </div>
       </AdminModal>
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Purchase Orders"
+        message={`Are you sure you want to delete ${selectedIds.size} selected purchase order(s)? This action cannot be undone.`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={bulkBusy}
+        destructive
+      />
     </div>
   );
 }

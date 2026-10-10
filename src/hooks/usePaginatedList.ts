@@ -16,9 +16,10 @@ interface UsePaginatedListOptions<T> {
  * by serialized value rather than reference, so this cannot enter an infinite
  * fetch loop regardless of how callers construct their arguments.
  */
-export function usePaginatedList<T extends { id: string }>({ fetcher, limit = 20, extraParams = {} }: UsePaginatedListOptions<T>) {
+export function usePaginatedList<T extends { id: string }>({ fetcher, limit: initialLimit = 20, extraParams = {} }: UsePaginatedListOptions<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(initialLimit);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,5 +57,10 @@ export function usePaginatedList<T extends { id: string }>({ fetcher, limit = 20
 
   useEffect(() => { setPage(1); }, [extraParamsKey]);
 
-  return { items, page, setPage, total, totalPages, isLoading, reload: load };
+  const changePageSize = useCallback((size: number) => {
+    setLimit(size);
+    setPage(1);
+  }, []);
+
+  return { items, page, setPage, limit, setLimit: changePageSize, total, totalPages, isLoading, reload: load };
 }

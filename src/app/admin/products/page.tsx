@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -55,6 +55,20 @@ export default function AdminProductsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
+
+  const handleToggleFeatured = async (product: Product) => {
+    setTogglingFeaturedId(product.id);
+    try {
+      await adminProductsApi.update(product.id, { isFeatured: !product.isFeatured });
+      show(product.isFeatured ? 'Removed from Featured' : 'Added to Featured', 'success');
+      reload();
+    } catch {
+      show('Failed to update Featured status', 'error');
+    } finally {
+      setTogglingFeaturedId(null);
+    }
+  };
 
   const openDelete = (product: Product) => {
     setDeleting(product);
@@ -165,7 +179,17 @@ export default function AdminProductsPage() {
             {
               key: 'isFeatured',
               label: 'Featured',
-              render: (v) => v ? <Badge variant="accent" size="xs">Yes</Badge> : null,
+              align: 'right',
+              render: (v, row) => (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleToggleFeatured(row); }}
+                  disabled={togglingFeaturedId === row.id}
+                  title={v ? 'Remove from Featured' : 'Add to Featured'}
+                  className="p-1.5 rounded-md hover:bg-accent/10 transition-colors disabled:opacity-50"
+                >
+                  <Star className={`h-4 w-4 ${v ? 'fill-accent text-accent' : 'text-foreground-subtle'}`} />
+                </button>
+              ),
             },
           ]}
           actions={(row) => (

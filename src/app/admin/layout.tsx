@@ -28,7 +28,13 @@ const NAV: NavItem[] = [
   { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
   { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
   { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
-  { label: 'Integrations', href: '/admin/integrations/likecard', icon: PlugZap },
+  {
+    label: 'Integrations', icon: PlugZap,
+    children: [
+      { label: 'LikeCard', href: '/admin/integrations/likecard' },
+      { label: 'Gift Card Margins', href: '/admin/integrations/likecard/margins' },
+    ],
+  },
   { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
   {
     label: 'Marketing', icon: Zap,

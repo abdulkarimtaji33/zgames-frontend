@@ -175,15 +175,39 @@ export interface LikeCardSyncStatus {
   unlinkedProducts: Array<{ productId: string; name: string; variantId: string }>;
 }
 
+export interface PopularCatalogSyncResult extends LikeCardSyncResult {
+  categoriesSynced: string[];
+  categoriesNotFound: string[];
+}
+
+export interface GiftCardMarginRow {
+  productId: string;
+  variantId: string;
+  name: string;
+  sku: string;
+  region: string;
+  costPrice: number;
+  likecardSellPrice: number | null;
+  price: number;
+  isActive: boolean;
+  marginAmount: number;
+  marginPercent: number | null;
+}
+
 export const adminLikeCardApi = {
   status: () => adminClient.get<ApiData<{ configured: boolean; circuitOpen: boolean }>>('/admin/integrations/likecard/status'),
   balance: () => adminClient.get<ApiData<LikeCardBalance>>('/admin/integrations/likecard/balance'),
   syncPlaystation: (markupPercent?: number) =>
     adminClient.post<ApiData<LikeCardSyncResult>>('/admin/integrations/likecard/sync-playstation', { markupPercent }),
+  syncPopular: (markupPercent?: number) =>
+    adminClient.post<ApiData<PopularCatalogSyncResult>>('/admin/integrations/likecard/sync-popular', { markupPercent }),
   syncStatus: () => adminClient.get<ApiData<LikeCardSyncStatus>>('/admin/integrations/likecard/sync-status'),
   testProductIds: () => adminClient.get<ApiData<{ productIds: string[] }>>('/admin/integrations/likecard/test-product-ids'),
   testPurchase: (productId: string, referenceId?: string) =>
     adminClient.post<ApiData<{ code: string; likecardOrderId: string; product: unknown }>>('/admin/integrations/likecard/test-purchase', { productId, referenceId }),
+  marginCatalog: () => adminClient.get<ApiData<GiftCardMarginRow[]>>('/admin/integrations/likecard/margin-catalog'),
+  updateSellingPrice: (productId: string, price: number) =>
+    adminClient.patch<ApiData<GiftCardMarginRow>>(`/admin/integrations/likecard/margin-catalog/${productId}/price`, { price }),
 };
 
 export const adminLoyaltyApi = {

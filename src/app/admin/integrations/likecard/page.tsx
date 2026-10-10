@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Wallet, PlugZap, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
+import { RefreshCw, Wallet, PlugZap, AlertTriangle, CheckCircle2, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormField, FormInput } from '@/components/admin/FormField';
@@ -10,6 +11,7 @@ import {
   adminLikeCardApi,
   type LikeCardBalance,
   type LikeCardSyncResult,
+  type PopularCatalogSyncResult,
   type LikeCardSyncStatus,
 } from '@/lib/api/adminApi';
 
@@ -19,9 +21,10 @@ export default function AdminLikeCardIntegrationPage() {
   const [status, setStatus] = useState<{ configured: boolean; circuitOpen: boolean } | null>(null);
   const [balance, setBalance] = useState<LikeCardBalance | null>(null);
   const [syncStatus, setSyncStatus] = useState<LikeCardSyncStatus | null>(null);
-  const [lastSync, setLastSync] = useState<LikeCardSyncResult | null>(null);
+  const [lastSync, setLastSync] = useState<LikeCardSyncResult | PopularCatalogSyncResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [markupPercent, setMarkupPercent] = useState('');
 
   const load = useCallback(async () => {
@@ -72,6 +75,20 @@ export default function AdminLikeCardIntegrationPage() {
     }
   };
 
+  const handleSyncAll = async () => {
+    setIsSyncingAll(true);
+    try {
+      const res = await adminLikeCardApi.syncPopular(markupPercent ? Number(markupPercent) : undefined);
+      setLastSync(res.data.data);
+      toast(`Sync complete: ${res.data.data.productsCreated} created, ${res.data.data.productsUpdated} updated`, 'success');
+      await load();
+    } catch {
+      toast('Catalog sync failed', 'error');
+    } finally {
+      setIsSyncingAll(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 flex justify-center">
@@ -91,9 +108,16 @@ export default function AdminLikeCardIntegrationPage() {
             Wholesale digital-goods supplier — staff-only. Never surfaced to customers.
           </p>
         </div>
-        <Badge variant={status?.configured ? 'success' : 'warning'} size="sm">
-          {status?.configured ? 'Configured' : 'Not Configured'}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/integrations/likecard/margins">
+            <Button variant="secondary" size="sm">
+              <DollarSign className="h-4 w-4" /> Gift Card Margins
+            </Button>
+          </Link>
+          <Badge variant={status?.configured ? 'success' : 'warning'} size="sm">
+            {status?.configured ? 'Configured' : 'Not Configured'}
+          </Badge>
+        </div>
       </div>
 
       {!status?.configured && (
@@ -162,13 +186,14 @@ export default function AdminLikeCardIntegrationPage() {
       </div>
 
       <section className="rounded-xl bg-card border border-border p-5 space-y-4">
-        <h2 className="font-heading font-bold">PlayStation Catalog Sync</h2>
+        <h2 className="font-heading font-bold">Catalog Sync</h2>
         <p className="text-sm text-foreground-muted">
-          Pulls PlayStation regional categories/products from LikeCard and upserts local products with a flat
-          markup on top of LikeCard&apos;s cost price. Product names/descriptions shown to customers are written
-          fresh — LikeCard&apos;s own branding is never used.
+          Pulls platform/region categories and products from LikeCard and upserts local products. By default the
+          selling price is set equal to LikeCard&apos;s cost (no automatic markup) — adjust individual prices
+          afterward from the <Link href="/admin/integrations/likecard/margins" className="text-accent hover:underline">Gift Card Margins</Link> page.
+          Product names/descriptions shown to customers are written fresh — LikeCard&apos;s own branding is never used.
         </p>
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-3 flex-wrap">
           <FormField label="Markup % override (optional)" className="max-w-[220px]">
             <FormInput
               type="number"
@@ -177,8 +202,11 @@ export default function AdminLikeCardIntegrationPage() {
               placeholder="Uses LIKECARD_MARKUP_PERCENT"
             />
           </FormField>
-          <Button variant="primary" size="sm" onClick={handleSync} isLoading={isSyncing} disabled={!status?.configured}>
-            <RefreshCw className="h-4 w-4" /> Sync PlayStation Catalog
+          <Button variant="secondary" size="sm" onClick={handleSync} isLoading={isSyncing} disabled={!status?.configured}>
+            <RefreshCw className="h-4 w-4" /> Sync PlayStation Only
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleSyncAll} isLoading={isSyncingAll} disabled={!status?.configured}>
+            <RefreshCw className="h-4 w-4" /> Sync All Catalogs
           </Button>
         </div>
 
@@ -190,6 +218,16 @@ export default function AdminLikeCardIntegrationPage() {
             {lastSync.regionsFound.length > 0 && (
               <p className="text-foreground-muted">
                 Regions synced: {lastSync.regionsFound.map((r) => r.region.toUpperCase()).join(', ')}
+              </p>
+            )}
+            {'categoriesSynced' in lastSync && lastSync.categoriesSynced.length > 0 && (
+              <p className="text-foreground-muted">
+                Platforms synced: {lastSync.categoriesSynced.join(', ')}
+              </p>
+            )}
+            {'categoriesNotFound' in lastSync && lastSync.categoriesNotFound.length > 0 && (
+              <p className="text-warning">
+                Platforms not found on LikeCard: {lastSync.categoriesNotFound.join(', ')}
               </p>
             )}
             {lastSync.skippedNoRegionMatch.length > 0 && (

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Download, Package, CheckCircle2, XCircle } from 'lucide-react';
+import { Download, Package, CheckCircle2, XCircle, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -25,13 +26,26 @@ function customerName(customer: OrderRow['customer']): string | null {
 }
 
 const STATUS_TABS = ['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
-const STATUS_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
-  pending: 'warning',
-  confirmed: 'info',
-  processing: 'info',
-  shipped: 'info',
-  delivered: 'success',
-  cancelled: 'error',
+// Every value the order_status enum accepts — kept in sync with
+// OrderStatus in the backend (src/modules/orders/entities/order.enums.ts).
+const ALL_STATUSES = [
+  'pending', 'confirmed', 'paid', 'processing', 'packed', 'shipped',
+  'delivered', 'cancelled', 'refunded', 'returned', 'exchange_requested', 'exchange_approved',
+];
+const STATUS_SELECT_CLASS: Record<string, string> = {
+  pending: 'bg-warning/10 border-warning/30 text-warning',
+  confirmed: 'bg-info/10 border-info/30 text-info',
+  paid: 'bg-info/10 border-info/30 text-info',
+  processing: 'bg-info/10 border-info/30 text-info',
+  packed: 'bg-info/10 border-info/30 text-info',
+  shipped: 'bg-info/10 border-info/30 text-info',
+  delivered: 'bg-success/10 border-success/30 text-success',
+  cancelled: 'bg-error/10 border-error/30 text-error',
+  refunded: 'bg-error/10 border-error/30 text-error',
+  returned: 'bg-error/10 border-error/30 text-error',
+  exchange_requested: 'bg-warning/10 border-warning/30 text-warning',
+  exchange_approved: 'bg-info/10 border-info/30 text-info',
+  default: 'bg-background-tertiary border-border text-foreground-muted',
 };
 
 function exportOrdersCsv(orders: OrderRow[]) {
@@ -101,6 +115,21 @@ export default function AdminOrdersPage() {
     }
     exportOrdersCsv(items);
     toast(`Exported ${items.length} orders`, 'success');
+  };
+
+  const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
+
+  const handleRowStatusChange = async (orderId: string, status: string) => {
+    setStatusBusyId(orderId);
+    try {
+      await adminOrdersApi.updateStatus(orderId, { status });
+      toast('Order status updated', 'success');
+      reload();
+    } catch {
+      toast('Could not change status — that transition may not be allowed', 'error');
+    } finally {
+      setStatusBusyId(null);
+    }
   };
 
   const handleBulkSetStatus = async (status: string) => {
@@ -215,11 +244,28 @@ export default function AdminOrdersPage() {
             {
               key: 'status',
               label: 'Status',
-              render: (v) => (
-                <Badge variant={STATUS_VARIANT[String(v).toLowerCase()] ?? 'default'} size="xs">
-                  {String(v).toUpperCase()}
-                </Badge>
-              ),
+              render: (v, row) => {
+                const current = String(v).toLowerCase();
+                return (
+                  <div className="relative inline-flex">
+                    <select
+                      value={current}
+                      disabled={statusBusyId === row.id}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => handleRowStatusChange(row.id, e.target.value)}
+                      className={cn(
+                        'appearance-none rounded-full pl-2.5 pr-6 py-1 text-[11px] font-bold uppercase tracking-wide border cursor-pointer disabled:opacity-50 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        STATUS_SELECT_CLASS[current] ?? STATUS_SELECT_CLASS.default,
+                      )}
+                    >
+                      {ALL_STATUSES.map((s) => (
+                        <option key={s} value={s}>{s.replace(/_/g, ' ').toUpperCase()}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 opacity-60" />
+                  </div>
+                );
+              },
             },
             {
               key: 'paymentStatus',

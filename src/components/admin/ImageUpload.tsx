@@ -21,10 +21,8 @@ export function ImageUpload({ folder, value, onChange, label = 'Upload image' }:
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
-      const res = await adminStorageApi.presignedUpload(folder, file.name, file.type);
-      const { uploadUrl, publicUrl } = res.data as { uploadUrl: string; publicUrl: string };
-      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
-      onChange(publicUrl);
+      const res = await adminStorageApi.upload(folder, file);
+      onChange(res.data.data.fileUrl);
       show('Image uploaded', 'success');
     } catch {
       show('Upload failed — enter image URL manually', 'error');

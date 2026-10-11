@@ -322,8 +322,14 @@ export const adminSettingsApi = {
 };
 
 export const adminStorageApi = {
-  presignedUpload: (folder: string, fileName: string, contentType: string) =>
-    adminClient.post('/storage/presigned-upload', { folder, fileName, contentType }),
+  upload: (folder: string, file: File) => {
+    const form = new FormData();
+    form.append('folder', folder);
+    form.append('file', file);
+    return adminClient.post<ApiData<{ fileUrl: string; key: string }>>('/storage/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export const adminReportsApi = {

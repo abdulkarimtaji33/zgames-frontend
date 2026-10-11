@@ -25,11 +25,9 @@ export function ProductImagesTab({ productId, images, onChange }: ProductImagesT
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const presign = await adminStorageApi.presignedUpload('products', file.name, file.type);
-        const { uploadUrl, publicUrl } = presign.data as { uploadUrl: string; publicUrl: string };
-        await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+        const uploadRes = await adminStorageApi.upload('products', file);
         const res = await adminProductsApi.addImage(productId, {
-          url: publicUrl,
+          url: uploadRes.data.data.fileUrl,
           isFeatured: images.length === 0,
           sortOrder: images.length,
         }) as { data: ProductImage } | { data: { data: ProductImage } };

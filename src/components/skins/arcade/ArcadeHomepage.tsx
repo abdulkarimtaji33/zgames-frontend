@@ -171,15 +171,16 @@ function StickerWall() {
                 >
                   {photo ? (
                     <>
-                      <Image
-                        src={photo}
-                        alt=""
-                        fill
-                        className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-110"
-                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                      <span className="relative text-xs sm:text-sm font-bold text-white line-clamp-2 drop-shadow">{cat.name}</span>
+                      <div className="absolute inset-0 bottom-7 p-3">
+                        <Image
+                          src={photo}
+                          alt=""
+                          fill
+                          className="object-contain p-2 transition-transform duration-[var(--duration-slow)] group-hover:scale-110"
+                          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                        />
+                      </div>
+                      <span className="absolute bottom-2 inset-x-2 text-xs sm:text-sm font-bold text-foreground line-clamp-1 text-center">{cat.name}</span>
                     </>
                   ) : (
                     <>

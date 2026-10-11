@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { ordersApi, paymentsApi } from '@/lib/api';
 import { StripePaymentForm } from '@/components/store/StripePaymentForm';
-import { AddressAutocomplete, type ParsedAddress } from '@/components/shared/AddressAutocomplete';
+import { AddressBookStep, type CheckoutAddress } from '@/components/checkout/AddressBookStep';
 import { cn } from '@/lib/utils/cn';
 import { getShippingCost } from '@/lib/shipping';
 import { ORDER_SUCCESS_STORAGE_KEY, type OrderSuccessSummary } from '@/lib/orderSuccess';
@@ -41,15 +41,7 @@ const PAYMENT_METHODS = [
   { id: 'cod', label: 'Cash on Delivery', icon: '💵' },
 ];
 
-interface AddressForm {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  countryCode: string;
-}
+type AddressForm = CheckoutAddress;
 
 export function VaultCheckoutPage() {
   const router = useRouter();
@@ -93,9 +85,16 @@ export function VaultCheckoutPage() {
   // and reused across retries so a failed payment-intent request never causes
   // ordersApi.create() to spawn a duplicate order.
   const idempotencyKeyRef = useRef<string | null>(null);
-  const addressWrapperRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AddressForm>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<AddressForm>();
+
+  // Contact-only form (digital carts) has no address book — just prefill the
+  // logged-in customer's name/phone once auth state has hydrated from storage.
+  useEffect(() => {
+    if (customer) {
+      reset({ firstName: customer.firstName, lastName: customer.lastName, phone: customer.phone ?? '', addressLine1: '', city: '', countryCode: 'AE' });
+    }
+  }, [customer, reset]);
 
   const availablePaymentMethods = isDigitalOnly ? PAYMENT_METHODS.filter((pm) => pm.id !== 'cod') : PAYMENT_METHODS;
 
@@ -116,16 +115,6 @@ export function VaultCheckoutPage() {
     setAddressData(data);
     setCurrentStep(isDigitalOnly ? 'payment' : 'shipping');
   };
-
-  // react-hook-form can't focus a hidden input; when addressLine1 fails
-  // validation, manually focus the visible input rendered by AddressAutocomplete
-  // once the error actually shows up (deferred to an effect, not during render/submit).
-  useEffect(() => {
-    if (errors.addressLine1) {
-      const el = addressWrapperRef.current?.querySelector('input');
-      (el as HTMLInputElement | null)?.focus();
-    }
-  }, [errors.addressLine1]);
 
   useEffect(() => {
     if (currentStep === 'review' && !idempotencyKeyRef.current) {
@@ -339,52 +328,7 @@ export function VaultCheckoutPage() {
               <h2 className="font-heading text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
                 <MapPin className="h-5 w-5 text-[color:var(--color-action)]" /> Delivery Address
               </h2>
-              <form onSubmit={handleSubmit(onAddressSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Input label="First Name" error={errors.firstName?.message}
-                    {...register('firstName', { required: 'Required' })} />
-                  <Input label="Last Name" error={errors.lastName?.message}
-                    {...register('lastName', { required: 'Required' })} />
-                </div>
-                <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567"
-                  error={errors.phone?.message}
-                  {...register('phone', { required: 'Required' })} />
-                <div ref={addressWrapperRef}>
-                  <AddressAutocomplete
-                    label="Address Line 1"
-                    placeholder="Start typing your address…"
-                    error={errors.addressLine1?.message}
-                    onTextChange={(v) => setValue('addressLine1', v, { shouldValidate: true })}
-                    onPlaceSelected={(place: ParsedAddress) => {
-                      setValue('addressLine1', place.addressLine1, { shouldValidate: true });
-                      setValue('city', place.city, { shouldValidate: true });
-                      if (place.countryCode) setValue('countryCode', place.countryCode);
-                    }}
-                  />
-                </div>
-                <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
-                <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor"
-                  {...register('addressLine2')} />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input label="City" error={errors.city?.message}
-                    {...register('city', { required: 'Required' })} />
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">Country</label>
-                    <select {...register('countryCode')}
-                      className="w-full rounded-md border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent focus:ring-2 focus:ring-ring/40 transition-[border-color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-standard)]"
-                    >
-                      <option value="AE">🇦🇪 United Arab Emirates</option>
-                      <option value="SA">🇸🇦 Saudi Arabia</option>
-                      <option value="QA">🇶🇦 Qatar</option>
-                      <option value="KW">🇰🇼 Kuwait</option>
-                      <option value="BH">🇧🇭 Bahrain</option>
-                    </select>
-                  </div>
-                </div>
-                <Button type="submit" variant="primary" size="lg" className="w-full mt-2">
-                  Continue to Shipping
-                </Button>
-              </form>
+              <AddressBookStep onContinue={onAddressSubmit} submitLabel="Continue to Shipping" />
             </div>
           )}
 

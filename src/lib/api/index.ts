@@ -128,6 +128,13 @@ export const customerApi = {
   removeFromWishlist: (productId: string) =>
     apiClient.delete(`/wishlist/${productId}`),
 };
+
+/* Countries / Cities */
+export const locationApi = {
+  getCities: (countryCode: string) =>
+    apiClient.get<{ data: Array<{ id: string; name: string; stateName: string | null }> }>('/countries/cities', { params: { countryCode } }),
+};
+
 /* Blog */
 export interface BlogPostDto {
   id: string;

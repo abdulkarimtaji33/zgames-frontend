@@ -86,6 +86,12 @@ export function AddressAutocomplete({
       <input
         ref={inputRef}
         id={inputId}
+        // Chrome ignores autocomplete="off" on address-shaped fields and shows its
+        // own "powered by Google" address suggestions on top of the real Places
+        // dropdown. A `name` it can't pattern-match against the field (randomized
+        // per mount, nothing address-like) combined with autocomplete="off" is the
+        // documented workaround — Chrome's heuristic keys heavily off `name`.
+        name={`loc-${inputId}`}
         type="text"
         defaultValue={defaultValue}
         placeholder={configured ? placeholder : placeholder.replace('…', ' (manual entry)')}
@@ -94,6 +100,9 @@ export function AddressAutocomplete({
         aria-describedby={error ? errorId : undefined}
         className="w-full rounded border border-border bg-background-secondary px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent"
         autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        role="presentation"
       />
       {error && (
         <p id={errorId} className="mt-1 text-xs text-error">

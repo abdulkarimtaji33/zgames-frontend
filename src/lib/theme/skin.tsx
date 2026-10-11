@@ -50,10 +50,20 @@ export function SkinProvider({
   return <SkinContext.Provider value={{ skin, setSkin }}>{children}</SkinContext.Provider>;
 }
 
+const FALLBACK_SKIN: SkinContextValue = { skin: 'arcade', setSkin: () => {} };
+
+/**
+ * Falls back to a no-op default instead of throwing when rendered outside
+ * a SkinProvider. Some routes (e.g. statically prerendered pages at build
+ * time) can render components that call this before the provider tree is
+ * attached — throwing there took down the whole page in production
+ * ("useSkin must be used within a SkinProvider"). Every real app render
+ * path still has the provider via src/components/Providers.tsx, so this
+ * fallback is only ever exercised in those edge-case render passes.
+ */
 export function useSkin() {
   const ctx = useContext(SkinContext);
-  if (!ctx) throw new Error('useSkin must be used within a SkinProvider');
-  return ctx;
+  return ctx ?? FALLBACK_SKIN;
 }
 
 export const SKIN_LABELS: Record<Skin, { name: string; tagline: string }> = {

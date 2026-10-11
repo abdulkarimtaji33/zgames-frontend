@@ -139,7 +139,7 @@ export function VaultFooter() {
       {/* Bottom bar */}
       <div className="border-t border-border">
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-foreground-subtle">
-          <p>© {new Date().getFullYear()} Vault — a ZGAMES property. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Vault — a CGA Games property. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/en/terms" className={cn('hover:text-foreground-muted transition-colors', focusRing)}>Terms</Link>
             <Link href="/en/privacy" className={cn('hover:text-foreground-muted transition-colors', focusRing)}>Privacy</Link>

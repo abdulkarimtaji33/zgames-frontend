@@ -121,7 +121,7 @@ export function ArcadeHeader() {
                 <Gamepad2 className="h-5 w-5 text-white" />
               </div>
               <span className="font-heading text-xl sm:text-2xl font-bold leading-none whitespace-nowrap">
-                <span className="text-accent">ZGAMES</span>
+                <span className="text-accent">CGA GAMES</span>
                 <span className="text-accent-orange">!</span>
               </span>
             </Link>
@@ -332,7 +332,7 @@ export function ArcadeHeader() {
           <div className="fixed inset-0 z-40 bg-black/40 animate-fade-in" onClick={() => setMobileOpen(false)} />
           <div className="fixed top-0 right-0 z-50 h-full w-80 max-w-[90vw] bg-surface-0 border-l-2 border-border shadow-lg animate-slide-in-right overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-              <span className="font-heading text-xl font-bold text-accent">ZGAMES!</span>
+              <span className="font-heading text-xl font-bold text-accent">CGA GAMES!</span>
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"

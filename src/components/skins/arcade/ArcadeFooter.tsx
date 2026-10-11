@@ -87,14 +87,14 @@ export function ArcadeFooter() {
           {/* Brand */}
           <div>
             <Link href="/en" className="inline-flex items-center gap-2 mb-3">
-              <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center font-heading font-bold text-white">Z</div>
-              <span className="font-heading text-xl font-bold text-accent">ZGAMES!</span>
+              <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center font-heading font-bold text-white">C</div>
+              <span className="font-heading text-xl font-bold text-accent">CGA GAMES!</span>
             </Link>
             <p className="text-sm text-foreground-muted leading-relaxed mb-4 max-w-sm">
               Your favorite corner of the internet for games, consoles, trading cards &amp; gaming gear &mdash; stocked fresh, shipped fast.
             </p>
             <div className="space-y-1.5 mb-4 text-sm text-foreground-muted">
-              <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-accent" /> support@zgames.com</div>
+              <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-accent" /> support@cgagames.com</div>
               <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-accent" /> Dubai, United Arab Emirates</div>
             </div>
             <div className="flex gap-2">
@@ -132,7 +132,7 @@ export function ArcadeFooter() {
       {/* Bottom bar */}
       <div className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-foreground-subtle">
-          <p>&copy; {new Date().getFullYear()} ZGAMES. Built different, played harder.</p>
+          <p>&copy; {new Date().getFullYear()} CGA Games. Built different, played harder.</p>
           <p>Press start to continue shopping {'\u{1F579}️'}</p>
         </div>
       </div>

@@ -26,23 +26,40 @@ interface CurrencyState {
   format: (amount: number) => string;
 }
 
+function makeFormat(currency: CurrencyInfo) {
+  return (amount: number) => `${currency.symbol} ${(amount * currency.rate).toFixed(2)}`;
+}
+
 export const useCurrencyStore = create<CurrencyState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       selected: CURRENCIES[0],
       currencies: CURRENCIES,
 
       setCurrency: (code) => {
         const currency = CURRENCIES.find((c) => c.code === code);
-        if (currency) set({ selected: currency });
+        // `format` is re-created (new function reference) on every switch —
+        // components that select only `s.format` (not `s.selected`) still
+        // re-render, since zustand triggers on reference change per slice.
+        // Reusing the same closure across currency changes was why prices
+        // only updated after a full page refresh.
+        if (currency) set({ selected: currency, format: makeFormat(currency) });
       },
 
-      format: (amount: number) => {
-        const { selected } = get();
-        const converted = amount * selected.rate;
-        return `${selected.symbol} ${converted.toFixed(2)}`;
-      },
+      format: makeFormat(CURRENCIES[0]),
     }),
-    { name: 'cgagames-currency' },
+    {
+      name: 'cgagames-currency',
+      // Only `selected` is worth persisting — `format`/`setCurrency` are
+      // functions and silently drop out of JSON on save anyway. Without a
+      // custom `merge`, rehydration would restore `selected` (e.g. USD)
+      // but leave `format` pointing at the AED closure from initial state,
+      // mismatching the restored currency until `setCurrency` ran again.
+      partialize: (state) => ({ selected: state.selected }),
+      merge: (persisted, current) => {
+        const selected = (persisted as Partial<CurrencyState> | undefined)?.selected ?? current.selected;
+        return { ...current, selected, format: makeFormat(selected) };
+      },
+    },
   ),
 );

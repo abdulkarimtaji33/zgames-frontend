@@ -24,24 +24,17 @@ const SIDEBAR_COLLAPSED_KEY = 'cgagames-admin-sidebar-collapsed';
 const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Overview',
+    defaultOpen: true,
     items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
   },
   {
     label: 'Catalog',
+    defaultOpen: true,
     items: [
       { label: 'Products', href: '/admin/products', icon: Package },
       { label: 'Categories', href: '/admin/categories', icon: Tags },
       { label: 'Brands', href: '/admin/brands', icon: Bookmark },
       { label: 'Attributes', href: '/admin/attributes', icon: Sliders },
-    ],
-  },
-  {
-    label: 'Supply Chain',
-    items: [
-      { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
-      { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
-      { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
-      { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
       {
         label: 'Integrations', icon: PlugZap,
         children: [
@@ -53,6 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: 'Orders & Fulfillment',
+    defaultOpen: true,
     items: [
       { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
       { label: 'Returns', href: '/admin/returns', icon: RotateCcw },
@@ -60,7 +54,26 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    label: 'Customers & Support',
+    defaultOpen: true,
+    items: [
+      { label: 'Customers', href: '/admin/customers', icon: Users },
+      { label: 'Support', href: '/admin/support', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Supply Chain',
+    defaultOpen: false,
+    items: [
+      { label: 'Inventory', href: '/admin/inventory', icon: Warehouse },
+      { label: 'Purchase Orders', href: '/admin/purchase-orders', icon: ClipboardList },
+      { label: 'Suppliers', href: '/admin/suppliers', icon: Building2 },
+      { label: 'Warehouses', href: '/admin/warehouses', icon: Truck },
+    ],
+  },
+  {
     label: 'Marketing',
+    defaultOpen: false,
     items: [
       {
         label: 'Marketing', icon: Zap,
@@ -76,14 +89,8 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: 'Customers & Support',
-    items: [
-      { label: 'Customers', href: '/admin/customers', icon: Users },
-      { label: 'Support', href: '/admin/support', icon: MessageSquare },
-    ],
-  },
-  {
     label: 'Content',
+    defaultOpen: false,
     items: [
       { label: 'Blog', href: '/admin/blog', icon: PenTool },
       { label: 'CMS Pages', href: '/admin/cms-pages', icon: FileText },
@@ -91,6 +98,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: 'Insights',
+    defaultOpen: false,
     items: [
       { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
       { label: 'Analytics', href: '/admin/analytics', icon: LineChart },
@@ -99,6 +107,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: 'People & Access',
+    defaultOpen: false,
     items: [
       { label: 'Users', href: '/admin/users', icon: UserCog },
       { label: 'Roles', href: '/admin/roles', icon: ShieldCheck },
@@ -107,6 +116,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: 'System',
+    defaultOpen: false,
     items: [
       {
         label: 'Localization', icon: Globe,

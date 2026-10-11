@@ -8,6 +8,7 @@ import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
@@ -59,10 +60,18 @@ function exportOrdersCsv(orders: OrderRow[]) {
 export default function AdminOrdersPage() {
   const toast = useAdminToast((s) => s.show);
   const [activeTab, setActiveTab] = useState('ALL');
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const extraParams = useMemo(
-    () => (activeTab !== 'ALL' ? { status: activeTab.toLowerCase() } : {}),
-    [activeTab],
+    () => ({
+      ...(activeTab !== 'ALL' ? { status: activeTab.toLowerCase() } : {}),
+      ...(search ? { search } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [activeTab, search, dateFrom, dateTo],
   );
 
   const fetcher = useCallback(
@@ -162,12 +171,16 @@ export default function AdminOrdersPage() {
         </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           searchable
-          searchPlaceholder="Search orders..."
+          searchPlaceholder="Search by order # or customer email..."
+          onSearch={setSearch}
+          filters={<DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />}
           columns={[
             { key: 'orderNumber', label: 'Order #', sortable: true },
             {
@@ -230,9 +243,11 @@ export default function AdminOrdersPage() {
           ]}
           actions={(row) => <CrudActions viewHref={`/admin/orders/${row.id}`} />}
           emptyMessage={
-            activeTab === 'ALL'
-              ? 'No orders yet. Orders will appear here as customers check out.'
-              : `No ${activeTab.toLowerCase()} orders found. Try a different status filter.`
+            search || dateFrom || dateTo
+              ? 'No orders match your search or date range.'
+              : activeTab === 'ALL'
+                ? 'No orders yet. Orders will appear here as customers check out.'
+                : `No ${activeTab.toLowerCase()} orders found. Try a different status filter.`
           }
         />
         <AdminPagination

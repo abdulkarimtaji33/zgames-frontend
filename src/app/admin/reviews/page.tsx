@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Download, MessageSquare, Trash2, X } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminModal } from '@/components/admin/AdminModal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { FormField, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -17,11 +18,22 @@ import type { Review } from '@/types';
 
 export default function AdminReviewsPage() {
   const toast = useAdminToast((s) => s.show);
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const fetcher = useCallback(
     (params: Record<string, unknown>) => adminReviewsApi.findAll(params),
     [],
   );
-  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<Review>({ fetcher });
+  const extraParams = useMemo(
+    () => ({
+      ...(search ? { search } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [search, dateFrom, dateTo],
+  );
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<Review>({ fetcher, extraParams });
 
   const [replyTarget, setReplyTarget] = useState<Review | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -173,12 +185,15 @@ export default function AdminReviewsPage() {
         <DataTable
           data={items}
           total={total}
+          hideFooter
           isLoading={isLoading}
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           searchable
-          searchPlaceholder="Search reviews..."
+          searchPlaceholder="Search by title, body, or customer..."
+          onSearch={setSearch}
+          filters={<DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />}
           columns={[
             { key: 'rating', label: 'Rating', render: (v) => <span className="text-viz-3">{'★'.repeat(Number(v))}</span> },
             {

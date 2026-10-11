@@ -9,8 +9,9 @@ import { AdminModal } from '@/components/admin/AdminModal';
 import { FormField, FormInput, FormTextarea } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { adminCustomersApi, adminLoyaltyApi } from '@/lib/api/adminApi';
+import { adminCustomersApi, adminLoyaltyApi, adminOrdersApi } from '@/lib/api/adminApi';
 import { useAdminToast } from '@/hooks';
+import type { Order } from '@/types';
 
 interface CustomerDetail {
   id: string;
@@ -38,6 +39,7 @@ export default function AdminCustomerDetailPage() {
   const toast = useAdminToast((s) => s.show);
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [history, setHistory] = useState<LoyaltyHistoryItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustPoints, setAdjustPoints] = useState('');
@@ -47,17 +49,21 @@ export default function AdminCustomerDetailPage() {
   const load = async () => {
     setIsLoading(true);
     try {
-      const [customerRes, historyRes] = await Promise.all([
+      const [customerRes, historyRes, ordersRes] = await Promise.all([
         adminCustomersApi.findOne(id),
         adminLoyaltyApi.getHistory(id),
+        adminOrdersApi.findAll({ customerId: id, limit: 50, sort: 'createdAt', order: 'DESC' }),
       ]);
       setCustomer(customerRes.data.data as unknown as CustomerDetail);
       const historyData = historyRes.data.data ?? historyRes.data;
       setHistory(Array.isArray(historyData) ? historyData as LoyaltyHistoryItem[] : []);
+      const ordersData = ordersRes.data.data;
+      setOrders(Array.isArray(ordersData) ? ordersData : ordersData?.items ?? []);
     } catch {
       toast('Failed to load customer', 'error');
       setCustomer(null);
       setHistory([]);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -150,6 +156,40 @@ export default function AdminCustomerDetailPage() {
             <div className="flex justify-between"><dt className="text-foreground-muted">Wallet Balance</dt><dd className="font-bold">AED {Number(customer.storeCredit ?? 0).toFixed(2)}</dd></div>
           </dl>
         </div>
+      </div>
+
+      <div>
+        <h2 className="font-heading text-lg font-bold mb-3">Order History</h2>
+        <DataTable
+          data={orders}
+          isLoading={false}
+          columns={[
+            { key: 'orderNumber', label: 'Order #', render: (v) => <span className="font-medium">{String(v)}</span> },
+            {
+              key: 'total',
+              label: 'Total',
+              align: 'right',
+              render: (v, row) => <span className="font-bold text-accent">{row.currency ?? 'AED'} {Number(v).toFixed(2)}</span>,
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              render: (v) => <Badge variant={String(v) === 'delivered' ? 'success' : String(v) === 'cancelled' ? 'error' : 'warning'} size="xs">{String(v).toUpperCase()}</Badge>,
+            },
+            {
+              key: 'paymentStatus',
+              label: 'Payment',
+              render: (v) => <Badge variant={String(v) === 'paid' ? 'success' : 'warning'} size="xs">{String(v)}</Badge>,
+            },
+            { key: 'createdAt', label: 'Date', render: (v) => <span className="text-xs text-foreground-muted">{new Date(String(v)).toLocaleDateString()}</span> },
+          ]}
+          actions={(row) => (
+            <Link href={`/admin/orders/${row.id}`} className="text-xs text-accent hover:underline underline-offset-2">
+              View
+            </Link>
+          )}
+          emptyMessage="No orders yet."
+        />
       </div>
 
       <div>

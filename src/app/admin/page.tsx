@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ShoppingBag, Users, DollarSign, Package, TrendingUp, RotateCcw, Clock, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '@/components/admin/StatCard';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import Link from 'next/link';
 import { adminOrdersApi, adminProductsApi, adminReportsApi } from '@/lib/api/adminApi';
 import type { Order } from '@/types';
@@ -47,16 +48,22 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
     setError(false);
+    const range = {
+      ...(dateFrom ? { startDate: dateFrom } : {}),
+      ...(dateTo ? { endDate: dateTo } : {}),
+    };
     Promise.all([
-      adminReportsApi.revenueSummary({}),
-      adminReportsApi.customerStats({}),
-      adminReportsApi.ordersByStatus({}),
-      adminReportsApi.topProducts({ limit: 5 }),
-      adminReportsApi.revenueByPeriod({ groupBy: 'month' }),
+      adminReportsApi.revenueSummary(range),
+      adminReportsApi.customerStats(range),
+      adminReportsApi.ordersByStatus(range),
+      adminReportsApi.topProducts({ ...range, limit: 5 }),
+      adminReportsApi.revenueByPeriod({ ...range, groupBy: 'month' }),
       adminOrdersApi.findAll({ limit: 5, sort: 'createdAt', order: 'DESC' }),
       adminProductsApi.findAll({ limit: 1 }),
     ])
@@ -93,21 +100,24 @@ export default function AdminDashboardPage() {
       })
       .catch(() => setError(true))
       .finally(() => setIsLoading(false));
-  }, [reloadKey]);
+  }, [reloadKey, dateFrom, dateTo]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-foreground-muted mt-0.5">Live data from your store.</p>
         </div>
-        {stats.pendingOrders !== '0' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-medium">
-            <div className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse-glow" />
-            {stats.pendingOrders} pending orders
-          </div>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+          {stats.pendingOrders !== '0' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-medium">
+              <div className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse-glow" />
+              {stats.pendingOrders} pending orders
+            </div>
+          )}
+        </div>
       </div>
 
       {error && (

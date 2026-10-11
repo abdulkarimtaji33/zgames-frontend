@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminReturnsApi } from '@/lib/api/adminApi';
@@ -30,12 +31,23 @@ const STATUS_VARIANT: Record<string, 'success' | 'error' | 'warning' | 'info'> =
 
 export default function AdminReturnsPage() {
   const { show } = useAdminToast();
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const fetcher = useCallback(
     (params: Record<string, unknown>) =>
       adminReturnsApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<ReturnRow> } }>,
     [],
   );
-  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<ReturnRow>({ fetcher });
+  const extraParams = useMemo(
+    () => ({
+      ...(search ? { search } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [search, dateFrom, dateTo],
+  );
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<ReturnRow>({ fetcher, extraParams });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -86,12 +98,16 @@ export default function AdminReturnsPage() {
         </BulkActionBar>
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           searchable
-          searchPlaceholder="Search returns..."
+          searchPlaceholder="Search by reason or order #..."
+          onSearch={setSearch}
+          filters={<DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />}
           columns={[
             { key: 'id', label: 'Return #', render: (v, row) => String(row.returnNumber ?? v).slice(0, 8).toUpperCase() },
             {

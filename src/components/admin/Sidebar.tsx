@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight, LogOut } from 'lucide-react';
@@ -16,7 +16,17 @@ export type NavItem = {
 export type NavSection = {
   label: string;
   items: NavItem[];
+  /** Whether this section's items are expanded by default (before any stored per-user preference is applied). Defaults to true. */
+  defaultOpen?: boolean;
 };
+
+const SECTION_COLLAPSE_KEY = 'cgagames-admin-nav-sections';
+
+function sectionContainsPath(section: NavSection, pathname: string): boolean {
+  return section.items.some((item) =>
+    item.href ? pathname === item.href : item.children?.some((c) => pathname.startsWith(c.href)),
+  );
+}
 
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const pathname = usePathname();
@@ -108,6 +118,42 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggleCollapse, sections, onLogout }: SidebarProps) {
+  const pathname = usePathname();
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    sections.forEach((s) => { initial[s.label] = s.defaultOpen ?? true; });
+    return initial;
+  });
+
+  // Merge in any persisted per-user overrides after mount (avoids SSR/localStorage mismatch),
+  // and always force-open whichever section contains the current route.
+  useEffect(() => {
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = window.localStorage.getItem(SECTION_COLLAPSE_KEY);
+      if (raw) stored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      sections.forEach((s) => {
+        if (stored[s.label] !== undefined) next[s.label] = stored[s.label];
+        if (sectionContainsPath(s, pathname)) next[s.label] = true;
+      });
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const toggleSection = (label: string) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        window.localStorage.setItem(SECTION_COLLAPSE_KEY, JSON.stringify(next));
+      } catch { /* ignore */ }
+      return next;
+    });
+  };
+
   return (
     <aside
       className={cn(
@@ -139,16 +185,41 @@ export function Sidebar({ collapsed, onToggleCollapse, sections, onLogout }: Sid
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-2">
-        {sections.map((section) => (
-          <div key={section.label} className="mb-1">
-            {!collapsed && <p className="admin-nav-section-label">{section.label}</p>}
-            <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <NavLink key={item.label} item={item} collapsed={collapsed} />
-              ))}
+        {sections.map((section) => {
+          const open = collapsed || (openSections[section.label] ?? true);
+          return (
+            <div key={section.label} className="mb-1">
+              {!collapsed && (
+                <button
+                  onClick={() => toggleSection(section.label)}
+                  aria-expanded={open}
+                  className="admin-nav-section-label flex items-center justify-between w-full group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  <span>{section.label}</span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3 w-3 text-foreground-subtle transition-transform duration-[var(--duration-fast)] opacity-0 group-hover:opacity-100',
+                      open ? 'rotate-180' : '',
+                      !open && 'opacity-100',
+                    )}
+                  />
+                </button>
+              )}
+              <div
+                className={cn(
+                  'overflow-hidden transition-[grid-template-rows] duration-[var(--duration-base)] ease-[var(--ease-standard)] grid',
+                  open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                )}
+              >
+                <div className="overflow-hidden space-y-0.5">
+                  {section.items.map((item) => (
+                    <NavLink key={item.label} item={item} collapsed={collapsed} />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="border-t border-border p-3 flex-shrink-0 space-y-1">

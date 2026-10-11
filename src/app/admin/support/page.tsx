@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Download, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminSupportApi } from '@/lib/api/adminApi';
@@ -31,12 +32,23 @@ const STATUS_VARIANT: Record<string, 'warning' | 'info' | 'success'> = {
 };
 
 export default function AdminSupportPage() {
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const fetcher = useCallback(
     (params: Record<string, unknown>) =>
       adminSupportApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<TicketRow> } }>,
     [],
   );
-  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<TicketRow>({ fetcher });
+  const extraParams = useMemo(
+    () => ({
+      ...(search ? { search } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [search, dateFrom, dateTo],
+  );
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<TicketRow>({ fetcher, extraParams });
   const toast = useAdminToast((s) => s.show);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -110,6 +122,7 @@ export default function AdminSupportPage() {
           onSelectionChange={setSelectedIds}
           searchable
           searchPlaceholder="Search tickets..."
+          filters={<DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />}
           columns={[
             { key: 'id', label: 'Ticket ID', sortable: true, render: (v) => String(v).slice(0, 8).toUpperCase() },
             { key: 'subject', label: 'Subject', render: (v) => <span className="font-medium text-sm line-clamp-1 max-w-xs">{String(v)}</span> },

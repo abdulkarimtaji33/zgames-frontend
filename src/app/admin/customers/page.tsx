@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { CrudActions } from '@/components/admin/CrudActions';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { adminCustomersApi } from '@/lib/api/adminApi';
@@ -25,12 +26,23 @@ interface CustomerRow {
 }
 
 export default function AdminCustomersPage() {
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const fetcher = useCallback(
     (params: Record<string, unknown>) =>
       adminCustomersApi.findAll(params) as unknown as Promise<{ data: { data: PaginatedResponse<CustomerRow> } }>,
     [],
   );
-  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading } = usePaginatedList<CustomerRow>({ fetcher });
+  const extraParams = useMemo(
+    () => ({
+      ...(search ? { search } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    }),
+    [search, dateFrom, dateTo],
+  );
+  const { items, page, setPage, limit, setLimit, total, totalPages, isLoading } = usePaginatedList<CustomerRow>({ fetcher, extraParams });
 
   const handleExport = () => {
     const rows = items.map((c) => [
@@ -56,9 +68,13 @@ export default function AdminCustomersPage() {
       <div className="space-y-0">
         <DataTable
           data={items}
+          total={total}
+          hideFooter
           isLoading={isLoading}
           searchable
           searchPlaceholder="Search customers..."
+          onSearch={setSearch}
+          filters={<DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />}
           columns={[
             {
               key: 'firstName',

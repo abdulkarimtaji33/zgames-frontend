@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, ChevronRight, ChevronDown, Search, GripVertical, Package } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, ChevronRight, ChevronDown, Search, GripVertical, Package, Home } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { AdminModal } from '@/components/admin/AdminModal';
@@ -9,9 +10,9 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { FormField, FormInput, FormSelect, FormTextarea } from '@/components/admin/FormField';
 import { ImageUpload } from '@/components/admin/ImageUpload';
-import { adminCategoriesApi } from '@/lib/api/adminApi';
+import { adminCategoriesApi, adminProductsApi } from '@/lib/api/adminApi';
 import { useAdminToast } from '@/hooks/useAdminToast';
-import type { Category } from '@/types';
+import type { Category, Product } from '@/types';
 
 interface CategoryNode extends Category {
   isActive?: boolean;
@@ -65,6 +66,13 @@ function CategoryTreeRow({
   onEdit,
   onDelete,
   onReorder,
+  onToggleActive,
+  onToggleFeatured,
+  togglingId,
+  expandedProducts,
+  onToggleProducts,
+  productsCache,
+  loadingProductsId,
   searchQuery,
 }: {
   cat: CategoryNode;
@@ -76,12 +84,21 @@ function CategoryTreeRow({
   onEdit: (cat: CategoryNode) => void;
   onDelete: (cat: CategoryNode) => void;
   onReorder: (draggedId: string, targetId: string, siblings: CategoryNode[]) => void;
+  onToggleActive: (cat: CategoryNode) => void;
+  onToggleFeatured: (cat: CategoryNode) => void;
+  togglingId: string | null;
+  expandedProducts: Set<string>;
+  onToggleProducts: (cat: CategoryNode) => void;
+  productsCache: Record<string, Product[]>;
+  loadingProductsId: string | null;
   searchQuery: string;
 }) {
   const hasChildren = (cat.children ?? []).length > 0;
   const isCollapsed = collapsed[cat.id];
   const visibleChildren = (cat.children ?? []).filter((c) => matchesSearch(c as CategoryNode, searchQuery)) as CategoryNode[];
   const count = productCounts[cat.id] ?? 0;
+  const isFeatured = Boolean((cat as CategoryNode & { isFeatured?: boolean }).isFeatured);
+  const productsOpen = expandedProducts.has(cat.id);
 
   return (
     <>
@@ -94,7 +111,7 @@ function CategoryTreeRow({
           const draggedId = e.dataTransfer.getData('text/category-id');
           if (draggedId && draggedId !== cat.id) onReorder(draggedId, cat.id, siblings);
         }}
-        className="group flex items-center justify-between px-3 py-3 hover:bg-background-tertiary/50 transition-colors border-t border-border first:border-t-0"
+        className="group flex flex-wrap items-center justify-between gap-2 px-3 py-3 hover:bg-background-tertiary/50 transition-colors border-t border-border first:border-t-0"
         style={{ paddingLeft: `${12 + depth * 24}px` }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -120,17 +137,59 @@ function CategoryTreeRow({
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="hidden sm:flex items-center gap-1 text-xs text-foreground-muted" title="Products in this category">
+          <button
+            onClick={() => onToggleProducts(cat)}
+            title="View products in this category"
+            className={`hidden sm:flex items-center gap-1 text-xs rounded-md px-1.5 py-1 transition-colors ${productsOpen ? 'text-accent bg-accent/10' : 'text-foreground-muted hover:text-foreground hover:bg-background-tertiary'}`}
+          >
             <Package className="h-3 w-3" /> {count}
-          </span>
-          <Badge variant={cat.isActive !== false ? 'success' : 'error'} size="xs">
-            {cat.isActive !== false ? 'Active' : 'Inactive'}
-          </Badge>
-          {(cat as CategoryNode & { isFeatured?: boolean }).isFeatured && (
-            <Badge variant="new" size="xs">Homepage</Badge>
-          )}
+            {productsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          </button>
+          <button
+            onClick={() => onToggleActive(cat)}
+            disabled={togglingId === cat.id}
+            title={cat.isActive !== false ? 'Click to deactivate' : 'Click to activate'}
+            className="disabled:opacity-50"
+          >
+            <Badge variant={cat.isActive !== false ? 'success' : 'error'} size="xs" className="cursor-pointer">
+              {cat.isActive !== false ? 'Active' : 'Inactive'}
+            </Badge>
+          </button>
+          <button
+            onClick={() => onToggleFeatured(cat)}
+            disabled={togglingId === cat.id}
+            title={isFeatured ? 'Remove from homepage' : 'Show on homepage'}
+            className="p-1.5 rounded-md hover:bg-accent/10 transition-colors disabled:opacity-50"
+          >
+            <Home className={`h-4 w-4 ${isFeatured ? 'fill-accent/20 text-accent' : 'text-foreground-subtle'}`} />
+          </button>
           <CrudActions onEdit={() => onEdit(cat)} onDelete={() => onDelete(cat)} />
         </div>
+        {productsOpen && (
+          <div className="w-full mt-2 rounded-lg border border-border bg-background-tertiary/40 p-2" style={{ marginLeft: `${12 + depth * 24}px` }}>
+            {loadingProductsId === cat.id ? (
+              <p className="text-xs text-foreground-muted px-2 py-2">Loading products...</p>
+            ) : (productsCache[cat.id]?.length ?? 0) === 0 ? (
+              <p className="text-xs text-foreground-muted px-2 py-2">No products in this category yet.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {productsCache[cat.id].map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/admin/products/${p.id}`}
+                    className="flex items-center justify-between gap-3 px-2 py-2 text-sm hover:bg-background-tertiary rounded-md transition-colors"
+                  >
+                    <span className="truncate">{p.name}</span>
+                    <span className="flex items-center gap-2 flex-shrink-0 text-xs text-foreground-muted">
+                      AED {Number(p.price).toFixed(2)}
+                      <Badge variant={p.isActive ? 'success' : 'error'} size="xs">{p.isActive ? 'Active' : 'Inactive'}</Badge>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {!isCollapsed && visibleChildren.map((child) => (
         <CategoryTreeRow
@@ -144,6 +203,13 @@ function CategoryTreeRow({
           onEdit={onEdit}
           onDelete={onDelete}
           onReorder={onReorder}
+          onToggleActive={onToggleActive}
+          onToggleFeatured={onToggleFeatured}
+          togglingId={togglingId}
+          expandedProducts={expandedProducts}
+          onToggleProducts={onToggleProducts}
+          productsCache={productsCache}
+          loadingProductsId={loadingProductsId}
           searchQuery={searchQuery}
         />
       ))}
@@ -165,6 +231,10 @@ export default function AdminCategoriesPage() {
   const [form, setForm] = useState<CategoryForm>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  const [productsCache, setProductsCache] = useState<Record<string, Product[]>>({});
+  const [loadingProductsId, setLoadingProductsId] = useState<string | null>(null);
 
   const loadTree = useCallback(async () => {
     setIsLoading(true);
@@ -211,6 +281,64 @@ export default function AdminCategoriesPage() {
   const openDelete = (cat: CategoryNode) => {
     setDeleting(cat);
     setConfirmOpen(true);
+  };
+
+  const applyLocalUpdate = (id: string, patch: Partial<CategoryNode>) => {
+    const apply = (nodes: CategoryNode[]): CategoryNode[] =>
+      nodes.map((n) => (n.id === id ? { ...n, ...patch } : { ...n, children: n.children ? apply(n.children as CategoryNode[]) : n.children }));
+    setCategories((prev) => apply(prev));
+  };
+
+  const handleToggleActive = async (cat: CategoryNode) => {
+    const next = !(cat.isActive !== false);
+    setTogglingId(cat.id);
+    applyLocalUpdate(cat.id, { isActive: next });
+    try {
+      await adminCategoriesApi.update(cat.id, { isActive: next });
+      show(next ? 'Category activated' : 'Category deactivated', 'success');
+    } catch {
+      applyLocalUpdate(cat.id, { isActive: cat.isActive });
+      show('Failed to update category status', 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleToggleFeatured = async (cat: CategoryNode) => {
+    const current = Boolean((cat as CategoryNode & { isFeatured?: boolean }).isFeatured);
+    const next = !current;
+    setTogglingId(cat.id);
+    applyLocalUpdate(cat.id, { isFeatured: next } as Partial<CategoryNode>);
+    try {
+      await adminCategoriesApi.update(cat.id, { isFeatured: next });
+      show(next ? 'Added to homepage' : 'Removed from homepage', 'success');
+    } catch {
+      applyLocalUpdate(cat.id, { isFeatured: current } as Partial<CategoryNode>);
+      show('Failed to update homepage visibility', 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleToggleProducts = async (cat: CategoryNode) => {
+    setExpandedProducts((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat.id)) next.delete(cat.id);
+      else next.add(cat.id);
+      return next;
+    });
+    if (expandedProducts.has(cat.id) || productsCache[cat.id]) return;
+    setLoadingProductsId(cat.id);
+    try {
+      const res = await adminProductsApi.findAll({ categoryId: cat.id, limit: 50 });
+      const data = res.data.data;
+      const items = Array.isArray(data) ? data : data?.items ?? [];
+      setProductsCache((prev) => ({ ...prev, [cat.id]: items }));
+    } catch {
+      show('Failed to load products for this category', 'error');
+    } finally {
+      setLoadingProductsId(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -353,6 +481,13 @@ export default function AdminCategoriesPage() {
               onEdit={openEdit}
               onDelete={openDelete}
               onReorder={handleReorder}
+              onToggleActive={handleToggleActive}
+              onToggleFeatured={handleToggleFeatured}
+              togglingId={togglingId}
+              expandedProducts={expandedProducts}
+              onToggleProducts={handleToggleProducts}
+              productsCache={productsCache}
+              loadingProductsId={loadingProductsId}
               searchQuery={search.trim().toLowerCase()}
             />
           ))

@@ -9,6 +9,7 @@ import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CrudActions } from '@/components/admin/CrudActions';
 import { BulkActionBar } from '@/components/admin/BulkActionBar';
+import { DateRangeFilter } from '@/components/admin/DateRangeFilter';
 import { FormSelect } from '@/components/admin/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -34,6 +35,8 @@ export default function AdminProductsPage() {
   const [categoryId, setCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
   const [status, setStatus] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
 
@@ -51,7 +54,9 @@ export default function AdminProductsPage() {
     ...(categoryId ? { categoryId } : {}),
     ...(brandId ? { brandId } : {}),
     ...(status ? { isActive: status === 'active' } : {}),
-  }), [search, categoryId, brandId, status]);
+    ...(dateFrom ? { dateFrom } : {}),
+    ...(dateTo ? { dateTo } : {}),
+  }), [search, categoryId, brandId, status, dateFrom, dateTo]);
   const { items, page, setPage, limit, setLimit, total, totalPages, isLoading, reload } = usePaginatedList<Product>({ fetcher, extraParams });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -187,6 +192,7 @@ export default function AdminProductsPage() {
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </FormSelect>
+              <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
             </>
           )}
           columns={[
@@ -261,7 +267,7 @@ export default function AdminProductsPage() {
             />
           )}
           emptyMessage={
-            search || categoryId || brandId || status
+            search || categoryId || brandId || status || dateFrom || dateTo
               ? 'No products match your filters. Try adjusting search or clearing filters.'
               : 'No products yet. Add your first product to get started.'
           }

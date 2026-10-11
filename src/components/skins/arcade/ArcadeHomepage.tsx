@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Clock, Flame, Gamepad2 } from 'lucide-react';
+import {
+  ArrowRight, Clock, Flame, Gamepad2, Headphones, Puzzle, Trophy, Joystick,
+  Gift, Gamepad, Shapes, type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { ProductCard } from '@/components/store/ProductCard';
 import { useCurrencyStore } from '@/store/currencyStore';
@@ -127,6 +131,23 @@ function TicketStrip() {
 }
 
 /* ── Sticker-wall category grid — playful tiles with idle wiggle. ───── */
+/* Keyword-matched icon per category, used when no image has been uploaded
+ * for it yet (Admin → Categories → Image) — a deliberate fallback instead
+ * of one generic placeholder glyph for every category. */
+const CATEGORY_ICON_RULES: [RegExp, LucideIcon][] = [
+  [/playstation|ps\d/i, Gamepad],
+  [/xbox/i, Gamepad],
+  [/nintendo|switch/i, Joystick],
+  [/accessor/i, Headphones],
+  [/toy/i, Shapes],
+  [/action figure|collectible|figure/i, Trophy],
+  [/gift/i, Gift],
+  [/game/i, Gamepad2],
+];
+function categoryIcon(name: string): LucideIcon {
+  return CATEGORY_ICON_RULES.find(([re]) => re.test(name))?.[1] ?? Puzzle;
+}
+
 function StickerWall() {
   const { categories, isLoading } = useFeaturedCategories(10);
 
@@ -138,22 +159,42 @@ function StickerWall() {
           ? Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="aspect-square rounded-2xl bg-surface-2 animate-pulse" />
             ))
-          : categories.map((cat, i) => (
-              <Link
-                key={cat.id}
-                href={`/en/category/${cat.slug}`}
-                className="skin-wiggle group relative aspect-square rounded-2xl bg-surface-1 border border-border overflow-hidden flex flex-col items-center justify-center gap-2 p-3 text-center transition-transform"
-                style={{ transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 1.5}deg)` }}
-              >
-                <span
-                  className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-25"
-                  style={{ background: `var(--viz-${(i % 6) + 1})` }}
-                  aria-hidden
-                />
-                <span className="relative text-3xl" aria-hidden>🎯</span>
-                <span className="relative text-xs sm:text-sm font-bold text-foreground line-clamp-2">{cat.name}</span>
-              </Link>
-            ))}
+          : categories.map((cat, i) => {
+              const photo = cat.image || cat.imageUrl;
+              const Icon = categoryIcon(cat.name);
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/en/category/${cat.slug}`}
+                  className="skin-wiggle group relative aspect-square rounded-2xl bg-surface-1 border border-border overflow-hidden flex flex-col items-center justify-center gap-2 p-3 text-center transition-transform"
+                  style={{ transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 1.5}deg)` }}
+                >
+                  {photo ? (
+                    <>
+                      <Image
+                        src={photo}
+                        alt=""
+                        fill
+                        className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-110"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                      <span className="relative text-xs sm:text-sm font-bold text-white line-clamp-2 drop-shadow">{cat.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-25"
+                        style={{ background: `var(--viz-${(i % 6) + 1})` }}
+                        aria-hidden
+                      />
+                      <Icon className="relative h-8 w-8 text-accent" aria-hidden />
+                      <span className="relative text-xs sm:text-sm font-bold text-foreground line-clamp-2">{cat.name}</span>
+                    </>
+                  )}
+                </Link>
+              );
+            })}
         {!isLoading && categories.length === 0 && (
           <p className="col-span-full text-sm text-foreground-subtle py-6">Nothing here yet — check back soon.</p>
         )}

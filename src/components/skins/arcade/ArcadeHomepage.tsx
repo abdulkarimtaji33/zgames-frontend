@@ -153,7 +153,10 @@ function StickerWall() {
 
   return (
     <section className={cn(SECTION_WRAP, 'py-8 sm:py-10')}>
-      <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground mb-4">Browse the Wall</h2>
+      <div className="mb-5">
+        <h2 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Browse the Wall</h2>
+        <p className="text-sm text-foreground-muted mt-0.5">Every corner of the store, one tap away</p>
+      </div>
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
         {isLoading
           ? Array.from({ length: 10 }).map((_, i) => (
@@ -166,24 +169,23 @@ function StickerWall() {
                 <Link
                   key={cat.id}
                   href={`/en/category/${cat.slug}`}
-                  className="skin-wiggle group relative aspect-square rounded-2xl bg-surface-1 border border-border overflow-hidden flex flex-col items-center justify-center gap-2 p-3 text-center transition-transform"
+                  className="skin-wiggle group relative aspect-square rounded-2xl overflow-hidden shadow-[var(--shadow-sm)] transition-[transform,box-shadow] duration-[var(--duration-base)] hover:shadow-[var(--shadow-lg)] hover:z-10"
                   style={{ transform: `rotate(${(i % 2 === 0 ? -1 : 1) * 1.5}deg)` }}
                 >
                   {photo ? (
                     <>
-                      <div className="absolute inset-0 bottom-7 p-3">
-                        <Image
-                          src={photo}
-                          alt=""
-                          fill
-                          className="object-contain p-2 transition-transform duration-[var(--duration-slow)] group-hover:scale-110"
-                          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                        />
-                      </div>
-                      <span className="absolute bottom-2 inset-x-2 text-xs sm:text-sm font-bold text-foreground line-clamp-1 text-center">{cat.name}</span>
+                      <Image
+                        src={photo}
+                        alt=""
+                        fill
+                        className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-110"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                      <span className="absolute bottom-2.5 inset-x-2.5 text-xs sm:text-sm font-bold text-white line-clamp-1 text-center drop-shadow">{cat.name}</span>
                     </>
                   ) : (
-                    <>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center bg-surface-1 border border-border">
                       <span
                         className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-25"
                         style={{ background: `var(--viz-${(i % 6) + 1})` }}
@@ -191,7 +193,7 @@ function StickerWall() {
                       />
                       <Icon className="relative h-8 w-8 text-accent" aria-hidden />
                       <span className="relative text-xs sm:text-sm font-bold text-foreground line-clamp-2">{cat.name}</span>
-                    </>
+                    </div>
                   )}
                 </Link>
               );

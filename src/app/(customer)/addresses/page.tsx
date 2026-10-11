@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dialog } from '@/components/ui/Dialog';
 import { AddressAutocomplete, type ParsedAddress } from '@/components/shared/AddressAutocomplete';
-import { customerApi } from '@/lib/api';
+import { MapPicker, type MapPickedLocation } from '@/components/shared/MapPicker';
+import { customerApi, locationApi } from '@/lib/api';
 
 interface Address {
   id: string;
@@ -16,6 +17,11 @@ interface Address {
   phone: string;
   addressLine1: string;
   addressLine2?: string | null;
+  area?: string | null;
+  buildingName?: string | null;
+  floor?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   city: string;
   state?: string | null;
   countryCode: string;
@@ -29,7 +35,9 @@ interface AddressFormValues {
   lastName: string;
   phone: string;
   addressLine1: string;
-  addressLine2?: string;
+  area: string;
+  buildingName: string;
+  floor: string;
   city: string;
   state?: string;
   countryCode: string;
@@ -37,8 +45,14 @@ interface AddressFormValues {
   label?: string;
 }
 
+interface CityOption {
+  id: string;
+  name: string;
+  stateName: string | null;
+}
+
 const EMPTY: AddressFormValues = {
-  firstName: '', lastName: '', phone: '', addressLine1: '', addressLine2: '',
+  firstName: '', lastName: '', phone: '', addressLine1: '', area: '', buildingName: '', floor: '',
   city: '', state: '', countryCode: 'AE', zipCode: '', label: 'Home',
 };
 
@@ -52,6 +66,8 @@ export default function AddressesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [pin, setPin] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -59,6 +75,17 @@ export default function AddressesPage() {
   };
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddressFormValues>({ defaultValues: EMPTY });
+
+  useEffect(() => {
+    locationApi.getCities('AE')
+      .then((res) => setCities(((res.data as { data?: CityOption[] }).data) ?? []))
+      .catch(() => setCities([]));
+  }, []);
+
+  const matchCity = (name: string) => {
+    const match = cities.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    return match ? match.name : name;
+  };
 
   const load = () => {
     setIsLoading(true);
@@ -73,6 +100,7 @@ export default function AddressesPage() {
   const openAdd = () => {
     setEditingId(null);
     reset(EMPTY);
+    setPin({ lat: null, lng: null });
     setErrorMsg(null);
     setShowForm(true);
   };
@@ -84,13 +112,16 @@ export default function AddressesPage() {
       lastName: addr.lastName,
       phone: addr.phone,
       addressLine1: addr.addressLine1,
-      addressLine2: addr.addressLine2 ?? '',
+      area: addr.area ?? '',
+      buildingName: addr.buildingName ?? '',
+      floor: addr.floor ?? '',
       city: addr.city,
       state: addr.state ?? '',
       countryCode: addr.countryCode,
       zipCode: addr.zipCode ?? '',
       label: addr.label ?? 'Home',
     });
+    setPin({ lat: addr.latitude ?? null, lng: addr.longitude ?? null });
     setErrorMsg(null);
     setShowForm(true);
   };
@@ -98,11 +129,12 @@ export default function AddressesPage() {
   const onSubmit = async (data: AddressFormValues) => {
     setSubmitting(true);
     setErrorMsg(null);
+    const payload = { ...data, latitude: pin.lat ?? undefined, longitude: pin.lng ?? undefined };
     try {
       if (editingId) {
-        await customerApi.updateAddress(editingId, data);
+        await customerApi.updateAddress(editingId, payload);
       } else {
-        await customerApi.addAddress(data);
+        await customerApi.addAddress(payload);
       }
       setShowForm(false);
       load();
@@ -169,8 +201,10 @@ export default function AddressesPage() {
                 )}
               </div>
               <p className="font-medium">{addr.firstName} {addr.lastName}</p>
-              <p className="text-sm text-foreground-muted">{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}</p>
-              <p className="text-sm text-foreground-muted">{addr.city}{addr.state ? `, ${addr.state}` : ''}, {addr.countryCode}</p>
+              <p className="text-sm text-foreground-muted">
+                {[addr.buildingName, addr.floor && `Floor ${addr.floor}`, addr.addressLine1].filter(Boolean).join(', ')}
+              </p>
+              <p className="text-sm text-foreground-muted">{addr.area}{addr.area ? ', ' : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''}, {addr.countryCode}</p>
               <p className="text-sm text-foreground-muted">{addr.phone}</p>
               <div className="flex items-center flex-wrap gap-2 pt-2">
                 <button onClick={() => openEdit(addr)} className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-background-tertiary text-foreground-muted hover:text-foreground transition-colors">
@@ -211,20 +245,27 @@ export default function AddressesPage() {
               <Input label="Phone Number" type="tel" placeholder="+971 50 123 4567" autoComplete="tel" error={errors.phone?.message} {...register('phone', { required: 'Required' })} />
 
               <AddressAutocomplete
-                label="Address Line 1"
+                label="Address Line 1 (Street)"
                 placeholder="Start typing your address…"
                 error={errors.addressLine1?.message}
                 onTextChange={(v) => setValue('addressLine1', v, { shouldValidate: true })}
                 onPlaceSelected={(place: ParsedAddress) => {
                   setValue('addressLine1', place.addressLine1, { shouldValidate: true });
-                  setValue('city', place.city, { shouldValidate: true });
+                  setValue('city', matchCity(place.city), { shouldValidate: true });
+                  if (place.area) setValue('area', place.area, { shouldValidate: true });
                   if (place.state) setValue('state', place.state);
                   if (place.zipCode) setValue('zipCode', place.zipCode);
                   if (place.countryCode) setValue('countryCode', place.countryCode);
+                  if (place.lat != null && place.lng != null) setPin({ lat: place.lat, lng: place.lng });
                 }}
               />
               <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
-              <Input label="Address Line 2 (optional)" placeholder="Apartment, Floor" autoComplete="address-line2" {...register('addressLine2')} />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Building/Villa Number or Name" placeholder="e.g. Villa 12, Marina Tower" error={errors.buildingName?.message} {...register('buildingName', { required: 'Required' })} />
+                <Input label="Floor" placeholder="e.g. Ground, 4th" error={errors.floor?.message} {...register('floor', { required: 'Required' })} />
+              </div>
+              <Input label="Area" placeholder="e.g. Al Barsha, Business Bay" error={errors.area?.message} {...register('area', { required: 'Required' })} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="City" autoComplete="address-level2" error={errors.city?.message} {...register('city', { required: 'Required' })} />
@@ -246,6 +287,17 @@ export default function AddressesPage() {
                 </div>
                 <Input label="Postal Code (optional)" autoComplete="postal-code" {...register('zipCode')} />
               </div>
+
+              <MapPicker
+                lat={pin.lat}
+                lng={pin.lng}
+                onLocationChange={(loc: MapPickedLocation) => {
+                  setPin({ lat: loc.lat, lng: loc.lng });
+                  if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldValidate: true });
+                  if (loc.city) setValue('city', matchCity(loc.city), { shouldValidate: true });
+                  if (loc.area) setValue('area', loc.area, { shouldValidate: true });
+                }}
+              />
 
               {errorMsg && <p className="text-sm text-error">{errorMsg}</p>}
 

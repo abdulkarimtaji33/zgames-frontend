@@ -6,6 +6,7 @@ import { loadGoogleMaps, isGoogleMapsConfigured } from '@/lib/googleMaps';
 export interface ParsedAddress {
   addressLine1: string;
   city: string;
+  area: string;
   state: string;
   countryCode: string;
   zipCode: string;
@@ -14,7 +15,15 @@ export interface ParsedAddress {
   lng: number | null;
 }
 
-function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress {
+interface GeocodedResult {
+  address_components?: google.maps.GeocoderAddressComponent[];
+  formatted_address?: string;
+  geometry?: { location?: google.maps.LatLng };
+  name?: string;
+}
+
+/** Shared by the Places Autocomplete result and the map pin's reverse-geocode result — both share this shape. */
+export function parseAddressComponents(place: GeocodedResult): ParsedAddress {
   const get = (type: string, useShort = false) =>
     place.address_components?.find((c) => c.types.includes(type))?.[useShort ? 'short_name' : 'long_name'] ?? '';
 
@@ -24,7 +33,8 @@ function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress {
 
   return {
     addressLine1,
-    city: get('locality') || get('postal_town') || get('sublocality') || '',
+    city: get('locality') || get('postal_town') || get('administrative_area_level_2') || '',
+    area: get('sublocality') || get('sublocality_level_1') || get('neighborhood') || '',
     state: get('administrative_area_level_1'),
     countryCode: get('country', true),
     zipCode: get('postal_code'),
@@ -75,7 +85,7 @@ export function AddressAutocomplete({
     ac.addListener('place_changed', () => {
       const place = ac.getPlace();
       if (!place?.address_components) return;
-      onPlaceSelected(parsePlace(place));
+      onPlaceSelected(parseAddressComponents(place));
     });
     autocompleteRef.current = ac;
   }, [mapsReady, onPlaceSelected]);

@@ -6,6 +6,7 @@ import { Plus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AddressAutocomplete, type ParsedAddress } from '@/components/shared/AddressAutocomplete';
+import { MapPicker, type MapPickedLocation } from '@/components/shared/MapPicker';
 import { customerApi, locationApi } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils/cn';
@@ -15,8 +16,13 @@ export interface CheckoutAddress {
   lastName: string;
   phone: string;
   addressLine1: string;
+  area: string;
+  buildingName: string;
+  floor: string;
   city: string;
   countryCode: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface SavedAddress extends CheckoutAddress {
@@ -36,12 +42,26 @@ interface AddressBookStepProps {
   submitLabel?: string;
 }
 
+const EMPTY_FORM = {
+  firstName: '',
+  lastName: '',
+  phone: '',
+  addressLine1: '',
+  area: '',
+  buildingName: '',
+  floor: '',
+  city: '',
+  countryCode: 'AE',
+};
+
 /**
  * Delivery-address step shared by both skins' checkout flows. Logged-in
  * customers pick from their saved address book (default pre-selected) or
  * add a new one; guests just get the plain form. Physical orders are UAE-only
  * for now, so country is locked and city comes from the cities API (seeded,
- * grouped by emirate) rather than free text.
+ * grouped by emirate) rather than free text. A draggable map pin lets the
+ * customer mark their exact delivery spot, which also fills/corrects the
+ * text fields via reverse geocoding.
  */
 export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: AddressBookStepProps) {
   const { isAuthenticated, customer } = useAuthStore();
@@ -50,17 +70,11 @@ export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: Addres
   const [selectedId, setSelectedId] = useState<string | 'new' | null>(null);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [saveNewAddress, setSaveNewAddress] = useState(true);
+  const [pin, setPin] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const addressWrapperRef = useRef<HTMLDivElement>(null);
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<CheckoutAddress>({
-    defaultValues: {
-      firstName: customer?.firstName ?? '',
-      lastName: customer?.lastName ?? '',
-      phone: customer?.phone ?? '',
-      addressLine1: '',
-      city: '',
-      countryCode: 'AE',
-    },
+    defaultValues: { ...EMPTY_FORM, firstName: customer?.firstName ?? '', lastName: customer?.lastName ?? '', phone: customer?.phone ?? '' },
   });
 
   useEffect(() => {
@@ -92,41 +106,32 @@ export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: Addres
     }
   }, [errors.addressLine1]);
 
+  const matchCity = (name: string) => {
+    const match = cities.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    return match ? match.name : name;
+  };
+
   const startNew = () => {
     setSelectedId('new');
-    reset({
-      firstName: customer?.firstName ?? '',
-      lastName: customer?.lastName ?? '',
-      phone: customer?.phone ?? '',
-      addressLine1: '',
-      city: '',
-      countryCode: 'AE',
-    });
+    setPin({ lat: null, lng: null });
+    reset({ ...EMPTY_FORM, firstName: customer?.firstName ?? '', lastName: customer?.lastName ?? '', phone: customer?.phone ?? '' });
   };
 
   const onSubmitNew = async (data: CheckoutAddress) => {
+    const payload = { ...data, latitude: pin.lat ?? undefined, longitude: pin.lng ?? undefined };
     if (isAuthenticated && saveNewAddress) {
       try {
-        await customerApi.addAddress({ ...data, label: 'Home' });
+        await customerApi.addAddress({ ...payload, label: 'Home' });
       } catch {
         // Saving to the address book is a convenience — never block checkout on it.
       }
     }
-    onContinue(data);
+    onContinue(payload);
   };
 
   const continueWithSaved = () => {
     const addr = savedAddresses.find((a) => a.id === selectedId);
-    if (addr) {
-      onContinue({
-        firstName: addr.firstName,
-        lastName: addr.lastName,
-        phone: addr.phone,
-        addressLine1: addr.addressLine1,
-        city: addr.city,
-        countryCode: addr.countryCode || 'AE',
-      });
-    }
+    if (addr) onContinue(addr);
   };
 
   if (loadingSaved) {
@@ -173,7 +178,10 @@ export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: Addres
                   )}
                 </span>
                 <span className="block text-foreground-muted">{addr.firstName} {addr.lastName} · {addr.phone}</span>
-                <span className="block text-foreground-muted">{addr.addressLine1}, {addr.city}</span>
+                <span className="block text-foreground-muted">
+                  {[addr.buildingName, addr.floor && `Floor ${addr.floor}`, addr.addressLine1].filter(Boolean).join(', ')}
+                </span>
+                <span className="block text-foreground-muted">{[addr.area, addr.city].filter(Boolean).join(', ')}</span>
               </span>
             </label>
           ))}
@@ -207,20 +215,41 @@ export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: Addres
           />
           <div ref={addressWrapperRef}>
             <AddressAutocomplete
-              label="Address Line 1"
+              label="Address Line 1 (Street)"
               placeholder="Start typing your address…"
               error={errors.addressLine1?.message}
               onTextChange={(v) => setValue('addressLine1', v, { shouldValidate: true })}
               onPlaceSelected={(place: ParsedAddress) => {
                 setValue('addressLine1', place.addressLine1, { shouldValidate: true });
-                if (place.city) {
-                  const match = cities.find((c) => c.name.toLowerCase() === place.city.toLowerCase());
-                  setValue('city', match ? match.name : place.city, { shouldValidate: true });
-                }
+                if (place.city) setValue('city', matchCity(place.city), { shouldValidate: true });
+                if (place.area) setValue('area', place.area, { shouldValidate: true });
+                if (place.lat != null && place.lng != null) setPin({ lat: place.lat, lng: place.lng });
               }}
             />
           </div>
           <input type="hidden" {...register('addressLine1', { required: 'Required' })} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Building/Villa Number or Name"
+              placeholder="e.g. Villa 12, Marina Tower"
+              error={errors.buildingName?.message}
+              {...register('buildingName', { required: 'Required' })}
+            />
+            <Input
+              label="Floor"
+              placeholder="e.g. Ground, 4th"
+              error={errors.floor?.message}
+              {...register('floor', { required: 'Required' })}
+            />
+          </div>
+          <Input
+            label="Area"
+            placeholder="e.g. Al Barsha, Business Bay"
+            error={errors.area?.message}
+            {...register('area', { required: 'Required' })}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">City</label>
@@ -247,6 +276,17 @@ export function AddressBookStep({ onContinue, submitLabel = 'Continue' }: Addres
               <input type="hidden" value="AE" {...register('countryCode')} />
             </div>
           </div>
+
+          <MapPicker
+            lat={pin.lat}
+            lng={pin.lng}
+            onLocationChange={(loc: MapPickedLocation) => {
+              setPin({ lat: loc.lat, lng: loc.lng });
+              if (loc.addressLine1) setValue('addressLine1', loc.addressLine1, { shouldValidate: true });
+              if (loc.city) setValue('city', matchCity(loc.city), { shouldValidate: true });
+              if (loc.area) setValue('area', loc.area, { shouldValidate: true });
+            }}
+          />
 
           {isAuthenticated && (
             <label className="flex items-center gap-2.5 text-sm text-foreground-muted cursor-pointer select-none">
